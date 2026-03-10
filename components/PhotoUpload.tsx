@@ -132,20 +132,22 @@ export default function PhotoUpload({
         `}>
           {uploading ? (
             <div className="flex flex-col items-center gap-2">
-              <Loader2 className="w-8 h-8 text-cyan-600 animate-spin" />
+              <Loader2 className="w-8 h-8 text-orange-600 animate-spin" />
               <p className="text-sm text-gray-600">Uploading... {Math.round(progress)}%</p>
               <div className="w-full max-w-xs h-2 bg-gray-200 rounded-full overflow-hidden">
                 <div 
                   className="h-full from-orange-500 to-orange-600 transition-all duration-300"
-                  style={{ background: 'linear-gradient(to right, #ea580c, #dc2626)' }}
-                  style={{ width: `${progress}%` }}
+                  style={{ 
+                    background: 'linear-gradient(to right, #ea580c, #dc2626)',
+                    width: `${progress}%`
+                  }}
                 />
               </div>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-2">
               <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                <Upload className="w-6 h-6 text-cyan-600" />
+                <Upload className="w-6 h-6 text-orange-600" />
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-900">
