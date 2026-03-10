@@ -132,11 +132,11 @@ export default function InvoicesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="px-4 sm:px-8 py-6">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <Breadcrumb items={[{ label: 'Invoices', href: '/dashboard/invoices' }]} />
 
         {/* Page Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
           {/* Left: Icon + Title */}
           <div className="flex items-center gap-4">
             {/* Icon Badge */}
@@ -158,7 +158,7 @@ export default function InvoicesPage() {
           {/* Right: Action Button */}
           <Link 
             href="/dashboard/invoices/new" 
-            className="inline-flex items-center gap-2 px-5 py-2.5 text-white font-semibold rounded-lg shadow-sm transition-all"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-white font-semibold rounded-lg shadow-sm transition-all w-full sm:w-auto"
             style={{ 
               backgroundColor: colors.accent.DEFAULT,
               boxShadow: '0 1px 3px rgba(234, 88, 12, 0.2)'
@@ -196,7 +196,7 @@ export default function InvoicesPage() {
             </div>
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <Filter className="w-4 h-4 text-gray-400 flex-shrink-0" />
-              <select value={statusFilter} onChange={e => handleStatusFilterChange(e.target.value)} className="flex-1 sm:flex-none px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all">
+              <select value={statusFilter} onChange={e => handleStatusFilterChange(e.target.value)} className="flex-1 sm:flex-none px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all">
                 <option value="all">All Status</option>
                 <option value="draft">Draft</option>
                 <option value="unpaid">Unpaid</option>
@@ -237,7 +237,7 @@ export default function InvoicesPage() {
                 return (
                   <tr key={invoice.id} className="hover:bg-gray-50 transition-colors group">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <Link href={`/dashboard/invoices/${invoice.id}`} className="text-sm font-medium text-cyan-600 hover:text-cyan-700 font-sans">
+                      <Link href={`/dashboard/invoices/${invoice.id}`} className="text-sm font-medium text-orange-600 hover:text-orange-700 font-sans">
                         {invoice.invoice_number}
                       </Link>
                     </td>

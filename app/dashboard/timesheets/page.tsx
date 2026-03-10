@@ -279,7 +279,7 @@ export default function TimesheetsPage() {
             })}
           </h2>
           <p className="text-gray-600 mt-2">
-            Total: <strong className="text-blue-500 text-xl">{totalHours.toFixed(1)} hours</strong>
+            Total: <strong className="text-orange-600 text-xl">{totalHours.toFixed(1)} hours</strong>
           </p>
         </div>
         <div className="p-8">
@@ -289,19 +289,19 @@ export default function TimesheetsPage() {
                 <p className="text-gray-500 text-lg">No time entries for this day</p>
                 <button 
                   onClick={() => handleAddHours()}
-                  className="mt-4 px-6 py-3 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600"
+                  className="mt-4 px-6 py-3 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700"
                 >
                   + Add Hours
                 </button>
               </div>
             ) : (
               dayEntries.map((entry) => (
-                <div key={entry.id} className="p-6 bg-gray-50 rounded-xl border-l-4 border-blue-500 hover:bg-gray-100 transition-colors">
+                <div key={entry.id} className="p-6 bg-gray-50 rounded-xl border-l-4 border-orange-500 hover:bg-gray-100 transition-colors">
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-semibold text-gray-900 text-lg">
                       {entry.start_time} - {entry.end_time}
                     </span>
-                    <span className="font-bold text-blue-500 text-lg">{entry.total_hours} hrs</span>
+                    <span className="font-bold text-orange-600 text-lg">{entry.total_hours} hrs</span>
                   </div>
                   <div className="flex items-center gap-2 mb-2">
                     <Wrench size={16} className="text-gray-400" />
@@ -349,7 +349,7 @@ export default function TimesheetsPage() {
         <div className="grid grid-cols-7 bg-gray-50 border-b">
           {days.map((day, i) => (
             <div key={day} className="p-4 text-center">
-              <div className="font-semibold text-blue-500">{day}</div>
+              <div className="font-semibold text-orange-600">{day}</div>
               <div className="text-2xl font-bold text-gray-900 mt-1">
                 {weekDays[i].getDate()}
               </div>
@@ -375,11 +375,11 @@ export default function TimesheetsPage() {
               >
                 {dayTotal > 0 && (
                   <>
-                    <div className="bg-blue-500 text-white px-3 py-1 rounded-md text-xs font-semibold mb-2 inline-block">
+                    <div className="bg-orange-600 text-white px-3 py-1 rounded-md text-xs font-semibold mb-2 inline-block">
                       {dayTotal.toFixed(1)} hrs
                     </div>
                     {dayEntries.slice(0, 2).map((entry, idx) => (
-                      <div key={idx} className="bg-blue-50 text-blue-500 px-2 py-1 rounded text-xs mt-1 truncate">
+                      <div key={idx} className="bg-orange-50 text-orange-600 px-2 py-1 rounded text-xs mt-1 truncate">
                         {getTimesheetLabel(entry)}
                       </div>
                     ))}
@@ -396,7 +396,7 @@ export default function TimesheetsPage() {
         </div>
         <div className="p-6 border-t bg-gray-50 flex justify-between items-center">
           <strong className="text-gray-900">Week Total:</strong>
-          <span className="text-4xl font-bold text-blue-500">{weekTotal.toFixed(1)} hrs</span>
+          <span className="text-4xl font-bold text-orange-600">{weekTotal.toFixed(1)} hrs</span>
         </div>
       </div>
     )
@@ -433,7 +433,7 @@ export default function TimesheetsPage() {
       <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
         <div className="grid grid-cols-7 bg-gray-50 border-b">
           {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-            <div key={day} className="p-4 text-center font-semibold text-blue-500">
+            <div key={day} className="p-4 text-center font-semibold text-orange-600">
               {day}
             </div>
           ))}
@@ -463,7 +463,7 @@ export default function TimesheetsPage() {
                   {date.getDate()}
                 </div>
                 {dayTotal > 0 && isCurrentMonth && (
-                  <div className="bg-blue-500 text-white px-2 py-1 rounded text-xs font-semibold mt-2 inline-block">
+                  <div className="bg-orange-600 text-white px-2 py-1 rounded text-xs font-semibold mt-2 inline-block">
                     {dayTotal.toFixed(1)}h
                   </div>
                 )}
@@ -475,7 +475,7 @@ export default function TimesheetsPage() {
           <strong className="text-gray-900">
             {currentDate.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' })} Total:
           </strong>
-          <span className="text-4xl font-bold text-blue-500">{monthTotal.toFixed(1)} hrs</span>
+          <span className="text-4xl font-bold text-orange-600">{monthTotal.toFixed(1)} hrs</span>
         </div>
       </div>
     )
@@ -579,7 +579,7 @@ export default function TimesheetsPage() {
           onClick={() => setCurrentView('clock')}
           className={`flex items-center gap-2 px-8 py-3 rounded-lg font-semibold text-sm transition-all ${
             currentView === 'clock'
-              ? 'bg-blue-500 text-white shadow-md'
+              ? 'bg-orange-600 text-white shadow-md'
               : 'text-gray-600 hover:text-gray-800'
           }`}
         >
@@ -590,7 +590,7 @@ export default function TimesheetsPage() {
           onClick={() => setCurrentView('calendar')}
           className={`flex items-center gap-2 px-8 py-3 rounded-lg font-semibold text-sm transition-all ${
             currentView === 'calendar'
-              ? 'bg-blue-500 text-white shadow-md'
+              ? 'bg-orange-600 text-white shadow-md'
               : 'text-gray-600 hover:text-gray-800'
           }`}
         >
@@ -624,7 +624,7 @@ export default function TimesheetsPage() {
                 <div className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
                   Time Elapsed
                 </div>
-                <div className="text-3xl font-bold text-blue-500">
+                <div className="text-3xl font-bold text-orange-600">
                   {formatElapsedTime()}
                 </div>
               </div>
@@ -642,7 +642,7 @@ export default function TimesheetsPage() {
                       type="button"
                       className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
                         clockInType === 'work'
-                          ? 'bg-blue-500 text-white'
+                          ? 'bg-orange-600 text-white'
                           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       }`}
                       onClick={() => setClockInType('work')}
@@ -681,7 +681,7 @@ export default function TimesheetsPage() {
                     value={selectedJob}
                     onChange={(e) => setSelectedJob(e.target.value)}
                     className={`w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-base focus:ring-4 mb-6 ${
-                      clockInType === 'work' ? 'focus:border-blue-500 focus:ring-blue-100' :
+                      clockInType === 'work' ? 'focus:border-orange-500 focus:ring-orange-100' :
                       clockInType === 'measure_quote' ? 'focus:border-amber-500 focus:ring-amber-100' :
                       'focus:border-gray-500 focus:ring-gray-100'
                     }`}
@@ -710,7 +710,7 @@ export default function TimesheetsPage() {
                 <button
                   onClick={handleClockIn}
                   className={`w-52 h-52 rounded-full text-white text-xl font-bold shadow-2xl hover:scale-105 transition-transform mx-auto block ${
-                    clockInType === 'work' ? 'bg-gradient-to-br from-blue-500 to-blue-600' :
+                    clockInType === 'work' ? 'bg-gradient-to-br from-orange-500 to-orange-600' :
                     clockInType === 'measure_quote' ? 'bg-gradient-to-br from-amber-500 to-amber-600' :
                     'bg-gradient-to-br from-gray-500 to-gray-600'
                   }`}
@@ -781,10 +781,10 @@ export default function TimesheetsPage() {
                 todayEntries.map((entry) => (
                   <div
                     key={entry.id}
-                    className="p-5 bg-gray-50 rounded-xl border-l-4 border-blue-500"
+                    className="p-5 bg-gray-50 rounded-xl border-l-4 border-orange-500"
                   >
                     <div className="flex justify-between items-center mb-2">
-                      <span className="font-semibold text-blue-500 text-sm">
+                      <span className="font-semibold text-orange-600 text-sm">
                         {getTimesheetLabel(entry)}
                       </span>
                       <span className="font-bold text-gray-900">{entry.total_hours}h</span>
@@ -797,7 +797,7 @@ export default function TimesheetsPage() {
               )}
             </div>
 
-            <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-5 text-white">
+            <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl p-5 text-white">
               <div className="flex justify-between items-center">
                 <span className="font-semibold">Total Today</span>
                 <span className="text-3xl font-bold">{totalToday.toFixed(1)}h</span>
@@ -815,7 +815,7 @@ export default function TimesheetsPage() {
             <div className="flex gap-3 items-center">
               <button 
                 onClick={goToToday}
-                className="px-5 py-2 bg-blue-50 text-blue-500 rounded-lg font-semibold text-sm hover:bg-blue-100"
+                className="px-5 py-2 bg-orange-50 text-orange-600 rounded-lg font-semibold text-sm hover:bg-orange-100"
               >
                 Today
               </button>
@@ -826,7 +826,7 @@ export default function TimesheetsPage() {
                     onClick={() => setCalendarView(view)}
                     className={`px-6 py-2 rounded-lg font-semibold text-sm transition-all capitalize ${
                       calendarView === view
-                        ? 'bg-blue-500 text-white shadow-md'
+                        ? 'bg-orange-600 text-white shadow-md'
                         : 'text-gray-600 hover:bg-gray-100'
                     }`}
                   >
@@ -839,7 +839,7 @@ export default function TimesheetsPage() {
             <div className="flex gap-4 items-center">
               <button 
                 onClick={prevPeriod}
-                className="w-10 h-10 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 flex items-center justify-center text-lg"
+                className="w-10 h-10 border-2 border-gray-200 rounded-lg hover:border-orange-500 hover:bg-orange-50 flex items-center justify-center text-lg"
               >
                 ‹
               </button>
@@ -848,7 +848,7 @@ export default function TimesheetsPage() {
               </span>
               <button 
                 onClick={nextPeriod}
-                className="w-10 h-10 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 flex items-center justify-center text-lg"
+                className="w-10 h-10 border-2 border-gray-200 rounded-lg hover:border-orange-500 hover:bg-orange-50 flex items-center justify-center text-lg"
               >
                 ›
               </button>
@@ -856,7 +856,7 @@ export default function TimesheetsPage() {
 
             <button 
               onClick={() => handleAddHours()}
-              className="px-6 py-3 bg-blue-500 text-white rounded-lg font-semibold text-sm shadow-md hover:bg-blue-600"
+              className="px-6 py-3 bg-orange-600 text-white rounded-lg font-semibold text-sm shadow-md hover:bg-orange-700"
             >
               + Add Hours
             </button>
@@ -882,7 +882,7 @@ export default function TimesheetsPage() {
                       type="date" 
                       value={selectedDate || ''} 
                       onChange={(e) => setSelectedDate(e.target.value)}
-                      className="w-full rounded-lg border-2 border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500"
+                      className="w-full rounded-lg border-2 border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-500"
                     />
                   </div>
                   
@@ -903,7 +903,7 @@ export default function TimesheetsPage() {
                       setShowAddModal(false)
                       setCurrentView('clock')
                     }}
-                    className="flex-1 px-6 py-3 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600"
+                    className="flex-1 px-6 py-3 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700"
                   >
                     Go to Clock
                   </button>
