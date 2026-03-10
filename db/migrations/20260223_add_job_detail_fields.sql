@@ -1,0 +1,11 @@
+-- Migration: Add job detail fields to jobs table
+ALTER TABLE jobs
+ADD COLUMN IF NOT EXISTS customer_name TEXT,
+ADD COLUMN IF NOT EXISTS customer_email TEXT,
+ADD COLUMN IF NOT EXISTS customer_phone TEXT,
+ADD COLUMN IF NOT EXISTS address TEXT,
+ADD COLUMN IF NOT EXISTS reference TEXT,
+ADD COLUMN IF NOT EXISTS staff_name TEXT,
+ADD COLUMN IF NOT EXISTS notes TEXT,
+ADD COLUMN IF NOT EXISTS tasks TEXT,
+ADD COLUMN IF NOT EXISTS created_by TEXT;

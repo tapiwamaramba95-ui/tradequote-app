@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { colors } from '@/lib/colors'
+import { StatusBadge } from '@/components/StatusBadge'
 import Link from 'next/link'
+import Breadcrumb from '@/components/Breadcrumb'
 import {
   DndContext,
   DragEndEvent,
@@ -20,6 +22,7 @@ import {
 type Job = {
   id: string
   title: string
+  job_number: string
   status: string
   total_amount: number | null
   scheduled_date: string | null
@@ -29,41 +32,15 @@ type Job = {
 }
 
 const COLUMNS = [
-  { 
-    id: 'quoted', 
-    title: 'Quoted', 
-    color: colors.status.quoted,
-    gradient: 'from-gray-50 to-gray-100',
-    icon: '📝'
-  },
-  { 
-    id: 'approved', 
-    title: 'Approved', 
-    color: colors.status.approved,
-    gradient: 'from-blue-50 to-blue-100',
-    icon: '✅'
-  },
-  { 
-    id: 'scheduled', 
-    title: 'Scheduled', 
-    color: colors.status.scheduled,
-    gradient: 'from-yellow-50 to-yellow-100',
-    icon: '📅'
-  },
-  { 
-    id: 'in_progress', 
-    title: 'In Progress', 
-    color: colors.status.inProgress,
-    gradient: 'from-purple-50 to-purple-100',
-    icon: '⚡'
-  },
-  { 
-    id: 'completed', 
-    title: 'Completed', 
-    color: colors.status.completed,
-    gradient: 'from-green-50 to-green-100',
-    icon: '🎉'
-  },
+  { id: 'enquiry', title: 'Enquiry', icon: '📝', color: '#94A3B8' },
+  { id: 'quoted', title: 'Quoted', icon: '📄', color: '#F59E0B' },
+  { id: 'approved', title: 'Approved', icon: '✅', color: '#3B82F6' },
+  { id: 'scheduled_measure_quote', title: 'Scheduled M&Q', icon: '📅', color: '#8B5CF6' },
+  { id: 'scheduled_work', title: 'Scheduled Work', icon: '🔧', color: '#7C2D12' },
+  { id: 'in_progress', title: 'In Progress', icon: '⚡', color: '#0EA5A4' },
+  { id: 'completed', title: 'Completed', icon: '🎉', color: '#10B981' },
+  { id: 'invoiced', title: 'Invoiced', icon: '💰', color: '#0369A1' },
+  { id: 'paid', title: 'Paid', icon: '✓', color: '#059669' },
 ]
 
 export default function KanbanPage() {
@@ -88,7 +65,7 @@ export default function KanbanPage() {
       .from('jobs')
       .select(`
         *,
-        clients (
+        clients!client_id (
           name
         )
       `)
@@ -156,7 +133,11 @@ export default function KanbanPage() {
   const totalValue = jobs.reduce((sum, job) => sum + (job.total_amount || 0), 0)
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 pb-8">
+    <div className="px-4 sm:px-6 lg:px-8 py-8">
+      <Breadcrumb items={[
+        { label: 'Jobs', href: '/dashboard/jobs' },
+        { label: 'Kanban' }
+      ]} />
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
@@ -292,26 +273,17 @@ function Column({ column, jobs }: { column: typeof COLUMNS[0]; jobs: Job[] }) {
     <div className="flex-shrink-0 w-80 snap-start">
       {/* Column Header with Gradient */}
       <div
-        className={`bg-gradient-to-r ${column.gradient} rounded-t-lg px-4 py-3 border-b-2`}
+        className="rounded-t-lg px-4 py-3 border-b-2"
         style={{ 
-          borderColor: column.id === 'completed' ? colors.semantic.success : colors.border.DEFAULT 
+          background: `linear-gradient(to bottom, ${column.color}15, ${column.color}05)`,
+          borderColor: column.color 
         }}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">{column.icon}</span>
-            <h3 className="font-semibold" style={{ color: column.color.text }}>
-              {column.title}
-            </h3>
-          </div>
-          <span 
-            className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold"
-            style={{ 
-              backgroundColor: column.color.bg,
-              color: column.color.text 
-            }}
-          >
-            {jobs.length}
+        <div className="flex items-center gap-2">
+          <span className="text-lg">{column.icon}</span>
+          <span style={{ color: column.color }}>{column.title}</span>
+          <span className="text-sm font-normal" style={{ color: colors.text.muted }}>
+            ({jobs.length})
           </span>
         </div>
       </div>
@@ -370,10 +342,15 @@ function JobCard({ job, isDragging = false }: { job: Job; isDragging?: boolean }
       }`}
       style={cardStyle}
     >
-      {/* Job Title */}
+      {/* Job Number */}
       <h4 className="font-semibold mb-2 line-clamp-2" style={{ color: colors.text.primary }}>
-        {job.title}
+        {job.job_number || 'No Job #'}
       </h4>
+
+      {/* Status Badge */}
+      <div className="mb-2">
+        <StatusBadge status={job.status} />
+      </div>
 
       {/* Job Details */}
       <div className="space-y-2">

@@ -1,4 +1,5 @@
-import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
+import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
+import { colors } from '@/lib/colors'
 
 type LineItem = {
   description: string
@@ -8,6 +9,7 @@ type LineItem = {
 }
 
 type Quote = {
+  id?: string
   quote_number: string
   created_at: string
   valid_until: string
@@ -15,8 +17,8 @@ type Quote = {
   subtotal: number
   tax: number
   total: number
-  notes: string
-  terms: string
+  notes?: string
+  terms?: string
   jobs: {
     title: string
     clients: {
@@ -33,28 +35,35 @@ const styles = StyleSheet.create({
     padding: 40,
     fontSize: 12,
     fontFamily: 'Helvetica',
+    backgroundColor: colors.background.main,
   },
-  header: {
-    marginBottom: 20,
+  headerBar: {
+    backgroundColor: colors.accent.DEFAULT,
+    padding: 18,
+    borderRadius: 6,
+    color: colors.text.inverse,
+    marginBottom: 18,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  title: {
-    fontSize: 24,
+  headerTitle: {
+    fontSize: 18,
+    color: colors.text.inverse,
     fontWeight: 'bold',
-    marginBottom: 10,
   },
-  quoteNumber: {
-    fontSize: 14,
-    color: '#666',
+  headerRight: {
+    fontSize: 12,
+    color: colors.text.inverse,
   },
   section: {
     marginBottom: 15,
   },
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    borderBottom: '1 solid #000',
-    paddingBottom: 4,
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 6,
+    color: colors.text.primary,
   },
   text: {
     marginBottom: 4,
@@ -65,9 +74,10 @@ const styles = StyleSheet.create({
   },
   tableHeader: {
     flexDirection: 'row',
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.background.main,
     padding: 8,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    color: colors.text.secondary,
   },
   tableRow: {
     flexDirection: 'row',
@@ -97,24 +107,65 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   grandTotal: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    borderTop: '2 solid #000',
-    paddingTop: 8,
+    fontSize: 14,
+    fontWeight: '700',
     marginTop: 8,
+    color: colors.accent.DEFAULT,
+  },
+  businessRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  logo: {
+    width: 80,
+    height: 24,
+  },
+  card: {
+    backgroundColor: colors.background.card,
+    padding: 12,
+    borderRadius: 6,
+    marginBottom: 10,
   },
 })
 
 export function QuotePDF({ quote }: { quote: Quote }) {
+  const job = Array.isArray(quote.jobs) ? quote.jobs[0] : quote.jobs
+  const client = job?.clients || {}
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>QUOTE</Text>
-          <Text style={styles.quoteNumber}>Quote #{quote.quote_number}</Text>
-          <Text style={styles.text}>Date: {new Date(quote.created_at).toLocaleDateString()}</Text>
-          <Text style={styles.text}>Valid Until: {new Date(quote.valid_until).toLocaleDateString()}</Text>
+        <View style={styles.headerBar}>
+          <View>
+            <Text style={styles.headerTitle}>TradeQuote</Text>
+            <Text style={{ fontSize: 10, color: '#ffffff' }}>Professional Quotes Made Simple</Text>
+          </View>
+          <View>
+            <Text style={styles.headerRight}>QUOTE</Text>
+            <Text style={styles.headerRight}>#{quote.quote_number}</Text>
+          </View>
+        </View>
+
+        <View style={styles.card}>
+          <View style={styles.businessRow}>
+            <View>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text.primary }}>Bill To</Text>
+              <Text style={styles.text}>{client.name || ''}</Text>
+              {client.email && <Text style={styles.text}>{client.email}</Text>}
+              {client.phone && <Text style={styles.text}>{client.phone}</Text>}
+              {client.address && <Text style={styles.text}>{client.address}</Text>}
+            </View>
+
+            <View>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text.primary }}>Details</Text>
+              <Text style={styles.text}>Project: {job?.title || ''}</Text>
+              <Text style={styles.text}>Date: {new Date(quote.created_at).toLocaleDateString()}</Text>
+              <Text style={styles.text}>Valid Until: {new Date(quote.valid_until).toLocaleDateString()}</Text>
+            </View>
+          </View>
         </View>
 
         {/* Client Info */}
@@ -176,10 +227,12 @@ export function QuotePDF({ quote }: { quote: Quote }) {
         )}
 
         {/* Terms */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Terms & Conditions</Text>
-          <Text style={styles.text}>{quote.terms}</Text>
-        </View>
+        {quote.terms && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Terms & Conditions</Text>
+            <Text style={styles.text}>{quote.terms}</Text>
+          </View>
+        )}
       </Page>
     </Document>
   )

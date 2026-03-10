@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { colors } from '@/lib/colors'
+import AddressInput from '@/components/AddressInput'
+import { formatAustralianPhone, isValidAustralianPhone, normalizeEmail, isValidEmail, suggestEmailCorrection } from '@/lib/utils/formatters'
 
 // GOOGLE PLACES: Set this to true when you've added your API key
 const USE_GOOGLE_PLACES = false
@@ -11,6 +13,8 @@ const USE_GOOGLE_PLACES = false
 export default function NewClientPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [errors, setErrors] = useState<{ phone?: string; email?: string }>({})
+  const [emailSuggestion, setEmailSuggestion] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -18,6 +22,11 @@ export default function NewClientPage() {
     address: '',
     notes: ''
   })
+
+  // Memoize the address change handler to prevent useEffect loops
+  const handleAddressChange = useCallback((address: string) => {
+    setFormData(prev => ({ ...prev, address }))
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -115,15 +124,42 @@ export default function NewClientPage() {
                     autoComplete="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className="mt-1 block w-full rounded-md shadow-sm focus:ring-2 focus:outline-none sm:text-sm px-3 py-2 border transition-colors"
+                    onBlur={(e) => {
+                      const normalized = normalizeEmail(e.target.value)
+                      setFormData(prev => ({ ...prev, email: normalized }))
+                      
+                      // Check for typos
+                      const suggestion = suggestEmailCorrection(normalized)
+                      setEmailSuggestion(suggestion)
+                      
+                      // Validate
+                      if (normalized && !isValidEmail(normalized)) {
+                        setErrors(prev => ({ ...prev, email: 'Please enter a valid email address' }))
+                      } else {
+                        setErrors(prev => ({ ...prev, email: undefined }))
+                      }
+                    }}
+                    className={`mt-1 block w-full rounded-md shadow-sm focus:ring-2 focus:outline-none sm:text-sm px-3 py-2 border transition-colors ${errors.email ? 'border-red-500' : ''}`}
                     style={{
-                      borderColor: colors.border.DEFAULT,
+                      borderColor: errors.email ? '#ef4444' : colors.border.DEFAULT,
                       backgroundColor: colors.background.card,
                       color: colors.text.primary,
                     }}
                     onFocus={(e) => e.target.style.borderColor = colors.accent.DEFAULT}
-                    onBlur={(e) => e.target.style.borderColor = colors.border.DEFAULT}
                   />
+                  {errors.email && <p className="text-sm text-red-600 mt-1">{errors.email}</p>}
+                  {emailSuggestion && !errors.email && (
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        setFormData(prev => ({ ...prev, email: emailSuggestion }))
+                        setEmailSuggestion(null)
+                      }}
+                      className="text-sm text-cyan-600 hover:text-cyan-700 mt-1"
+                    >
+                      Did you mean {emailSuggestion}?
+                    </button>
+                  )}
                 </div>
 
                 <div>
@@ -141,15 +177,26 @@ export default function NewClientPage() {
                     autoComplete="tel"
                     value={formData.phone}
                     onChange={handleChange}
-                    className="mt-1 block w-full rounded-md shadow-sm focus:ring-2 focus:outline-none sm:text-sm px-3 py-2 border transition-colors"
+                    onBlur={(e) => {
+                      const formatted = formatAustralianPhone(e.target.value)
+                      setFormData(prev => ({ ...prev, phone: formatted }))
+                      
+                      if (formatted && !isValidAustralianPhone(formatted)) {
+                        setErrors(prev => ({ ...prev, phone: 'Please enter a valid Australian phone number' }))
+                      } else {
+                        setErrors(prev => ({ ...prev, phone: undefined }))
+                      }
+                    }}
+                    placeholder="0412 345 678"
+                    className={`mt-1 block w-full rounded-md shadow-sm focus:ring-2 focus:outline-none sm:text-sm px-3 py-2 border transition-colors ${errors.phone ? 'border-red-500' : ''}`}
                     style={{
-                      borderColor: colors.border.DEFAULT,
+                      borderColor: errors.phone ? '#ef4444' : colors.border.DEFAULT,
                       backgroundColor: colors.background.card,
                       color: colors.text.primary,
                     }}
                     onFocus={(e) => e.target.style.borderColor = colors.accent.DEFAULT}
-                    onBlur={(e) => e.target.style.borderColor = colors.border.DEFAULT}
                   />
+                  {errors.phone && <p className="text-sm text-red-600 mt-1">{errors.phone}</p>}
                 </div>
 
                 <div>
@@ -159,35 +206,12 @@ export default function NewClientPage() {
                     style={{ color: colors.text.primary }}
                   >
                     Address
-                    {USE_GOOGLE_PLACES && (
-                      <span className="ml-2 text-xs" style={{ color: colors.text.muted }}>
-                        Start typing to search...
-                      </span>
-                    )}
                   </label>
-                  <input
-                    type="text"
-                    name="address"
-                    id="address"
-                    autoComplete="street-address"
+                  <AddressInput
                     value={formData.address}
-                    onChange={handleChange}
-                    placeholder="123 Main Street, Melbourne VIC 3000"
-                    className="mt-1 block w-full rounded-md shadow-sm focus:ring-2 focus:outline-none sm:text-sm px-3 py-2 border transition-colors"
-                    style={{
-                      borderColor: colors.border.DEFAULT,
-                      backgroundColor: colors.background.card,
-                      color: colors.text.primary,
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = colors.accent.DEFAULT}
-                    onBlur={(e) => e.target.style.borderColor = colors.border.DEFAULT}
+                    onChange={handleAddressChange}
+                    required={false}
                   />
-                  <p className="mt-1 text-xs" style={{ color: colors.text.muted }}>
-                    {USE_GOOGLE_PLACES 
-                      ? 'Google Places autocomplete enabled'
-                      : 'Browser autocomplete enabled - full address autocomplete coming in Week 4'
-                    }
-                  </p>
                 </div>
 
                 <div>

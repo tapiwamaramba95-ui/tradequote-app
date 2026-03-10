@@ -8,7 +8,6 @@ export async function GET(request: Request) {
 
   if (code) {
     const cookieStore = await cookies()
-    
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -25,8 +24,11 @@ export async function GET(request: Request) {
         },
       }
     )
-    
-    await supabase.auth.exchangeCodeForSession(code)
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+    if (data && data.session) {
+      cookieStore.set('sb-access-token', data.session.access_token, { path: '/', httpOnly: true })
+      cookieStore.set('sb-refresh-token', data.session.refresh_token, { path: '/', httpOnly: true })
+    }
   }
 
   return NextResponse.redirect(new URL('/dashboard', request.url))

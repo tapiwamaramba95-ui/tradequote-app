@@ -67,6 +67,15 @@ export default function DashboardLayout({
         </svg>
       )
     },
+    {
+      name: 'Enquiries',
+      href: '/dashboard/enquiries',
+      icon: (
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+      )
+    },
     { 
       name: 'Clients', 
       href: '/dashboard/clients', 
@@ -100,6 +109,51 @@ export default function DashboardLayout({
       icon: (
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      )
+    },
+    {
+      name: 'Purchase Orders',
+      href: '/dashboard/purchase-orders',
+      icon: (
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6M7 21h10M7 3h10v4H7z" />
+        </svg>
+      )
+    },
+    {
+      name: 'Suppliers',
+      href: '/dashboard/suppliers',
+      icon: (
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h18M5 7v10a2 2 0 002 2h10a2 2 0 002-2V7M8 7v-2a2 2 0 012-2h4a2 2 0 012 2v2" />
+        </svg>
+      )
+    },
+    {
+      name: 'Timesheets',
+      href: '/dashboard/timesheets',
+      icon: (
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3M8 3h8v4H8zM5 21h14a2 2 0 002-2V7H3v12a2 2 0 002 2z" />
+        </svg>
+      )
+    },
+    {
+      name: 'Analytics',
+      href: '/dashboard/analytics',
+      icon: (
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+      )
+    },
+    {
+      name: 'Settings',
+      href: '/dashboard/settings',
+      icon: (
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
         </svg>
       )
     },
@@ -147,16 +201,16 @@ export default function DashboardLayout({
                   href={item.href}
                   className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-all ${
                     active 
-                      ? 'text-white' 
-                      : 'text-white/60 hover:text-white hover:bg-white/5'
+                      ? 'text-white font-semibold' 
+                      : 'text-white/70 hover:text-white hover:bg-white/5'
                   }`}
                   style={active ? {
-                    backgroundColor: 'rgba(14, 165, 164, 0.1)',
+                    backgroundColor: colors.accent.light,
                     borderLeft: `3px solid ${colors.accent.DEFAULT}`,
                     paddingLeft: '0.625rem'
                   } : {}}
                 >
-                  <span className={active ? `text-[${colors.accent.DEFAULT}]` : ''}>
+                  <span className="flex-shrink-0" style={{ color: active ? colors.accent.DEFAULT : 'inherit' }}>
                     {item.icon}
                   </span>
                   {sidebarOpen && (

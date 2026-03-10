@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { colors } from '@/lib/colors'
+import AddressInput from '@/components/AddressInput'
 import Link from 'next/link'
 
 type Client = {
@@ -35,6 +36,11 @@ export default function NewJobPage() {
   // Fetch clients on load
   useEffect(() => {
     fetchClients()
+  }, [])
+
+  // Memoize the address change handler
+  const handleAddressChange = useCallback((address: string) => {
+    setFormData(prev => ({ ...prev, address }))
   }, [])
 
   const fetchClients = async () => {
@@ -252,21 +258,10 @@ export default function NewJobPage() {
                     <label className="block text-sm font-medium mb-1" style={{ color: colors.text.primary }}>
                       Address
                     </label>
-                    <input
-                      type="text"
-                      name="address"
+                    <AddressInput
                       value={formData.address}
-                      onChange={handleChange}
-                      placeholder="Job site address"
-                      autoComplete="street-address"
-                      className="w-full rounded-md shadow-sm focus:ring-2 focus:outline-none text-sm px-3 py-2 border transition-colors"
-                      style={{
-                        borderColor: colors.border.DEFAULT,
-                        backgroundColor: colors.background.card,
-                        color: colors.text.primary,
-                      }}
-                      onFocus={(e) => e.target.style.borderColor = colors.accent.DEFAULT}
-                      onBlur={(e) => e.target.style.borderColor = colors.border.DEFAULT}
+                      onChange={handleAddressChange}
+                      required={false}
                     />
                   </div>
 
@@ -333,7 +328,8 @@ export default function NewJobPage() {
                     >
                       <option value="quoted">Quoted</option>
                       <option value="approved">Approved</option>
-                      <option value="scheduled">Scheduled</option>
+                      <option value="scheduled_measure_quote">Scheduled for Measure & Quote</option>
+                      <option value="scheduled_work">Scheduled for Work</option>
                       <option value="in_progress">In Progress</option>
                       <option value="completed">Completed</option>
                       <option value="cancelled">Cancelled</option>

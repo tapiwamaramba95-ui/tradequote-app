@@ -1,8 +1,11 @@
-'use client'
-
+"use client";
+import Breadcrumb from '@/components/Breadcrumb';
+import Table from '@/components/Table';
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
+import { Users, Plus, Search, Eye } from 'lucide-react'
+import { colors } from '@/lib/colors'
 
 type Client = {
   id: string
@@ -10,100 +13,196 @@ type Client = {
   email: string
   phone: string
   address: string
+  street_address: string
+  suburb: string
+  state: string
+  postcode: string
   created_at: string
 }
 
 export default function ClientsPage() {
-  const [clients, setClients] = useState<Client[]>([])
-  const [loading, setLoading] = useState(true)
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
-    fetchClients()
-  }, [])
+    fetchClients();
+  }, []);
 
   const fetchClients = async () => {
     const { data, error } = await supabase
       .from('clients')
-      .select('*')
-      .order('created_at', { ascending: false })
+      .select('*, street_address, suburb, state, postcode')
+      .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching clients:', error)
+      console.error('Error fetching clients:', error);
     } else {
-      setClients(data || [])
+      setClients(data || []);
     }
-    setLoading(false)
-  }
+    setLoading(false);
+  };
 
   if (loading) {
-    return <div className="p-6">Loading...</div>
+    return (
+      <div className="bg-gray-50 min-h-screen p-8">
+        <Breadcrumb items={[{ label: 'Clients' }]} />
+        <div className="p-6">Loading...</div>
+      </div>
+    );
   }
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8">
-      <div className="sm:flex sm:items-center">
-        <div className="sm:flex-auto">
-          <h1 className="text-2xl font-semibold text-gray-900">Clients</h1>
-          <p className="mt-2 text-sm text-gray-700">
-            A list of all your clients including their name, email, and phone.
-          </p>
+    <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
+      <Breadcrumb items={[{ label: 'Clients', href: '/dashboard/clients' }]} />
+      
+      {/* Page Header */}
+      <div className="flex items-center justify-between mb-6">
+        {/* Left: Icon + Title */}
+        <div className="flex items-center gap-4">
+          {/* Icon Badge */}
+          <div className="w-12 h-12 bg-gradient-to-br from-cyan-100 to-cyan-50 rounded-xl flex items-center justify-center shadow-sm">
+            <Users className="w-6 h-6 text-cyan-600" />
+          </div>
+          
+          {/* Title & Subtitle */}
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Clients
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              {clients.length} {clients.length === 1 ? 'client' : 'clients'} in your database
+            </p>
+          </div>
         </div>
-        <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-          <Link
-            href="/dashboard/clients/new"
-            className="inline-flex items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:w-auto"
-          >
-            Add Client
-          </Link>
-        </div>
+        
+        {/* Right: Action Button */}
+        <Link
+          href="/dashboard/clients/new"
+          className="inline-flex items-center gap-2 px-5 py-2.5 text-white font-semibold rounded-lg shadow-sm transition-all"
+          style={{ 
+            backgroundColor: colors.accent.DEFAULT,
+            boxShadow: '0 1px 3px rgba(234, 88, 12, 0.2)'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.accent.hover}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = colors.accent.DEFAULT}
+        >
+          <Plus className="w-4 h-4" />
+          New Client
+        </Link>
       </div>
       
-      <div className="mt-8 flex flex-col">
-        <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
-          <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
-            <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-              <table className="min-w-full divide-y divide-gray-300">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Name</th>
-                    <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Email</th>
-                    <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Phone</th>
-                    <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Address</th>
-                    <th className="relative py-3.5 pl-3 pr-4 sm:pr-6">
-                      <span className="sr-only">View</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
-                  {clients.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="py-4 text-center text-gray-500">
-                        No clients yet. Add your first client!
-                      </td>
-                    </tr>
-                  ) : (
-                    clients.map((client) => (
-                      <tr key={client.id}>
-                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                          {client.name}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{client.email}</td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{client.phone}</td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{client.address}</td>
-                        <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                          <Link href={`/dashboard/clients/${client.id}`} className="text-blue-600 hover:text-blue-900">
-                            View
-                          </Link>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+      {/* Search Toolbar */}
+      <div 
+        className="bg-white rounded-lg shadow-sm border p-4 mb-6" 
+        style={{ borderColor: colors.border.DEFAULT }}
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex flex-1 max-w-md relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search size={18} style={{ color: colors.text.muted }} />
             </div>
+            <input
+              type="text"
+              placeholder="Search clients..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full pl-10 pr-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              style={{ 
+                borderColor: colors.border.DEFAULT,
+                color: colors.text.primary 
+              }}
+            />
           </div>
         </div>
       </div>
+
+      {/* Table */}
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <Table
+          columns={[
+            {
+              key: 'name',
+              label: 'Name',
+              align: 'left',
+              width: '20%',
+              render: (client: Client) => (
+                <Link href={`/dashboard/clients/${client.id}`} className="hover:underline font-medium text-blue-700">
+                  {client.name}
+                </Link>
+              )
+            },
+            {
+              key: 'email',
+              label: 'Email',
+              align: 'left',
+              width: '25%',
+              render: (client: Client) => (
+                <div className="truncate max-w-[200px]" title={client.email}>
+                  {client.email}
+                </div>
+              )
+            },
+            {
+              key: 'phone',
+              label: 'Phone',
+              align: 'center',
+              width: '15%',
+              render: (client: Client) => client.phone
+            },
+            {
+              key: 'address',
+              label: 'Address',
+              align: 'left',
+              width: '30%',
+              render: (client: Client) => {
+                // Display structured address if available, otherwise legacy address
+                if (client.street_address || client.suburb || client.state || client.postcode) {
+                  const parts = [];
+                  if (client.street_address) parts.push(client.street_address);
+                  if (client.suburb || client.state || client.postcode) {
+                    const locationParts = [client.suburb, client.state, client.postcode].filter(Boolean);
+                    if (locationParts.length > 0) {
+                      parts.push(locationParts.join(' '));
+                    }
+                  }
+                  return (
+                    <div className="text-sm">
+                      {parts.map((part, index) => (
+                        <div key={index} className="truncate">{part}</div>
+                      ))}
+                    </div>
+                  );
+                }
+                return <div className="truncate" title={client.address}>{client.address || ''}</div>;
+              }
+            },
+            {
+              key: 'actions',
+              label: 'Actions',
+              align: 'center',
+              width: '10%',
+              render: (client: Client) => (
+                <Link 
+                  href={`/dashboard/clients/${client.id}`} 
+                  className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-900 font-semibold transition-colors"
+                >
+                  <Eye size={16} />
+                  View
+                </Link>
+              )
+            }
+          ]}
+          data={clients.filter(client => 
+            !search || 
+            client.name?.toLowerCase().includes(search.toLowerCase()) ||
+            client.email?.toLowerCase().includes(search.toLowerCase()) ||
+            client.phone?.toLowerCase().includes(search.toLowerCase())
+          )}
+          loading={loading}
+          emptyMessage="No clients yet. Add your first client!"
+        />
+      </div>
     </div>
-  )
+  );
 }

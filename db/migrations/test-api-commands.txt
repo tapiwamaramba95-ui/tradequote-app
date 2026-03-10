@@ -1,0 +1,33 @@
+# API Test Commands
+
+# List suppliers
+curl -s http://localhost:3000/api/suppliers | jq
+
+# List purchase orders
+curl -s http://localhost:3000/api/purchase-orders | jq
+
+# Get a single purchase order
+curl -s http://localhost:3000/api/purchase-orders/00000000-0000-0000-0000-000000000101 | jq
+
+# Create a new purchase order
+curl -s -X POST http://localhost:3000/api/purchase-orders -H 'Content-Type: application/json' -d '{"supplier_id": "00000000-0000-0000-0000-000000000001", "reference": "PO-2026-003", "total": 1200}' | jq
+
+# Create an invoice from a PO
+curl -s -X POST http://localhost:3000/api/purchase-orders/00000000-0000-0000-0000-000000000101/create-invoice | jq
+
+# Create a GRN from a PO
+curl -s -X POST http://localhost:3000/api/purchase-orders/00000000-0000-0000-0000-000000000101/create-grn | jq
+
+# List invoices
+curl -s http://localhost:3000/api/invoices | jq
+
+# List GRNs
+curl -s http://localhost:3000/api/grns | jq
+
+# Get a single invoice
+curl -s http://localhost:3000/api/invoices/00000000-0000-0000-0000-000000000201 | jq
+
+# Get a single GRN
+curl -s http://localhost:3000/api/grns/00000000-0000-0000-0000-000000000301 | jq
+
+# Note: jq is used for pretty-printing JSON. Remove '| jq' if not installed.
