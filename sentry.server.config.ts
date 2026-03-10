@@ -14,7 +14,6 @@ Sentry.init({
 
   // Server-specific integrations
   integrations: [
-    // Captures HTTP requests
-    new Sentry.Integrations.Http({ tracing: true }),
+    // Note: Http integration removed due to API changes
   ],
 });

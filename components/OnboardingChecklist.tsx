@@ -163,8 +163,10 @@ export default function OnboardingChecklist() {
         <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
           <div 
             className="from-orange-500 to-orange-600 rounded-full h-2 transition-all duration-500 ease-out"
-            style={{ background: 'linear-gradient(to right, #ea580c, #dc2626)' }}
-            style={{ width: `${percentage}%` }}
+            style={{ 
+              background: 'linear-gradient(to right, #ea580c, #dc2626)',
+              width: `${percentage}%`
+            }}
           />
         </div>
       </div>

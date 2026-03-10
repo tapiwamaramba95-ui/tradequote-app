@@ -18,7 +18,6 @@ Sentry.init({
 
   // Integrations
   integrations: [
-    // Captures user interactions like clicks
-    new Sentry.Integrations.UserAgent(),
+    // Note: UserAgent integration removed due to API changes
   ],
 });

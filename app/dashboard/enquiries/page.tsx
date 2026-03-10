@@ -66,7 +66,14 @@ export default function EnquiriesPage() {
 
 			if (data) {
 				console.log('Enquiry data:', data)
-				setEnquiries(data as EnquiryJob[])
+				// Transform the data to match our type expectations
+				const transformedData = data.map(item => ({
+					...item,
+					clients: Array.isArray(item.clients) && item.clients.length > 0 
+						? item.clients[0] 
+						: null
+				}))
+				setEnquiries(transformedData as EnquiryJob[])
 			}
 			if (error) {
 				console.error('Database error:', error)
@@ -249,9 +256,9 @@ export default function EnquiriesPage() {
 												// Check client's structured address first
 												if (enquiry.clients?.street_address || enquiry.clients?.suburb || enquiry.clients?.state || enquiry.clients?.postcode) {
 													const parts = [];
-													if (enquiry.clients.street_address) parts.push(enquiry.clients.street_address);
-													if (enquiry.clients.suburb || enquiry.clients.state || enquiry.clients.postcode) {
-														const locationParts = [enquiry.clients.suburb, enquiry.clients.state, enquiry.clients.postcode].filter(Boolean);
+													if (enquiry.clients?.street_address) parts.push(enquiry.clients.street_address);
+									if (enquiry.clients?.suburb || enquiry.clients?.state || enquiry.clients?.postcode) {
+										const locationParts = [enquiry.clients?.suburb, enquiry.clients?.state, enquiry.clients?.postcode].filter(Boolean);
 														if (locationParts.length > 0) {
 															parts.push(locationParts.join(' '));
 														}

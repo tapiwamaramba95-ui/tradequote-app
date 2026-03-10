@@ -6,6 +6,8 @@ interface AddressInputProps {
   value?: string
   onChange: (address: string) => void
   onStructuredChange?: (address: { street: string, suburb: string, state: string, postcode: string }) => void
+  initialStructured?: { street_address: string, suburb: string, state: string, postcode: string }
+  placeholder?: string
   required?: boolean
   disabled?: boolean
 }
@@ -14,6 +16,8 @@ export default function AddressInput({
   value = '', 
   onChange, 
   onStructuredChange,
+  initialStructured,
+  placeholder = '',
   required = false,
   disabled = false 
 }: AddressInputProps) {
@@ -67,6 +71,16 @@ export default function AddressInput({
       }
     }
   }, [value])
+
+  // Handle initialStructured prop
+  useEffect(() => {
+    if (initialStructured && !value) {
+      setStreet(initialStructured.street_address || '')
+      setSuburb(initialStructured.suburb || '')
+      setState(initialStructured.state || '')
+      setPostcode(initialStructured.postcode || '')
+    }
+  }, [initialStructured, value])
 
   // Title case helper
   const toTitleCase = (str: string) => {
@@ -122,7 +136,7 @@ export default function AddressInput({
           type="text"
           value={street}
           onChange={(e) => setStreet(e.target.value)}
-          placeholder="45 Workshop Street"
+          placeholder={placeholder || "45 Workshop Street"}
           required={required}
           disabled={disabled}
           className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500 focus:ring-opacity-20 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"

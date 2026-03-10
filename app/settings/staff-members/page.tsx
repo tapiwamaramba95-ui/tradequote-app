@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { colors } from '@/lib/colors';
 import Breadcrumb from '@/components/Breadcrumb';
 
 export type Staff = {
