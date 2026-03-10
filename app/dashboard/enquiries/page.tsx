@@ -163,8 +163,7 @@ export default function EnquiriesPage() {
 								className="w-full pl-10 pr-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2"
 								style={{ 
 									borderColor: colors.border.DEFAULT,
-									color: colors.text.primary,
-									'--tw-ring-color': colors.accent.DEFAULT
+								color: colors.text.primary
 								}}
 								onFocus={(e) => {
 									e.target.style.borderColor = colors.accent.DEFAULT
