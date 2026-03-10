@@ -136,19 +136,19 @@ export default function BillingPage() {
 
       {/* Trial Banner */}
       {isOnTrial && (
-        <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6 mb-8">
+        <div className="bg-orange-50 border-2 border-orange-200 rounded-2xl p-6 mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-bold text-blue-900 mb-1">
+              <h3 className="text-lg font-bold text-orange-900 mb-1">
                 ⏰ {daysRemaining} days left in your trial
               </h3>
-              <p className="text-sm text-blue-700">
+              <p className="text-sm text-orange-700">
                 Choose a plan to continue using TradeQuote after your trial ends
               </p>
             </div>
             <button
               onClick={() => router.push('/dashboard/settings/billing/upgrade')}
-              className="px-6 py-3 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-colors"
+              className="px-6 py-3 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors"
             >
               Choose Plan
             </button>
@@ -191,7 +191,7 @@ export default function BillingPage() {
               {isStarter && (
                 <button
                   onClick={() => handleUpgradePlan('professional')}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-colors"
+                  className="px-4 py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors"
                 >
                   Upgrade to Professional
                 </button>
@@ -199,7 +199,7 @@ export default function BillingPage() {
               {isProfessional && (
                 <button
                   onClick={() => handleUpgradePlan('business')}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-colors"
+                  className="px-4 py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors"
                 >
                   Upgrade to Business
                 </button>
@@ -427,7 +427,7 @@ export default function BillingPage() {
               </ul>
               <button
                 onClick={() => handleUpgradePlan('professional')}
-                className="w-full py-3 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-colors"
+                className="w-full py-3 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors"
               >
                 Choose Professional
               </button>
@@ -537,7 +537,7 @@ export default function BillingPage() {
                       </p>
                     </div>
                     {pm.is_default && (
-                      <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">
+                      <span className="px-2 py-1 bg-blue-100 text-orange-700 rounded text-xs font-semibold">
                         Default
                       </span>
                     )}

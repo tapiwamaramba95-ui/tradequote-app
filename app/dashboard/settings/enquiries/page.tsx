@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { colors } from '@/lib/colors'
 import { SettingsCard } from '@/components/SettingsCard'
 import { SettingsToggle } from '@/components/SettingsToggle'
 
@@ -107,7 +108,7 @@ export default function EnquirySettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: colors.accent.DEFAULT }}></div>
       </div>
     )
   }
@@ -144,7 +145,7 @@ export default function EnquirySettingsPage() {
                 />
                 <button
                   onClick={() => navigator.clipboard.writeText(formUrl)}
-                  className="px-4 py-2 rounded-md text-sm font-medium text-white bg-cyan-600 hover:bg-cyan-700"
+                  className="px-4 py-2 rounded-md text-sm font-medium text-white bg-orange-500 hover:bg-orange-600"
                 >
                   Copy
                 </button>
@@ -164,7 +165,7 @@ export default function EnquirySettingsPage() {
                 </pre>
                 <button
                   onClick={() => navigator.clipboard.writeText(embedCode)}
-                  className="absolute top-2 right-2 px-3 py-1 rounded text-xs font-medium text-white bg-cyan-600 hover:bg-cyan-700"
+                  className="absolute top-2 right-2 px-3 py-1 rounded text-xs font-medium text-white bg-orange-500 hover:bg-orange-600"
                 >
                   Copy
                 </button>
@@ -187,12 +188,12 @@ export default function EnquirySettingsPage() {
           />
           <button
             onClick={() => navigator.clipboard.writeText(enquiryEmail)}
-            className="px-4 py-2 rounded-md text-sm font-medium text-white bg-cyan-600 hover:bg-cyan-700"
+            className="px-4 py-2 rounded-md text-sm font-medium text-white bg-orange-500 hover:bg-orange-600"
           >
             Copy
           </button>
         </div>
-        <div className="mt-4 p-3 rounded-lg bg-blue-50 border border-blue-200">
+        <div className="mt-4 p-3 rounded-lg bg-orange-50 border border-orange-200">
           <p className="text-sm text-gray-900">
             📧 <strong>Email integration coming soon!</strong>
           </p>
@@ -206,7 +207,7 @@ export default function EnquirySettingsPage() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-6 py-2 rounded-md text-sm font-medium text-white bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50"
+          className="px-6 py-2 rounded-md text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Save Changes'}
         </button>

@@ -223,7 +223,7 @@ export default function SchedulePage() {
   };
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8">
+    <div className="w-full px-4 sm:px-6 lg:px-8 py-8 max-w-screen-2xl mx-auto">
       {/* Page Header */}
       <div className="flex items-center justify-between mb-6">
         {/* Left: Icon + Title */}
@@ -255,12 +255,13 @@ export default function SchedulePage() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm">
-        <div className="flex gap-1 bg-gray-50 p-1 rounded-lg w-fit">
+      <div className="w-full overflow-x-auto mb-6">
+        <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
+          <div className="flex gap-1 bg-gray-50 p-1 rounded-lg min-w-max">
           <button 
-            className={`px-6 py-2 rounded-lg font-semibold text-sm transition-all ${
+            className={`px-3 sm:px-6 py-2 rounded-lg font-semibold text-sm whitespace-nowrap transition-all ${
               scheduleFilter === 'all'
-                ? 'bg-blue-500 text-white shadow-md'
+                ? 'bg-orange-500 text-white shadow-md'
                 : 'text-gray-600 hover:bg-gray-100'
             }`}
             onClick={() => setScheduleFilter('all')}
@@ -268,7 +269,7 @@ export default function SchedulePage() {
             All Jobs
           </button>
           <button 
-            className={`px-6 py-2 rounded-lg font-semibold text-sm transition-all ${
+            className={`px-3 sm:px-6 py-2 rounded-lg font-semibold text-sm whitespace-nowrap transition-all ${
               scheduleFilter === 'measure_quote'
                 ? 'bg-amber-500 text-white shadow-md'
                 : 'text-gray-600 hover:bg-gray-100'
@@ -278,9 +279,9 @@ export default function SchedulePage() {
             Measure & Quote
           </button>
           <button 
-            className={`px-6 py-2 rounded-lg font-semibold text-sm transition-all ${
+            className={`px-3 sm:px-6 py-2 rounded-lg font-semibold text-sm whitespace-nowrap transition-all ${
               scheduleFilter === 'work'
-                ? 'bg-blue-500 text-white shadow-md'
+                ? 'bg-orange-500 text-white shadow-md'
                 : 'text-gray-600 hover:bg-gray-100'
             }`}
             onClick={() => setScheduleFilter('work')}
@@ -288,7 +289,7 @@ export default function SchedulePage() {
             Work
           </button>
           <button 
-            className={`px-6 py-2 rounded-lg font-semibold text-sm transition-all ${
+            className={`px-3 sm:px-6 py-2 rounded-lg font-semibold text-sm whitespace-nowrap transition-all ${
               scheduleFilter === 'admin'
                 ? 'bg-gray-500 text-white shadow-md'
                 : 'text-gray-600 hover:bg-gray-100'
@@ -298,15 +299,20 @@ export default function SchedulePage() {
             Admin
           </button>
         </div>
+        </div>
       </div>
 
       {/* Calendar */}
-      <Calendar appointments={appointments} onCreate={handleCreate} />
+      <div className="w-full overflow-x-auto">
+        <div className="min-w-[800px] lg:min-w-0">
+          <Calendar appointments={appointments} onCreate={handleCreate} />
+        </div>
+      </div>
       {/* Modern modal for appointment creation */}
       {showModal && (
         <div className="fixed inset-0 bg-gray-900/20 backdrop-blur-lg flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-8 w-full max-w-2xl shadow-2xl">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">New Appointment</h3>
+          <div className="bg-white rounded-2xl p-4 sm:p-6 lg:p-8 w-full max-w-sm sm:max-w-lg lg:max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">New Appointment</h3>
             
             <div className="space-y-6">
               <div>
@@ -318,7 +324,7 @@ export default function SchedulePage() {
                     type="button"
                     className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
                       eventType === 'scheduled_work'
-                        ? 'bg-blue-500 text-white'
+                        ? 'bg-orange-500 text-white'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                     onClick={() => setEventType('scheduled_work')}
@@ -359,7 +365,7 @@ export default function SchedulePage() {
                     type="date" 
                     value={selectedDate ? selectedDate.toISOString().split('T')[0] : ''} 
                     onChange={e => setSelectedDate(new Date(e.target.value))}
-                    className="w-full rounded-lg border-2 border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500"
+                    className="w-full rounded-lg border-2 border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-500"
                   />
                 </div>
                 
@@ -379,7 +385,7 @@ export default function SchedulePage() {
                         setSelectedDate(newDate);
                       }
                     }}
-                    className="w-full rounded-lg border-2 border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500"
+                    className="w-full rounded-lg border-2 border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-500"
                   />
                 </div>
               </div>
@@ -394,7 +400,7 @@ export default function SchedulePage() {
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
                     placeholder="Admin appointment title..."
-                    className="w-full rounded-lg border-2 border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500"
+                    className="w-full rounded-lg border-2 border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-500"
                   />
                 </div>
               )}
@@ -409,7 +415,7 @@ export default function SchedulePage() {
                     placeholder="Search jobs..."
                     value={jobSearch}
                     onChange={e => setJobSearch(e.target.value)}
-                    className="w-full rounded-lg border-2 border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500"
+                    className="w-full rounded-lg border-2 border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-500"
                   />
                   {jobSearch && (
                     <div className="mt-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg">
@@ -450,7 +456,7 @@ export default function SchedulePage() {
                     placeholder="Search enquiries..."
                     value={jobSearch}
                     onChange={e => setJobSearch(e.target.value)}
-                    className="w-full rounded-lg border-2 border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500"
+                    className="w-full rounded-lg border-2 border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-500"
                   />
                   {jobSearch && (
                     <div className="mt-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg">
@@ -498,7 +504,7 @@ export default function SchedulePage() {
               </button>
               <button
                 onClick={handleSaveAppointment}
-                className="flex-1 px-6 py-3 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600"
+                className="flex-1 px-6 py-3 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600"
               >
                 Save
               </button>

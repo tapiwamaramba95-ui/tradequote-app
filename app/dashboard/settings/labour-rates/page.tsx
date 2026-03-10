@@ -217,7 +217,7 @@ export default function LabourRatesPage() {
         {!showAddForm && (
           <button
             onClick={() => setShowAddForm(true)}
-            className="px-6 py-3 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-colors"
+            className="px-6 py-3 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors"
           >
             + Add Rate
           </button>
@@ -306,7 +306,7 @@ export default function LabourRatesPage() {
             </button>
             <button
               onClick={editingRate ? handleUpdateRate : handleAddRate}
-              className="px-6 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-colors"
+              className="px-6 py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors"
             >
               {editingRate ? 'Update Rate' : 'Add Rate'}
             </button>
@@ -327,7 +327,7 @@ export default function LabourRatesPage() {
             </p>
             <button
               onClick={() => setShowAddForm(true)}
-              className="px-6 py-3 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-colors"
+              className="px-6 py-3 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors"
             >
               + Add Rate
             </button>
@@ -343,7 +343,7 @@ export default function LabourRatesPage() {
                         {rate.rate_name}
                       </h3>
                       {rate.is_default && (
-                        <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">
+                        <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-semibold">
                           Default
                         </span>
                       )}
@@ -381,7 +381,7 @@ export default function LabourRatesPage() {
                     {!rate.is_default && (
                       <button
                         onClick={() => handleSetDefault(rate.id)}
-                        className="px-4 py-2 border-2 rounded-lg text-sm font-semibold hover:bg-blue-50 transition-colors"
+                        className="px-4 py-2 border-2 rounded-lg text-sm font-semibold hover:bg-orange-50 transition-colors"
                         style={{ borderColor: colors.accent.DEFAULT, color: colors.accent.DEFAULT }}
                       >
                         Set Default
@@ -409,9 +409,9 @@ export default function LabourRatesPage() {
       </div>
 
       {/* Info Box */}
-      <div className="mt-8 bg-blue-50 border-2 border-blue-200 rounded-2xl p-6">
-        <h3 className="font-semibold text-blue-900 mb-3">💡 How Labour Rates Work</h3>
-        <ul className="space-y-2 text-sm text-blue-800">
+      <div className="mt-8 bg-orange-50 border-2 border-orange-200 rounded-2xl p-6">
+        <h3 className="font-semibold mb-3" style={{ color: colors.text.primary }}>💡 How Labour Rates Work</h3>
+        <ul className="space-y-2 text-sm" style={{ color: colors.text.secondary }}>
           <li>• Set different rates for standard time, overtime, weekends, and emergencies</li>
           <li>• Default rate is automatically applied when creating quotes or invoices</li>
           <li>• You can override rates on individual quotes/invoices</li>

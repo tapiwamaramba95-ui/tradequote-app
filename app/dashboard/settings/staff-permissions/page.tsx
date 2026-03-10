@@ -233,7 +233,7 @@ export default function StaffPermissionsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: colors.accent.DEFAULT }}></div>
       </div>
     );
   }
@@ -254,10 +254,10 @@ export default function StaffPermissionsPage() {
       </div>
 
       {/* Info Banner */}
-      <div className="bg-cyan-50 border border-cyan-200 rounded-lg p-4 mb-6">
+      <div className="rounded-lg border p-4 mb-6" style={{ backgroundColor: `${colors.accent.DEFAULT}10`, borderColor: `${colors.accent.DEFAULT}30` }}>
         <div className="flex items-start gap-3">
-          <Info size={20} className="text-cyan-600 mt-0.5" />
-          <p className="text-sm text-cyan-800">
+          <Info size={20} style={{ color: colors.accent.DEFAULT }} className="mt-0.5" />
+          <p className="text-sm" style={{ color: colors.text.primary }}>
             During your trial there is no limit on the number of staff members you can create.
           </p>
         </div>
@@ -313,21 +313,41 @@ export default function StaffPermissionsPage() {
         <div className="flex gap-0">
           <button
             onClick={() => setActiveTab('active')}
-            className={`px-4 py-3 text-sm font-medium border-b-2 ${
-              activeTab === 'active'
-                ? 'border-cyan-600 text-cyan-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
+            className="px-4 py-3 text-sm font-medium border-b-2 border-transparent"
+            style={{
+              borderBottomColor: activeTab === 'active' ? colors.accent.DEFAULT : 'transparent',
+              color: activeTab === 'active' ? colors.accent.DEFAULT : '#6b7280'
+            }}
+            onMouseEnter={(e) => {
+              if (activeTab !== 'active') {
+                (e.target as HTMLElement).style.color = '#374151'
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (activeTab !== 'active') {
+                (e.target as HTMLElement).style.color = '#6b7280'
+              }
+            }}
           >
             Active ({staff.filter(s => s.status === 'active').length})
           </button>
           <button
             onClick={() => setActiveTab('inactive')}
-            className={`px-4 py-3 text-sm font-medium border-b-2 ${
-              activeTab === 'inactive'
-                ? 'border-cyan-600 text-cyan-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
+            className="px-4 py-3 text-sm font-medium border-b-2 border-transparent"
+            style={{
+              borderBottomColor: activeTab === 'inactive' ? colors.accent.DEFAULT : 'transparent',
+              color: activeTab === 'inactive' ? colors.accent.DEFAULT : '#6b7280'
+            }}
+            onMouseEnter={(e) => {
+              if (activeTab !== 'inactive') {
+                (e.target as HTMLElement).style.color = '#374151'
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (activeTab !== 'inactive') {
+                (e.target as HTMLElement).style.color = '#6b7280'
+              }
+            }}
           >
             Inactive ({staff.filter(s => s.status === 'inactive').length})
           </button>
@@ -384,7 +404,7 @@ export default function StaffPermissionsPage() {
                           handleToggleStatus(member);
                         }}
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                          member.status === 'active' ? 'bg-cyan-600' : 'bg-gray-200'
+                          member.status === 'active' ? 'bg-orange-500' : 'bg-gray-200'
                         }`}
                       >
                         <span
@@ -427,7 +447,8 @@ export default function StaffPermissionsPage() {
                   <div className="flex gap-6">
                     <button
                       type="button"
-                      className="pb-3 px-1 border-b-2 border-cyan-600 text-cyan-600 font-medium text-sm"
+                      className="pb-3 px-1 border-b-2 font-medium text-sm"
+                      style={{ borderBottomColor: colors.accent.DEFAULT, color: colors.accent.DEFAULT }}
                     >
                       Personal Information
                     </button>
@@ -454,7 +475,7 @@ export default function StaffPermissionsPage() {
                         required
                         value={formData.name || ''}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                        className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                       />
                     </div>
 
@@ -467,7 +488,7 @@ export default function StaffPermissionsPage() {
                         required
                         value={formData.email || ''}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                        className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                       />
                     </div>
 
@@ -479,10 +500,10 @@ export default function StaffPermissionsPage() {
                         type="text"
                         value={formData.username || formData.email || ''}
                         onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                        className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                        className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                       />
                       <p className="text-xs text-gray-500 mt-1">
-                        <button type="button" className="text-cyan-600 hover:underline">
+                        <button type="button" className="hover:underline" style={{ color: colors.accent.DEFAULT }}>
                           Learn about changing usernames.
                         </button>
                       </p>
@@ -494,7 +515,7 @@ export default function StaffPermissionsPage() {
                         type="text"
                         value={formData.mobile || ''}
                         onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
-                        className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                        className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                       />
                     </div>
 
@@ -504,7 +525,7 @@ export default function StaffPermissionsPage() {
                         type="text"
                         value={formData.phone || ''}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                        className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                       />
                     </div>
 
@@ -517,7 +538,7 @@ export default function StaffPermissionsPage() {
                           type="text"
                           value={formData.billing_rate || 'Standard Labour Rate'}
                           onChange={(e) => setFormData({ ...formData, billing_rate: e.target.value })}
-                          className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                          className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                         />
                         <button
                           type="button"
@@ -537,7 +558,7 @@ export default function StaffPermissionsPage() {
                         step="0.01"
                         value={formData.hourly_cost || ''}
                         onChange={(e) => setFormData({ ...formData, hourly_cost: parseFloat(e.target.value) })}
-                        className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                        className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                         placeholder="0.00"
                       />
                     </div>
@@ -550,7 +571,7 @@ export default function StaffPermissionsPage() {
                         type="text"
                         value={formData.licence_number || ''}
                         onChange={(e) => setFormData({ ...formData, licence_number: e.target.value })}
-                        className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                        className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                       />
                     </div>
 
@@ -559,7 +580,8 @@ export default function StaffPermissionsPage() {
                       <h3 className="text-sm font-semibold text-gray-700 mb-3">External Calendars</h3>
                       <button
                         type="button"
-                        className="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-2.5 px-4 rounded text-sm"
+                        className="w-full font-semibold py-2.5 px-4 rounded text-sm text-white hover:opacity-90 transition-opacity"
+                        style={{ backgroundColor: colors.accent.DEFAULT }}
                       >
                         Connect Google Calendar
                       </button>
@@ -590,7 +612,7 @@ export default function StaffPermissionsPage() {
                                   }
                                 })}
                                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                  formData.notifications?.job_alerts_email ? 'bg-cyan-600' : 'bg-gray-200'
+                                  formData.notifications?.job_alerts_email ? 'bg-orange-500' : 'bg-gray-200'
                                 }`}
                               >
                                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
@@ -610,7 +632,7 @@ export default function StaffPermissionsPage() {
                                   }
                                 })}
                                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                  formData.notifications?.job_alerts_mobile ? 'bg-cyan-600' : 'bg-gray-200'
+                                  formData.notifications?.job_alerts_mobile ? 'bg-orange-500' : 'bg-gray-200'
                                 }`}
                               >
                                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
@@ -642,7 +664,7 @@ export default function StaffPermissionsPage() {
                                   }
                                 })}
                                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                  formData.notifications?.enquiries_email ? 'bg-cyan-600' : 'bg-gray-200'
+                                  formData.notifications?.enquiries_email ? 'bg-orange-500' : 'bg-gray-200'
                                 }`}
                               >
                                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
@@ -662,7 +684,7 @@ export default function StaffPermissionsPage() {
                                   }
                                 })}
                                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                  formData.notifications?.enquiries_mobile ? 'bg-cyan-600' : 'bg-gray-200'
+                                  formData.notifications?.enquiries_mobile ? 'bg-orange-500' : 'bg-gray-200'
                                 }`}
                               >
                                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
@@ -691,7 +713,7 @@ export default function StaffPermissionsPage() {
                                   }
                                 })}
                                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                  formData.notifications?.approval_confirmation_popup ? 'bg-cyan-600' : 'bg-gray-200'
+                                  formData.notifications?.approval_confirmation_popup ? 'bg-orange-500' : 'bg-gray-200'
                                 }`}
                               >
                                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
@@ -716,7 +738,7 @@ export default function StaffPermissionsPage() {
                                   }
                                 })}
                                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                  formData.notifications?.copy_bills_to_costs_popup ? 'bg-cyan-600' : 'bg-gray-200'
+                                  formData.notifications?.copy_bills_to_costs_popup ? 'bg-orange-500' : 'bg-gray-200'
                                 }`}
                               >
                                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
@@ -771,7 +793,7 @@ export default function StaffPermissionsPage() {
                                 },
                               })
                             }
-                            className="h-4 w-4 rounded border-gray-300 text-cyan-600 focus:ring-cyan-500"
+                            className="h-4 w-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500"
                           />
                           <span className="flex-1 text-sm text-gray-700">
                             {permission.label}
@@ -806,7 +828,7 @@ export default function StaffPermissionsPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 rounded bg-cyan-600 text-white font-semibold hover:bg-cyan-700"
+                  className="px-6 py-2 rounded bg-orange-500 text-white font-semibold hover:bg-orange-600"
                 >
                   Save
                 </button>

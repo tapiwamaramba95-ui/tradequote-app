@@ -102,7 +102,7 @@ export default function ReactivatePage() {
           </p>
           <Link
             href="/auth/sign-up"
-            className="inline-block px-6 py-3 bg-blue-500 text-white rounded-lg font-semibold"
+            className="inline-block px-6 py-3 bg-orange-500 text-white rounded-lg font-semibold"
           >
             Create New Account
           </Link>
@@ -124,9 +124,9 @@ export default function ReactivatePage() {
           </p>
         </div>
 
-        <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-6 mb-8">
-          <h3 className="font-semibold text-blue-900 mb-3">Your account is exactly as you left it:</h3>
-          <ul className="space-y-2 text-sm text-blue-800">
+        <div className="bg-orange-50 border-2 border-orange-200 rounded-xl p-6 mb-8">
+          <h3 className="font-semibold text-orange-900 mb-3">Your account is exactly as you left it:</h3>
+          <ul className="space-y-2 text-sm text-orange-800">
             <li>• All your jobs, quotes & invoices</li>
             <li>• All your clients</li>
             <li>• All your settings</li>
@@ -185,7 +185,7 @@ export default function ReactivatePage() {
                   <h3 className="font-bold text-lg" style={{ color: colors.text.primary }}>
                     Professional
                   </h3>
-                  <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-semibold">POPULAR</span>
+                  <span className="bg-orange-100 text-orange-700 px-2 py-1 rounded-full text-xs font-semibold">POPULAR</span>
                 </div>
                 <span className="font-bold text-lg" style={{ color: colors.accent.DEFAULT }}>
                   $30/month

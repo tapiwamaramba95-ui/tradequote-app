@@ -343,7 +343,7 @@ export default function CompanySettingsPage() {
                   handleEmailChange(emailSuggestion)
                   setEmailSuggestion(null)
                 }}
-                className="text-sm text-cyan-600 hover:text-cyan-700 mt-1"
+                className="text-sm text-orange-500 hover:text-orange-600 mt-1"
               >
                 Did you mean {emailSuggestion}?
               </button>

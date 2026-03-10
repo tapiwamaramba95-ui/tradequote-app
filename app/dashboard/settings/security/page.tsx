@@ -237,7 +237,7 @@ export default function SecurityPage() {
           {!showPasswordForm && (
             <button
               onClick={() => setShowPasswordForm(true)}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-colors"
+              className="px-4 py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors"
             >
               Change Password
             </button>
@@ -309,7 +309,7 @@ export default function SecurityPage() {
               </button>
               <button
                 onClick={handlePasswordChange}
-                className="px-6 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-colors"
+                className="px-6 py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors"
               >
                 Update Password
               </button>
@@ -349,7 +349,7 @@ export default function SecurityPage() {
             </p>
             <button
               onClick={handleEnable2FA}
-              className="px-6 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-colors"
+              className="px-6 py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors"
             >
               Enable 2FA
             </button>
@@ -405,7 +405,7 @@ export default function SecurityPage() {
               <button
                 onClick={handleVerify2FA}
                 disabled={verificationCode.length !== 6}
-                className="px-6 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-colors disabled:opacity-50"
+                className="px-6 py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50"
               >
                 Verify & Enable
               </button>

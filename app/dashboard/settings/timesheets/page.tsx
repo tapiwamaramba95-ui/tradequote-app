@@ -119,7 +119,7 @@ export default function TimesheetSettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
       </div>
     )
   }
@@ -157,7 +157,7 @@ export default function TimesheetSettingsPage() {
               <select
                 value={defaultView}
                 onChange={(e) => setDefaultView(e.target.value)}
-                className="w-full rounded-lg border-2 px-4 py-3 text-sm focus:ring-4 focus:ring-blue-100 focus:border-blue-500"
+                className="w-full rounded-lg border-2 px-4 py-3 text-sm focus:ring-4 focus:ring-orange-100 focus:border-orange-500"
                 style={{
                   borderColor: colors.border.DEFAULT,
                   backgroundColor: colors.background.card,
@@ -177,7 +177,7 @@ export default function TimesheetSettingsPage() {
               <select
                 value={weekStartDay}
                 onChange={(e) => setWeekStartDay(Number(e.target.value))}
-                className="w-full rounded-lg border-2 px-4 py-3 text-sm focus:ring-4 focus:ring-blue-100 focus:border-blue-500"
+                className="w-full rounded-lg border-2 px-4 py-3 text-sm focus:ring-4 focus:ring-orange-100 focus:border-orange-500"
                 style={{
                   borderColor: colors.border.DEFAULT,
                   backgroundColor: colors.background.card,
@@ -197,7 +197,7 @@ export default function TimesheetSettingsPage() {
                 type="time"
                 value={standardStartTime}
                 onChange={(e) => setStandardStartTime(e.target.value)}
-                className="w-full rounded-lg border-2 px-4 py-3 text-sm focus:ring-4 focus:ring-blue-100 focus:border-blue-500"
+                className="w-full rounded-lg border-2 px-4 py-3 text-sm focus:ring-4 focus:ring-orange-100 focus:border-orange-500"
                 style={{
                   borderColor: colors.border.DEFAULT,
                   backgroundColor: colors.background.card,
@@ -214,7 +214,7 @@ export default function TimesheetSettingsPage() {
                 type="time"
                 value={standardEndTime}
                 onChange={(e) => setStandardEndTime(e.target.value)}
-                className="w-full rounded-lg border-2 px-4 py-3 text-sm focus:ring-4 focus:ring-blue-100 focus:border-blue-500"
+                className="w-full rounded-lg border-2 px-4 py-3 text-sm focus:ring-4 focus:ring-orange-100 focus:border-orange-500"
                 style={{
                   borderColor: colors.border.DEFAULT,
                   backgroundColor: colors.background.card,
@@ -253,7 +253,7 @@ export default function TimesheetSettingsPage() {
                   onChange={(e) => setAutoDeductBreaks(e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
               </label>
             </div>
 
@@ -268,7 +268,7 @@ export default function TimesheetSettingsPage() {
                   max="480"
                   value={defaultBreakMinutes}
                   onChange={(e) => setDefaultBreakMinutes(Number(e.target.value))}
-                  className="w-full md:w-48 rounded-lg border-2 px-4 py-3 text-sm focus:ring-4 focus:ring-blue-100 focus:border-blue-500"
+                  className="w-full md:w-48 rounded-lg border-2 px-4 py-3 text-sm focus:ring-4 focus:ring-orange-100 focus:border-orange-500"
                   style={{
                     borderColor: colors.border.DEFAULT,
                     backgroundColor: colors.background.card,
@@ -294,7 +294,7 @@ export default function TimesheetSettingsPage() {
                 step="0.5"
                 value={overtimeTriggerHours}
                 onChange={(e) => setOvertimeTriggerHours(Number(e.target.value))}
-                className="w-full rounded-lg border-2 px-4 py-3 text-sm focus:ring-4 focus:ring-blue-100 focus:border-blue-500"
+                className="w-full rounded-lg border-2 px-4 py-3 text-sm focus:ring-4 focus:ring-orange-100 focus:border-orange-500"
                 style={{
                   borderColor: colors.border.DEFAULT,
                   backgroundColor: colors.background.card,
@@ -314,7 +314,7 @@ export default function TimesheetSettingsPage() {
                 step="0.1"
                 value={overtimeRate}
                 onChange={(e) => setOvertimeRate(Number(e.target.value))}
-                className="w-full rounded-lg border-2 px-4 py-3 text-sm focus:ring-4 focus:ring-blue-100 focus:border-blue-500"
+                className="w-full rounded-lg border-2 px-4 py-3 text-sm focus:ring-4 focus:ring-orange-100 focus:border-orange-500"
                 style={{
                   borderColor: colors.border.DEFAULT,
                   backgroundColor: colors.background.card,
@@ -344,7 +344,7 @@ export default function TimesheetSettingsPage() {
                   onChange={(e) => setRequireApproval(e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
               </label>
             </div>
 
@@ -364,7 +364,7 @@ export default function TimesheetSettingsPage() {
                   onChange={(e) => setAllowManualEntry(e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
               </label>
             </div>
 
@@ -385,7 +385,7 @@ export default function TimesheetSettingsPage() {
                     onChange={(e) => setRequireManualEntryReason(e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
                 </label>
               </div>
             )}
@@ -402,7 +402,7 @@ export default function TimesheetSettingsPage() {
               <select
                 value={roundingInterval}
                 onChange={(e) => setRoundingInterval(Number(e.target.value))}
-                className="w-full rounded-lg border-2 px-4 py-3 text-sm focus:ring-4 focus:ring-blue-100 focus:border-blue-500"
+                className="w-full rounded-lg border-2 px-4 py-3 text-sm focus:ring-4 focus:ring-orange-100 focus:border-orange-500"
                 style={{
                   borderColor: colors.border.DEFAULT,
                   backgroundColor: colors.background.card,
@@ -422,7 +422,7 @@ export default function TimesheetSettingsPage() {
               <select
                 value={roundingMethod}
                 onChange={(e) => setRoundingMethod(e.target.value)}
-                className="w-full rounded-lg border-2 px-4 py-3 text-sm focus:ring-4 focus:ring-blue-100 focus:border-blue-500"
+                className="w-full rounded-lg border-2 px-4 py-3 text-sm focus:ring-4 focus:ring-orange-100 focus:border-orange-500"
                 style={{
                   borderColor: colors.border.DEFAULT,
                   backgroundColor: colors.background.card,
@@ -456,7 +456,7 @@ export default function TimesheetSettingsPage() {
                   onChange={(e) => setRemindClockIn(e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
               </label>
             </div>
 
@@ -476,7 +476,7 @@ export default function TimesheetSettingsPage() {
                   onChange={(e) => setRemindClockOut(e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
               </label>
             </div>
 
@@ -489,7 +489,7 @@ export default function TimesheetSettingsPage() {
                   type="time"
                   value={reminderTime}
                   onChange={(e) => setReminderTime(e.target.value)}
-                  className="w-full md:w-48 rounded-lg border-2 px-4 py-3 text-sm focus:ring-4 focus:ring-blue-100 focus:border-blue-500"
+                  className="w-full md:w-48 rounded-lg border-2 px-4 py-3 text-sm focus:ring-4 focus:ring-orange-100 focus:border-orange-500"
                   style={{
                     borderColor: colors.border.DEFAULT,
                     backgroundColor: colors.background.card,
@@ -512,7 +512,7 @@ export default function TimesheetSettingsPage() {
                 <select
                   value={exportFormat}
                   onChange={(e) => setExportFormat(e.target.value)}
-                  className="w-full rounded-lg border-2 px-4 py-3 text-sm focus:ring-4 focus:ring-blue-100 focus:border-blue-500"
+                  className="w-full rounded-lg border-2 px-4 py-3 text-sm focus:ring-4 focus:ring-orange-100 focus:border-orange-500"
                   style={{
                     borderColor: colors.border.DEFAULT,
                     backgroundColor: colors.background.card,
@@ -542,7 +542,7 @@ export default function TimesheetSettingsPage() {
                   onChange={(e) => setIncludeNotesInExport(e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
               </label>
             </div>
           </div>

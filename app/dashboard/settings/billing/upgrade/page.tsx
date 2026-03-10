@@ -144,7 +144,7 @@ export default function UpgradePage() {
                 onClick={() => setBillingPeriod('monthly')}
                 className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-colors ${
                   billingPeriod === 'monthly'
-                    ? 'bg-blue-500 text-white'
+                    ? 'bg-orange-500 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -154,7 +154,7 @@ export default function UpgradePage() {
                 onClick={() => setBillingPeriod('yearly')}
                 className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-colors relative ${
                   billingPeriod === 'yearly'
-                    ? 'bg-blue-500 text-white'
+                    ? 'bg-orange-500 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -201,7 +201,7 @@ export default function UpgradePage() {
                     onClick={() => setSelectedPlan(key)}
                     className={`w-full p-4 rounded-lg text-left transition-colors ${
                       selectedPlan === key
-                        ? 'border-2 bg-blue-50'
+                        ? 'border-2 bg-orange-50'
                         : 'border-2 hover:border-gray-300'
                     }`}
                     style={{
@@ -218,7 +218,7 @@ export default function UpgradePage() {
                         </p>
                       </div>
                       {key === 'professional' && (
-                        <span className="px-2 py-1 bg-blue-500 text-white text-xs rounded-full font-semibold">
+                        <span className="px-2 py-1 bg-orange-500 text-white text-xs rounded-full font-semibold">
                           POPULAR
                         </span>
                       )}
@@ -271,7 +271,7 @@ export default function UpgradePage() {
             <button
               onClick={handleSubscribe}
               disabled={loading}
-              className="w-full py-4 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-4 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Processing...' : `Subscribe to ${plan.name}`}
             </button>
