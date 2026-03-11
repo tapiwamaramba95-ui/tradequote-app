@@ -166,8 +166,7 @@ export default function LoginPage() {
               <span className="text-sm text-white/70">No account? </span>
               <a
                 href="/auth/sign-up"
-                className="text-sm font-medium hover:underline"
-                style={{ color: colors.accent.light }}
+                className="text-sm font-bold hover:underline text-white hover:text-orange-300 transition-colors"
               >
                 Sign up for free
               </a>
