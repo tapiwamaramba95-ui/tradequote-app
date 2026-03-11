@@ -30,28 +30,6 @@ export default function LoginPage() {
     }
   }
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${location.origin}/auth/callback`,
-      },
-    })
-
-    if (error) {
-      setError(error.message)
-      setLoading(false)
-    } else {
-      alert('Check your email for the confirmation link!')
-      setLoading(false)
-    }
-  }
-
   return (
     <div 
       className="min-h-screen flex items-center justify-center"
@@ -186,15 +164,13 @@ export default function LoginPage() {
             {/* Sign Up Link */}
             <div className="text-center pt-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
               <span className="text-sm text-white/70">No account? </span>
-              <button
-                type="button"
-                onClick={handleSignup}
-                disabled={loading}
+              <a
+                href="/auth/sign-up"
                 className="text-sm font-medium hover:underline"
                 style={{ color: colors.accent.light }}
               >
-                Sign up
-              </button>
+                Sign up for free
+              </a>
             </div>
           </form>
         </div>

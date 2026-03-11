@@ -129,8 +129,8 @@ export default function SignUpPage() {
         <div className="text-center mb-8">
           {/* Logo with Icon Badge */}
           <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-cyan-100 to-cyan-50 rounded-xl flex items-center justify-center shadow-sm">
-              <FileText className="w-7 h-7 text-cyan-600" />
+            <div className="w-14 h-14 bg-gradient-to-br from-orange-100 to-orange-50 rounded-xl flex items-center justify-center shadow-sm">
+              <FileText className="w-7 h-7 text-orange-600" />
             </div>
             <h1 className="text-4xl font-bold text-gray-900">
               TradeQuote
@@ -138,8 +138,8 @@ export default function SignUpPage() {
           </div>
           
           {/* Badge-style subheading */}
-          <div className="inline-block px-4 py-2 bg-gradient-to-r from-cyan-50 to-blue-50 border border-cyan-200 rounded-full mb-3">
-            <p className="text-sm font-semibold text-cyan-900">Start Your 14-Day Free Trial</p>
+          <div className="inline-block px-4 py-2 bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-full mb-3">
+            <p className="text-sm font-semibold text-orange-900">Start Your 14-Day Free Trial</p>
           </div>
           
           <p className="text-sm text-gray-500">
@@ -365,11 +365,11 @@ export default function SignUpPage() {
               />
               <label className="text-sm text-gray-700">
                 I agree to the{' '}
-                <Link href="/terms" className="font-medium text-cyan-600 hover:text-cyan-700 underline">
+                <Link href="/terms" className="font-medium text-orange-600 hover:text-orange-700 underline">
                   Terms of Service
                 </Link>{' '}
                 and{' '}
-                <Link href="/privacy" className="font-medium text-cyan-600 hover:text-cyan-700 underline">
+                <Link href="/privacy" className="font-medium text-orange-600 hover:text-orange-700 underline">
                   Privacy Policy
                 </Link>
               </label>
@@ -379,7 +379,12 @@ export default function SignUpPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 rounded-lg font-bold text-white bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
+              className="w-full py-3.5 rounded-lg font-bold text-white shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
+              style={{ 
+                backgroundColor: colors.accent.DEFAULT,
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.accent.hover}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = colors.accent.DEFAULT}
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -410,7 +415,7 @@ export default function SignUpPage() {
             {/* Sign In Link */}
             <p className="text-center text-sm mt-4 text-gray-600">
               Already have an account?{' '}
-              <Link href="/login" className="font-semibold text-cyan-600 hover:text-cyan-700">
+              <Link href="/login" className="font-semibold text-orange-600 hover:text-orange-700">
                 Sign in
               </Link>
             </p>
