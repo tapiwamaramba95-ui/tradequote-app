@@ -98,7 +98,7 @@ export default function JobCreationForm({ onJobCreated, onClose }: JobCreationFo
   const handleStructuredAddressChange = useCallback((structured: any) => {
     setFormData(prev => ({ 
       ...prev, 
-      street_address: structured.street_address || '',
+      street_address: structured.street || '',
       suburb: structured.suburb || '',
       state: structured.state || '',
       postcode: structured.postcode || ''
@@ -173,7 +173,10 @@ export default function JobCreationForm({ onJobCreated, onClose }: JobCreationFo
               <p className="text-xs text-gray-500 mb-2">Enter the address where work will be performed</p>
               <AddressInput
                 value=""
-                onChange={() => {}} 
+                onChange={(address) => {
+                  // Handle simple string address updates
+                  setFormData(prev => ({ ...prev, address }))
+                }} 
                 onStructuredChange={handleStructuredAddressChange}
                 initialStructured={{
                   street_address: formData.street_address,

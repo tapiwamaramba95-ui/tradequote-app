@@ -140,7 +140,7 @@ export default function NewEnquiryPage() {
   const handleStructuredAddressChange = (structured: any) => {
     setFormData(prev => ({ 
       ...prev, 
-      street_address: structured.street_address || '',
+      street_address: structured.street || '',
       suburb: structured.suburb || '',
       state: structured.state || '',
       postcode: structured.postcode || ''

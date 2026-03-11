@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 interface AddressInputProps {
   value?: string
@@ -25,6 +25,7 @@ export default function AddressInput({
   const [suburb, setSuburb] = useState('')
   const [state, setState] = useState('')
   const [postcode, setPostcode] = useState('')
+  const initializedRef = useRef(false)
 
   // Parse existing address on mount
   useEffect(() => {
@@ -72,13 +73,14 @@ export default function AddressInput({
     }
   }, [value])
 
-  // Handle initialStructured prop
+  // Handle initialStructured prop (only initialize once)
   useEffect(() => {
-    if (initialStructured && !value) {
+    if (initialStructured && !value && !initializedRef.current) {
       setStreet(initialStructured.street_address || '')
       setSuburb(initialStructured.suburb || '')
       setState(initialStructured.state || '')
       setPostcode(initialStructured.postcode || '')
+      initializedRef.current = true
     }
   }, [initialStructured, value])
 
@@ -101,26 +103,9 @@ export default function AddressInput({
       })
     }
 
-    // Maintain backward compatibility with string format
-    if (street && suburb && state && postcode) {
-      const formatted = `${street}\n${suburb} ${state} ${postcode}`
-      onChange(formatted)
-    } else if (street || suburb || state || postcode) {
-      // Handle partial addresses - save whatever is available
-      const parts = []
-      if (street) parts.push(street)
-      
-      // Build location line from available components
-      const locationParts = []
-      if (suburb) locationParts.push(suburb)
-      if (state) locationParts.push(state)
-      if (postcode) locationParts.push(postcode)
-      
-      if (locationParts.length > 0) {
-        parts.push(locationParts.join(' '))
-      }
-      
-      onChange(parts.join('\n'))
+    // Simple string format for backward compatibility
+    if (street) {
+      onChange(street)
     } else {
       onChange('')
     }
