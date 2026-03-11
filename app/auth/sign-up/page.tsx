@@ -379,12 +379,7 @@ export default function SignUpPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 rounded-lg font-bold text-white shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
-              style={{ 
-                backgroundColor: colors.accent.DEFAULT,
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.accent.hover}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = colors.accent.DEFAULT}
+              className="w-full py-3.5 rounded-lg font-bold text-orange-600 bg-white border-2 border-orange-600 shadow-lg hover:shadow-xl transition-all disabled:opacity-50 hover:bg-orange-50"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
