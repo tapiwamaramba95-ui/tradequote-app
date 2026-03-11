@@ -86,11 +86,16 @@ export default function SignUpPage() {
         },
       })
 
-      if (authError) throw authError
+      if (authError) {
+        console.error('Auth signup error:', authError)
+        throw new Error(`Authentication error: ${authError.message}`)
+      }
 
       if (!authData.user) {
-        throw new Error('Failed to create user')
+        throw new Error('Failed to create user - no user returned from auth')
       }
+
+      console.log('User created successfully:', authData.user.id)
 
       // 2. Update profile with business details
       const { error: profileError } = await supabase
@@ -104,7 +109,10 @@ export default function SignUpPage() {
         })
         .eq('id', authData.user.id)
 
-      if (profileError) throw profileError
+      if (profileError) {
+        console.error('Profile update error:', profileError)
+        throw new Error(`Profile update error: ${profileError.message}`)
+      }
 
       // ✅ Mark business details as complete if provided  
       if (businessName && tradeType && phone) {
@@ -117,8 +125,8 @@ export default function SignUpPage() {
           .eq('user_id', authData.user.id)
       }
 
-      // 3. Send to dashboard
-      router.push('/dashboard?welcome=true')
+      // 3. Send to onboarding wizard to complete setup
+      router.push('/onboarding?from=signup')
 
     } catch (error: any) {
       console.error('Sign up error:', error)

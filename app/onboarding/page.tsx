@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { colors } from '@/lib/colors'
 import { CheckCircle2, Building2, DollarSign, FileText, ArrowRight, ArrowLeft, X } from 'lucide-react'
 import AddressInput from '@/components/AddressInput'
 
@@ -14,7 +15,10 @@ export default function OnboardingWizard() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   
-  // Form state
+  // Form state  
+  const [businessName, setBusinessName] = useState('')
+  const [tradeType, setTradeType] = useState('')
+  const [phoneNumber, setPhoneNumber] = useState('')
   const [abn, setAbn] = useState('')
   const [address, setAddress] = useState('')
   const [logo, setLogo] = useState<File | null>(null)
@@ -28,6 +32,8 @@ export default function OnboardingWizard() {
   }, [])
 
   const checkProgress = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    
     const { data: progress } = await supabase
       .from('onboarding_progress')
       .select('*')
@@ -36,6 +42,22 @@ export default function OnboardingWizard() {
     if (!progress) {
       router.push('/dashboard')
       return
+    }
+
+    // Load business information from profiles table to pre-populate
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('business_name, trade_type, phone')
+      .eq('id', user?.id)
+      .single()
+
+    if (profile) {
+      setBusinessName(profile.business_name || '')
+      setTradeType(profile.trade_type || '')
+      setPhoneNumber(profile.phone || '')
+      
+      // Also set the account name to the business name by default
+      setAccountName(profile.business_name || '')
     }
 
     // Determine starting step based on what's already completed
@@ -69,12 +91,16 @@ export default function OnboardingWizard() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
 
-      // Save to business_settings
+      // Save to business_settings (including info from sign-up)
       const { error } = await supabase
         .from('business_settings')
         .update({ 
+          company_name: businessName,
+          company_email: user?.email,
+          company_phone: phoneNumber,
+          trade_type: tradeType,
           abn,
-          address,
+          company_address: address,
           company_logo_url: logo ? 'pending-upload' : null // Handle file upload separately
         })
         .eq('user_id', user?.id)
@@ -207,6 +233,12 @@ export default function OnboardingWizard() {
         <div className="max-w-2xl w-full">
           {currentStep === 'profile' && (
             <ProfileStep
+              businessName={businessName}
+              setBusinessName={setBusinessName}
+              tradeType={tradeType}
+              setTradeType={setTradeType}  
+              phoneNumber={phoneNumber}
+              setPhoneNumber={setPhoneNumber}
               abn={abn}
               setAbn={setAbn}
               address={address}
@@ -259,7 +291,7 @@ function StepIndicator({ number, title, active, completed }: any) {
         completed 
           ? 'bg-green-600' 
           : active 
-            ? 'bg-cyan-600' 
+            ? 'bg-orange-600' 
             : 'bg-gray-200'
       }`}>
         {completed ? (
@@ -272,7 +304,7 @@ function StepIndicator({ number, title, active, completed }: any) {
       </div>
       <div className="hidden sm:block">
         <p className={`text-xs font-semibold uppercase ${
-          active ? 'text-cyan-600' : completed ? 'text-green-600' : 'text-gray-500'
+          active ? 'text-orange-600' : completed ? 'text-green-600' : 'text-gray-500'
         }`}>
           Step {number}
         </p>
@@ -291,18 +323,68 @@ function ProgressLine({ completed }: { completed: boolean }) {
 }
 
 // Profile Step Component
-function ProfileStep({ abn, setAbn, address, setAddress, onSubmit, onSkip, saving }: any) {
+function ProfileStep({ 
+  businessName, setBusinessName, 
+  tradeType, setTradeType, 
+  phoneNumber, setPhoneNumber,
+  abn, setAbn, 
+  address, setAddress, 
+  onSubmit, onSkip, saving 
+}: any) {
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8">
       <div className="text-center mb-8">
-        <div className="w-16 h-16 bg-gradient-to-br from-cyan-100 to-cyan-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-          <Building2 className="w-8 h-8 text-cyan-600" />
+        <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-orange-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <Building2 className="w-8 h-8" style={{ color: colors.primary }} />
         </div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Complete Your Company Profile</h2>
         <p className="text-gray-600">These details appear on your quotes and invoices</p>
       </div>
 
-      <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Pre-populated from sign-up */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-900 mb-2">
+            Business Name
+          </label>
+          <input
+            type="text"
+            value={businessName}
+            onChange={(e) => setBusinessName(e.target.value)}
+            placeholder="Your business name"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500 focus:ring-opacity-20 transition-colors"
+          />
+          <p className="text-xs text-gray-500 mt-1">From your sign-up</p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-gray-900 mb-2">
+            Trade Type
+          </label>
+          <input
+            type="text"
+            value={tradeType}
+            onChange={(e) => setTradeType(e.target.value)}
+            placeholder="e.g., Electrician, Plumber"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500 focus:ring-opacity-20 transition-colors"
+          />
+          <p className="text-xs text-gray-500 mt-1">From your sign-up</p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-gray-900 mb-2">
+            Phone Number
+          </label>
+          <input
+            type="tel"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
+            placeholder="0412 345 678"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500 focus:ring-opacity-20 transition-colors"
+          />
+          <p className="text-xs text-gray-500 mt-1">From your sign-up</p>
+        </div>
+
         <div>
           <label className="block text-sm font-semibold text-gray-900 mb-2">
             ABN <span className="text-red-500">*</span>
@@ -312,48 +394,52 @@ function ProfileStep({ abn, setAbn, address, setAddress, onSubmit, onSkip, savin
             value={abn}
             onChange={(e) => setAbn(e.target.value)}
             placeholder="12 345 678 901"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500 focus:ring-opacity-20 transition-colors"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500 focus:ring-opacity-20 transition-colors"
           />
           <p className="text-xs text-gray-500 mt-1">Australian Business Number</p>
         </div>
+      </div>
 
-        <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-2">
-            Business Address <span className="text-red-500">*</span>
-          </label>
-          <AddressInput
-            value={address}
-            onChange={setAddress}
-            placeholder="This appears on invoices and quotes"
-          />
-          <p className="text-xs text-gray-500 mt-1">This appears on invoices and quotes</p>
-        </div>
+      <div className="mt-6">
+        <label className="block text-sm font-semibold text-gray-900 mb-2">
+          Business Address <span className="text-red-500">*</span>
+        </label>
+        <AddressInput
+          value={address}
+          onChange={setAddress}
+          placeholder="This appears on invoices and quotes"
+        />
+        <p className="text-xs text-gray-500 mt-1">This appears on invoices and quotes</p>
+      </div>
 
-        <div className="flex gap-3 pt-6">
-          <button
-            onClick={onSkip}
-            className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
-          >
-            Skip this step
-          </button>
-          <button
-            onClick={onSubmit}
-            disabled={!abn || !address || saving}
-            className="flex-1 px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-lg font-semibold hover:from-cyan-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 transition-all"
-          >
-            {saving ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                Saving...
-              </>
-            ) : (
-              <>
-                Continue
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-          </button>
-        </div>
+      <div className="flex gap-3 pt-6">
+        <button
+          onClick={onSkip}
+          className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+        >
+          Skip this step
+        </button>
+        <button
+          onClick={onSubmit}
+          disabled={!abn || !address || saving}
+          className="flex-1 px-6 py-3 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 transition-all"
+          style={{ 
+            backgroundColor: colors.primary,
+            color: 'white',
+          }}
+        >
+          {saving ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              Saving...
+            </>
+          ) : (
+            <>
+              Continue
+              <ArrowRight className="w-4 h-4" />
+            </>
+          )}
+        </button>
       </div>
     </div>
   )
