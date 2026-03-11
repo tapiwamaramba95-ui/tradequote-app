@@ -17,6 +17,8 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [currentStep, setCurrentStep] = useState<LoginStep>('credentials')
   const [trustDevice, setTrustDevice] = useState(false)
+  const [challengeId, setChallengeId] = useState<string>('')
+  const [factorId, setFactorId] = useState<string>('')
 
   const handleCredentialLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -24,36 +26,92 @@ export default function LoginPage() {
     setError('')
 
     try {
+      console.log('Attempting login with:', email)
+      
+      // First, try to sign in with password
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
+      console.log('Sign in response:', { data, error })
+
+      // Handle potential MFA errors
       if (error) {
+        console.log('Sign in error type:', error.name, error.message)
+        
+        // Check if it's an MFA challenge required error
+        if (error.name === 'AuthMFAChallengeError' || error.message.toLowerCase().includes('mfa')) {
+          console.log('MFA challenge required, proceeding with 2FA flow')
+          // MFA is required - proceed to 2FA step
+          // The error might contain challenge information
+          setCurrentStep('2fa')
+          setLoading(false)
+          return
+        }
+        
         setError(error.message)
         setLoading(false)
         return
       }
 
-      // Check if user has 2FA enabled
-      const { data: factors } = await supabase.auth.mfa.listFactors()
-      
-      if (factors?.totp && factors.totp.length > 0) {
-        // User has 2FA - check if device is trusted
-        const deviceId = getOrCreateDeviceId()
-        const isDeviceTrusted = await checkDeviceTrust(data.user?.id, deviceId)
-        
-        if (!isDeviceTrusted) {
-          setCurrentStep('2fa')
-          setLoading(false)
-          return
-        }
-      }
+      // If we get here, either:
+      // 1. Login succeeded and no MFA is enabled
+      // 2. Login succeeded and device is already trusted
+      console.log('Login successful, checking session:', data.session)
 
-      // No 2FA required or device is trusted - proceed to dashboard
-      router.push('/dashboard')
+      if (data.session && data.user) {
+        // Check if user actually has 2FA enabled to determine if device trust worked
+        console.log('Checking for MFA factors...')
+        const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors()
+        console.log('MFA factors result:', { factors, factorsError })
+        
+        if (!factorsError && factors?.totp && factors.totp.length > 0) {
+          console.log('User has 2FA but login succeeded - device must be trusted or 2FA not enforced properly')
+          // If they have 2FA but login succeeded, check device trust status
+          const deviceId = getOrCreateDeviceId()
+          const isDeviceTrusted = await checkDeviceTrust(data.user.id, deviceId)
+          console.log('Device trust check result:', isDeviceTrusted)
+          
+          if (!isDeviceTrusted) {
+            console.log('Device not trusted, but login succeeded - this might indicate MFA enforcement issue')
+            // Let's create a challenge manually to enforce 2FA
+            const totpFactor = factors.totp[0]
+            console.log('Creating manual MFA challenge for factor:', totpFactor.id)
+            
+            const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({
+              factorId: totpFactor.id
+            })
+
+            if (challengeError) {
+              console.error('Challenge creation error:', challengeError)
+              // If challenge creation fails, log out and show error
+              await supabase.auth.signOut()
+              setError('2FA verification required but failed to create challenge. Please try again.')
+              setLoading(false)
+              return
+            }
+
+            console.log('Manual challenge created:', challenge)
+            setChallengeId(challenge.id)
+            setFactorId(totpFactor.id)
+            setCurrentStep('2fa')
+            setLoading(false)
+            return
+          }
+        }
+        
+        // No 2FA or device is trusted - proceed to dashboard
+        console.log('Proceeding to dashboard - no 2FA required or device trusted')
+        router.push('/dashboard')
+      } else {
+        console.error('No session created despite successful login')
+        setError('Login failed - no session created')
+        setLoading(false)
+      }
     } catch (err) {
-      setError('An unexpected error occurred')
+      console.error('Login error:', err)
+      setError('An unexpected error occurred: ' + String(err))
       setLoading(false)
     }
   }
@@ -64,36 +122,70 @@ export default function LoginPage() {
     setError('')
 
     try {
-      const { data: factors } = await supabase.auth.mfa.listFactors()
-      const totpFactor = factors?.totp?.[0]
-
-      if (!totpFactor) {
-        setError('2FA is not properly set up')
-        setLoading(false)
-        return
+      console.log('Starting 2FA verification')
+      
+      // Ensure we have the required IDs, otherwise try to create a new challenge
+      if (!challengeId || !factorId) {
+        console.log('Missing challenge/factor IDs, creating new challenge...')
+        
+        // Get factors first
+        const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors()
+        if (factorsError || !factors?.totp || factors.totp.length === 0) {
+          setError('Unable to verify 2FA. Please log in again.')
+          setCurrentStep('credentials')
+          setLoading(false)
+          return
+        }
+        
+        // Create a new challenge
+        const totpFactor = factors.totp[0]
+        const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({
+          factorId: totpFactor.id
+        })
+        
+        if (challengeError || !challenge) {
+          console.error('Failed to create challenge:', challengeError)
+          setError('Failed to create 2FA challenge. Please log in again.')
+          setCurrentStep('credentials')
+          setLoading(false)
+          return
+        }
+        
+        setChallengeId(challenge.id)
+        setFactorId(totpFactor.id)
+        console.log('New challenge created:', challenge.id)
       }
 
+      console.log('Verifying TOTP with challenge ID:', challengeId, 'factor ID:', factorId)
+
       const { data, error } = await supabase.auth.mfa.verify({
-        factorId: totpFactor.id,
-        challengeId: totpFactor.challenge_id || '',
+        factorId: factorId,
+        challengeId: challengeId,
         code: totpCode
       })
 
       if (error) {
-        setError('Invalid verification code')
+        console.error('2FA verification error:', error)
+        setError('Invalid verification code. Please try again.')
         setLoading(false)
         return
       }
 
+      console.log('2FA verification successful:', data)
+
       // If user chose to trust device, save it
       if (trustDevice && data.user) {
         const deviceId = getOrCreateDeviceId()
-        await saveTrustedDevice(data.user.id, deviceId)
+        console.log('Saving trusted device:', deviceId)
+        
+        await saveDeviceTrust(data.user.id, deviceId)
       }
 
+      // Redirect to dashboard
       router.push('/dashboard')
     } catch (err) {
-      setError('Invalid verification code')
+      console.error('2FA login error:', err)
+      setError('An unexpected error occurred during 2FA verification')
       setLoading(false)
     }
   }
@@ -364,7 +456,14 @@ export default function LoginPage() {
                 {/* Back Button */}
                 <button
                   type="button"
-                  onClick={() => { setCurrentStep('credentials'); setError(''); setTotpCode('') }}
+                  onClick={() => { 
+                    setCurrentStep('credentials')
+                    setError('')
+                    setTotpCode('')
+                    setChallengeId('')
+                    setFactorId('')
+                    setTrustDevice(false)
+                  }}
                   className="w-full px-4 py-2 text-sm text-white/70 hover:text-white transition-colors"
                 >
                   ← Back to login

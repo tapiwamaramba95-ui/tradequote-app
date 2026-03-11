@@ -28,7 +28,10 @@ export default function SecurityPage() {
   const [show2FASetup, setShow2FASetup] = useState(false)
   const [qrCodeUrl, setQrCodeUrl] = useState('')
   const [verificationCode, setVerificationCode] = useState('')
-  const [twoFactorSecret, setTwoFactorSecret] = useState('')
+  const [factorId, setFactorId] = useState('')
+  const [uri, setUri] = useState('')
+  const [mfaFactors, setMfaFactors] = useState<any[]>([])
+  const [mfaEnabled, setMfaEnabled] = useState(false)
 
   useEffect(() => {
     loadSecurityData()
@@ -47,6 +50,15 @@ export default function SecurityPage() {
         .single()
 
       if (profileData) setProfile(profileData)
+
+      // Load MFA factors
+      const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors()
+      if (!factorsError && factors) {
+        const totpFactors = factors.totp || factors.factors?.filter(f => f.factor_type === 'totp') || []
+        setMfaFactors(totpFactors)
+        setMfaEnabled(totpFactors.length > 0)
+        console.log('MFA factors loaded:', totpFactors)
+      }
 
       // Load security logs
       const { data: logsData } = await supabase
@@ -111,23 +123,33 @@ export default function SecurityPage() {
 
   const handleEnable2FA = async () => {
     try {
-      // Generate secret
-      const secret = generateRandomSecret()
-      setTwoFactorSecret(secret)
+      console.log('Starting 2FA enrollment...')
+      
+      // Enroll a new TOTP factor using Supabase MFA API
+      const { data, error } = await supabase.auth.mfa.enroll({
+        factorType: 'totp'
+      })
+
+      if (error) {
+        console.error('Enrollment error:', error)
+        alert('Failed to start 2FA setup: ' + error.message)
+        return
+      }
+
+      console.log('Enrollment started:', data)
+      
+      setFactorId(data.id)
+      setUri(data.totp.uri)
 
       // Generate QR code
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      const otpauthUrl = `otpauth://totp/TradeQuote:${user.email}?secret=${secret}&issuer=TradeQuote`
-      const qrUrl = await QRCode.toDataURL(otpauthUrl)
+      const qrUrl = await QRCode.toDataURL(data.totp.uri)
       setQrCodeUrl(qrUrl)
 
       setShow2FASetup(true)
 
     } catch (error) {
       console.error('Error setting up 2FA:', error)
-      alert('Failed to set up 2FA')
+      alert('Failed to set up 2FA: ' + String(error))
     }
   }
 
@@ -138,34 +160,56 @@ export default function SecurityPage() {
     }
 
     try {
-      // Verify code (implement TOTP verification)
-      // For demo purposes, accepting any 6-digit code
+      console.log('Verifying 2FA code for factor:', factorId)
       
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      // Create a challenge for verification
+      const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({
+        factorId: factorId
+      })
 
-      // Save 2FA secret
-      await supabase
-        .from('profiles')
-        .update({
-          two_factor_enabled: true,
-          two_factor_secret: twoFactorSecret,
-        })
-        .eq('id', user.id)
+      if (challengeError) {
+        console.error('Challenge error:', challengeError)
+        alert('Failed to create challenge: ' + challengeError.message)
+        return
+      }
+
+      console.log('Challenge created:', challenge)
+
+      // Verify with the challenge ID
+      const { data, error } = await supabase.auth.mfa.verify({
+        factorId: factorId,
+        challengeId: challenge.id,
+        code: verificationCode
+      })
+
+      if (error) {
+        console.error('Verification error:', error)
+        alert('Invalid verification code. Please try again.')
+        return
+      }
+
+      console.log('2FA enrollment verified successfully:', data)
 
       // Log security event
-      await supabase.from('security_audit_log').insert({
-        user_id: user.id,
-        event_type: '2fa_enabled',
-      })
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        await supabase.from('security_audit_log').insert({
+          user_id: user.id,
+          event_type: '2fa_enabled',
+        })
+      }
 
       alert('2FA enabled successfully!')
       setShow2FASetup(false)
       setVerificationCode('')
+      setFactorId('')
+      setUri('')
+      setQrCodeUrl('')
       loadSecurityData()
 
     } catch (error) {
-      alert('Failed to verify code')
+      console.error('Verification failed:', error)
+      alert('Failed to verify code: ' + String(error))
     }
   }
 
@@ -175,38 +219,37 @@ export default function SecurityPage() {
     }
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      await supabase
-        .from('profiles')
-        .update({
-          two_factor_enabled: false,
-          two_factor_secret: null,
+      console.log('Disabling 2FA for factors:', mfaFactors)
+      
+      // Unenroll all TOTP factors
+      for (const factor of mfaFactors) {
+        console.log('Unenrolling factor:', factor.id)
+        const { error } = await supabase.auth.mfa.unenroll({
+          factorId: factor.id
         })
-        .eq('id', user.id)
+        
+        if (error) {
+          console.error('Error unenrolling factor:', error)
+          throw error
+        }
+      }
 
       // Log security event
-      await supabase.from('security_audit_log').insert({
-        user_id: user.id,
-        event_type: '2fa_disabled',
-      })
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        await supabase.from('security_audit_log').insert({
+          user_id: user.id,
+          event_type: '2fa_disabled',
+        })
+      }
 
-      alert('2FA disabled')
+      alert('2FA disabled successfully')
       loadSecurityData()
 
     } catch (error) {
-      alert('Failed to disable 2FA')
+      console.error('Failed to disable 2FA:', error)
+      alert('Failed to disable 2FA: ' + String(error))
     }
-  }
-
-  const generateRandomSecret = (): string => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
-    let secret = ''
-    for (let i = 0; i < 32; i++) {
-      secret += chars.charAt(Math.floor(Math.random() * chars.length))
-    }
-    return secret
   }
 
   if (loading) {
@@ -330,7 +373,7 @@ export default function SecurityPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            {profile?.two_factor_enabled ? (
+            {mfaEnabled ? (
               <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-semibold">
                 Enabled
               </span>
@@ -342,7 +385,7 @@ export default function SecurityPage() {
           </div>
         </div>
 
-        {!profile?.two_factor_enabled && !show2FASetup && (
+        {!mfaEnabled && !show2FASetup && (
           <div>
             <p className="mb-6" style={{ color: colors.text.secondary }}>
               Protect your account with 2FA using an authenticator app like Google Authenticator or Authy.
@@ -368,9 +411,12 @@ export default function SecurityPage() {
               {qrCodeUrl && (
                 <img src={qrCodeUrl} alt="2FA QR Code" className="mb-4" />
               )}
-              <p className="text-xs font-mono p-3 bg-gray-100 rounded" style={{ color: colors.text.primary }}>
-                {twoFactorSecret}
-              </p>
+              <div className="bg-gray-100 rounded p-3">
+                <p className="text-xs font-medium mb-2" style={{ color: colors.text.primary }}>Manual Entry Secret:</p>
+                <p className="text-xs font-mono break-all" style={{ color: colors.text.primary }}>
+                  {uri.split('secret=')[1]?.split('&')[0] || 'Loading...'}
+                </p>
+              </div>
             </div>
 
             <div className="mb-6">
@@ -396,6 +442,9 @@ export default function SecurityPage() {
                 onClick={() => {
                   setShow2FASetup(false)
                   setVerificationCode('')
+                  setFactorId('')
+                  setUri('')
+                  setQrCodeUrl('')
                 }}
                 className="px-4 py-2 border-2 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
                 style={{ borderColor: colors.border.DEFAULT, color: colors.text.primary }}
@@ -413,11 +462,12 @@ export default function SecurityPage() {
           </div>
         )}
 
-        {profile?.two_factor_enabled && (
+        {mfaEnabled && (
           <div>
             <p className="mb-6" style={{ color: colors.text.secondary }}>
               2FA is currently enabled on your account. Use your authenticator app to sign in.
             </p>
+            
             <button
               onClick={handleDisable2FA}
               className="px-4 py-2 border-2 border-red-200 text-red-600 rounded-lg font-semibold hover:bg-red-50 transition-colors"
