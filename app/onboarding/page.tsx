@@ -335,7 +335,7 @@ function ProfileStep({
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8">
       <div className="text-center mb-8">
         <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-orange-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-          <Building2 className="w-8 h-8" style={{ color: colors.primary }} />
+          <Building2 className="w-8 h-8 text-orange-600" />
         </div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Complete Your Company Profile</h2>
         <p className="text-gray-600">These details appear on your quotes and invoices</p>
@@ -422,11 +422,7 @@ function ProfileStep({
         <button
           onClick={onSubmit}
           disabled={!abn || !address || saving}
-          className="flex-1 px-6 py-3 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 transition-all"
-          style={{ 
-            backgroundColor: colors.primary,
-            color: 'white',
-          }}
+          className="flex-1 px-6 py-3 bg-orange-600 text-white rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 transition-all hover:bg-orange-700"
         >
           {saving ? (
             <>
