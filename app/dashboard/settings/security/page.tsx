@@ -54,7 +54,7 @@ export default function SecurityPage() {
       // Load MFA factors
       const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors()
       if (!factorsError && factors) {
-        const totpFactors = factors.totp || factors.factors?.filter(f => f.factor_type === 'totp') || []
+        const totpFactors = factors.totp || []
         setMfaFactors(totpFactors)
         setMfaEnabled(totpFactors.length > 0)
         console.log('MFA factors loaded:', totpFactors)

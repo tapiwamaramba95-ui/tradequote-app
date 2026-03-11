@@ -48,8 +48,8 @@ export default function TwoFactorTestPage() {
       console.log('Direct MFA factors response:', { factorsData, factorsError })
 
       // Try different ways to access factors
-      const clientFactors = factorsData?.totp || factorsData?.factors?.filter(f => f.factor_type === 'totp') || []
-      const allClientFactors = factorsData?.factors || []
+      const clientFactors = factorsData?.totp || []
+      const allClientFactors = factorsData?.all || []
       
       console.log('Processed client factors:', { 
         clientFactors, 

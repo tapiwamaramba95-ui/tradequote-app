@@ -49,8 +49,8 @@ export async function GET() {
     }
 
     // Check different possible structures for factors
-    const totpFactors = factors?.totp || factors?.factors?.filter(f => f.factor_type === 'totp') || []
-    const allFactors = factors?.factors || []
+    const totpFactors = factors?.totp || []
+    const allFactors = factors?.all || []
     
     console.log('Processed factors:', { 
       totpFactors, 

@@ -178,7 +178,7 @@ export default function LoginPage() {
         const deviceId = getOrCreateDeviceId()
         console.log('Saving trusted device:', deviceId)
         
-        await saveDeviceTrust(data.user.id, deviceId)
+        await saveTrustedDevice(data.user.id, deviceId)
       }
 
       // Redirect to dashboard
