@@ -125,8 +125,8 @@ export default function SignUpPage() {
           .eq('user_id', authData.user.id)
       }
 
-      // 3. Send to onboarding wizard to complete setup
-      router.push('/onboarding?from=signup')
+      // 3. Send to success page to check email
+      router.push(`/auth/sign-up/success?email=${encodeURIComponent(email)}`)
 
     } catch (error: any) {
       console.error('Sign up error:', error)

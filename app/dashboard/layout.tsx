@@ -15,6 +15,7 @@ export default function DashboardLayout({
   const pathname = usePathname()
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
+  const [profile, setProfile] = useState<any>(null)
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
   useEffect(() => {
@@ -25,6 +26,15 @@ export default function DashboardLayout({
         router.push('/login')
       } else {
         setUser(session.user)
+        
+        // Load user profile information
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('full_name, business_name')
+          .eq('id', session.user.id)
+          .single()
+        
+        setProfile(profileData)
         setLoading(false)
       }
     }
@@ -225,12 +235,12 @@ export default function DashboardLayout({
           <div className="p-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
             <div className="flex items-center space-x-3 px-3 py-2">
               <div className="h-8 w-8 rounded-full flex items-center justify-center text-white font-semibold text-sm" style={{ backgroundColor: colors.accent.DEFAULT }}>
-                {user?.email?.[0].toUpperCase() || 'U'}
+                {profile?.full_name?.[0]?.toUpperCase() || profile?.business_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
               </div>
               {sidebarOpen && (
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-white truncate">
-                    {user?.email?.split('@')[0] || 'User'}
+                    {profile?.full_name || profile?.business_name || user?.email?.split('@')[0] || 'User'}
                   </p>
                   <button
                     onClick={handleLogout}

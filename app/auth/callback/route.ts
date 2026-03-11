@@ -31,5 +31,6 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.redirect(new URL('/dashboard', request.url))
+  // Redirect to onboarding for new users after email verification
+  return NextResponse.redirect(new URL('/onboarding?verified=true', request.url))
 }
