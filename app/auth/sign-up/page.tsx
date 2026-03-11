@@ -97,15 +97,20 @@ export default function SignUpPage() {
 
       console.log('User created successfully:', authData.user.id)
 
+      // Wait a moment for trigger to complete
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
       // 2. Update profile with business details
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
           business_name: businessName,
+          company_name: businessName, // Keep both for compatibility
           trade_type: tradeType,
           phone: phone,
           subscription_status: 'trial',
           trial_started_at: new Date().toISOString(),
+          // trial_ends_at will be auto-calculated by database trigger
         })
         .eq('id', authData.user.id)
 
@@ -113,6 +118,8 @@ export default function SignUpPage() {
         console.error('Profile update error:', profileError)
         throw new Error(`Profile update error: ${profileError.message}`)
       }
+
+      console.log('Profile updated successfully with business details')
 
       // ✅ Mark business details as complete if provided  
       if (businessName && tradeType && phone) {

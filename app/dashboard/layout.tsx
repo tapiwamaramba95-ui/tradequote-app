@@ -30,7 +30,7 @@ export default function DashboardLayout({
         // Load user profile information
         const { data: profileData } = await supabase
           .from('profiles')
-          .select('full_name, business_name')
+          .select('full_name, business_name, email')
           .eq('id', session.user.id)
           .single()
         
@@ -40,6 +40,21 @@ export default function DashboardLayout({
     }
 
     checkUser()
+    
+    // Listen for auth state changes to update profile
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user && event === 'SIGNED_IN') {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('full_name, business_name, email')
+          .eq('id', session.user.id)
+          .single()
+        
+        setProfile(profileData)
+      }
+    })
+
+    return () => subscription.unsubscribe()
   }, [router])
 
   const handleLogout = async () => {

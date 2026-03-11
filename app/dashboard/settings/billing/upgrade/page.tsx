@@ -11,7 +11,7 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 const PLAN_DETAILS = {
   starter: {
     name: 'Starter',
-    price: 20,
+    price: 39,
     description: 'Perfect for solo tradies just getting started',
     features: [
       'Unlimited jobs, quotes & invoices',
@@ -24,7 +24,7 @@ const PLAN_DETAILS = {
   },
   professional: {
     name: 'Professional',
-    price: 30,
+    price: 49,
     description: 'For tradies with a small team',
     features: [
       'Everything in Starter',
@@ -39,7 +39,7 @@ const PLAN_DETAILS = {
   },
   business: {
     name: 'Business',
-    price: 79,
+    price: 89,
     description: 'For growing businesses with multiple crews',
     features: [
       'Everything in Professional',

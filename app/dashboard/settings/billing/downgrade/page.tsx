@@ -78,7 +78,7 @@ export default function DowngradePage() {
                   Professional
                 </p>
                 <p className="text-sm" style={{ color: colors.text.secondary }}>
-                  $30/month • Up to 5 staff
+                  $49/month • Up to 5 staff
                 </p>
               </div>
             </div>
@@ -99,7 +99,7 @@ export default function DowngradePage() {
                   Starter
                 </p>
                 <p className="text-sm" style={{ color: colors.text.secondary }}>
-                  $20/month • 1 user only
+                  $39/month • 1 user only
                 </p>
               </div>
             </div>

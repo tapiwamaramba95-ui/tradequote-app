@@ -157,7 +157,7 @@ export default function ReactivatePage() {
                   Starter
                 </h3>
                 <span className="font-bold text-lg" style={{ color: colors.accent.DEFAULT }}>
-                  $20/month
+                  $39/month
                 </span>
               </div>
               <p className="text-sm" style={{ color: colors.text.secondary }}>
@@ -188,7 +188,7 @@ export default function ReactivatePage() {
                   <span className="bg-orange-100 text-orange-700 px-2 py-1 rounded-full text-xs font-semibold">POPULAR</span>
                 </div>
                 <span className="font-bold text-lg" style={{ color: colors.accent.DEFAULT }}>
-                  $30/month
+                  $49/month
                 </span>
               </div>
               <p className="text-sm" style={{ color: colors.text.secondary }}>
@@ -216,7 +216,7 @@ export default function ReactivatePage() {
                   Business
                 </h3>
                 <span className="font-bold text-lg" style={{ color: colors.accent.DEFAULT }}>
-                  $79/month
+                  $89/month
                 </span>
               </div>
               <p className="text-sm" style={{ color: colors.text.secondary }}>

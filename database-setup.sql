@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS profiles (
     phone TEXT,
     subscription_status TEXT DEFAULT 'trial',
     trial_started_at TIMESTAMPTZ,
-    company_name TEXT,
+    trial_ends_at TIMESTAMPTZ,
+    company_name TEXT, -- Legacy field, same as business_name
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -61,6 +62,13 @@ BEGIN
         ALTER TABLE profiles ADD COLUMN trial_started_at TIMESTAMPTZ;
         RAISE NOTICE 'Added trial_started_at column to profiles';
     END IF;
+
+    -- Check and add trial_ends_at  
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'profiles' AND column_name = 'trial_ends_at') THEN
+        ALTER TABLE profiles ADD COLUMN trial_ends_at TIMESTAMPTZ;
+        RAISE NOTICE 'Added trial_ends_at column to profiles';
+    END IF;
 END $$;
 
 -- Enable RLS on profiles table
@@ -70,6 +78,7 @@ ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
 DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
 DROP POLICY IF EXISTS "Users can insert own profile" ON profiles;
+DROP POLICY IF EXISTS "Service role can insert profiles" ON profiles;
 
 -- Create RLS policies for profiles
 CREATE POLICY "Users can view own profile" 
@@ -126,6 +135,7 @@ ALTER TABLE onboarding_progress ENABLE ROW LEVEL SECURITY;
 
 -- Drop existing policy to avoid conflicts
 DROP POLICY IF EXISTS "Users can manage their own onboarding progress" ON onboarding_progress;
+DROP POLICY IF EXISTS "Service role can insert onboarding progress" ON onboarding_progress;
 
 -- RLS Policy: Users can only view/edit their own progress
 CREATE POLICY "Users can manage their own onboarding progress" 
@@ -198,7 +208,29 @@ CREATE TRIGGER update_onboarding_progress_updated_at
     EXECUTE FUNCTION update_updated_at_column();
 
 -- =====================================================
--- 5. VERIFICATION QUERIES
+-- 5. AUTO-CALCULATE TRIAL END DATE
+-- =====================================================
+
+-- Function to automatically set trial end date
+CREATE OR REPLACE FUNCTION set_trial_end_date()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.trial_started_at IS NOT NULL AND NEW.trial_ends_at IS NULL THEN
+    NEW.trial_ends_at = NEW.trial_started_at + INTERVAL '14 days';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger to auto-set trial end date
+DROP TRIGGER IF EXISTS set_trial_end_date_trigger ON profiles;
+CREATE TRIGGER set_trial_end_date_trigger
+    BEFORE INSERT OR UPDATE ON profiles
+    FOR EACH ROW
+    EXECUTE FUNCTION set_trial_end_date();
+
+-- =====================================================
+-- 6. VERIFICATION QUERIES
 -- =====================================================
 
 -- Check profiles table structure

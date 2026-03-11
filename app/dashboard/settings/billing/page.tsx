@@ -176,7 +176,7 @@ export default function BillingPage() {
             </div>
             {isActive && (
               <p className="text-lg font-bold" style={{ color: colors.accent.DEFAULT }}>
-                {isStarter ? '$20' : isProfessional ? '$30' : '$79'}/{isMonthly ? 'month' : 'year'}
+                {isStarter ? '$39' : isProfessional ? '$49' : '$89'}/{isMonthly ? 'month' : 'year'}
               </p>
             )}
             {isOnTrial && profile && (
@@ -331,7 +331,7 @@ export default function BillingPage() {
               </p>
               <div className="mb-4">
                 <span className="text-3xl font-bold" style={{ color: colors.accent.DEFAULT }}>
-                  $20
+                  $39
                 </span>
                 <span className="text-sm" style={{ color: colors.text.secondary }}>
                   /month
@@ -385,7 +385,7 @@ export default function BillingPage() {
               </p>
               <div className="mb-4">
                 <span className="text-3xl font-bold" style={{ color: colors.accent.DEFAULT }}>
-                  $30
+                  $49
                 </span>
                 <span className="text-sm" style={{ color: colors.text.secondary }}>
                   /month
@@ -443,7 +443,7 @@ export default function BillingPage() {
               </p>
               <div className="mb-4">
                 <span className="text-3xl font-bold" style={{ color: colors.accent.DEFAULT }}>
-                  $79
+                  $89
                 </span>
                 <span className="text-sm" style={{ color: colors.text.secondary }}>
                   /month

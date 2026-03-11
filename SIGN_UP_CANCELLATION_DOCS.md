@@ -110,7 +110,7 @@ Plumber, Electrician, Carpenter, Painter, Landscaper, Builder, HVAC, Roofing, Ti
   - All jobs, quotes & invoices
   - All clients
   - All settings
-- Plan selection: Starter ($20), Professional ($30), Business ($79)
+- Plan selection: Starter ($39), Professional ($49), Business ($89)
 - Redirects to payment flow
 
 **Ineligible State:**
@@ -322,7 +322,7 @@ export async function sendWelcomeEmail(email: string, name: string, trialEndDate
 
 ## 📊 Pricing Structure
 
-### Starter - $20/month or $200/year
+### Starter - $39/month or $390/year
 - Unlimited jobs, quotes & invoices
 - 1 user (solo tradie)
 - Client management
@@ -330,7 +330,7 @@ export async function sendWelcomeEmail(email: string, name: string, trialEndDate
 - Mobile app
 - Email support
 
-### Professional - $30/month or $300/year ⭐ MOST POPULAR
+### Professional - $49/month or $490/year ⭐ MOST POPULAR
 - Everything in Starter
 - Up to 5 staff members
 - Timesheets & time tracking
@@ -340,7 +340,7 @@ export async function sendWelcomeEmail(email: string, name: string, trialEndDate
 - Stripe payments (optional)
 - Priority support
 
-### Business - $79/month or $790/year
+### Business - $89/month or $890/year
 - Everything in Professional
 - Unlimited staff
 - Custom branding (logo on docs)
@@ -416,7 +416,7 @@ export async function sendWelcomeEmail(email: string, name: string, trialEndDate
 ## ⚡ Retention Offers
 
 ### 1. 50% Discount (Reason: Too Expensive)
-- **Offer:** Pay $15/month for 3 months (normally $30)
+- **Offer:** Pay $25/month for 3 months (normally $49)
 - **Savings:** $45 over 3 months
 - **Implementation:** TODO - Integrate with Stripe
 

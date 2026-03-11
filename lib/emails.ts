@@ -51,7 +51,7 @@ export const trialReminderDay10 = (name: string, daysLeft: number) => ({
         Choose a Plan
       </a>
       
-      <p><strong>Plans start at just $20/month</strong> - less than the cost of one coffee per day!</p>
+      <p><strong>Plans start at just $39/month</strong> - less than the cost of one coffee per day!</p>
       
       <p>Need help deciding? Reply to this email and we'll help you choose the right plan.</p>
       
@@ -72,7 +72,7 @@ export const trialReminderDay13 = (name: string) => ({
       
       <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px; margin: 20px 0;">
         <h3 style="margin-top: 0; color: #1e40af;">Choose a Plan Today</h3>
-        <p style="margin-bottom: 0;">Plans start at $20/month with no lock-in contract</p>
+        <p style="margin-bottom: 0;">Plans start at $39/month with no lock-in contract</p>
       </div>
       
       <a href="https://tradequote.com/dashboard/settings/billing" style="display: inline-block; background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; margin: 20px 0;">
@@ -112,7 +112,7 @@ export const trialEnded = (name: string) => ({
         Reactivate Your Account →
       </a>
       
-      <p><strong>Plans start at just $20/month</strong></p>
+      <p><strong>Plans start at just $39/month</strong></p>
       
       <h3>Not ready to commit?</h3>
       <p>Reply to this email and let's chat. We're happy to:</p>
@@ -178,7 +178,7 @@ export const winBackDay7 = (name: string) => ({
       <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 24px; border-radius: 12px; text-align: center; margin: 20px 0;">
         <div style="font-size: 36px; font-weight: bold; margin-bottom: 8px;">50% OFF</div>
         <div style="font-size: 18px; margin-bottom: 16px;">for the next 3 months</div>
-        <div style="font-size: 16px; opacity: 0.9;">Just $15/month instead of $30</div>
+        <div style="font-size: 16px; opacity: 0.9;">Just $25/month instead of $49</div>
       </div>
       
       <a href="https://tradequote.com/dashboard/settings/billing/reactivate?offer=50off" style="display: inline-block; background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; margin: 20px 0;">
