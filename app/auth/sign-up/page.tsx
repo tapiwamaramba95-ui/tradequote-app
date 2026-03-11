@@ -47,6 +47,11 @@ export default function SignUpPage() {
     setLoading(true)
 
     try {
+      // Check if Supabase is configured
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        throw new Error('Supabase configuration is missing. Please contact support.')
+      }
+
       // Validate
       if (!agreedToTerms) {
         setError('Please agree to the Terms of Service')
@@ -61,7 +66,7 @@ export default function SignUpPage() {
       }
 
       if (!phone) {
-        setError('Phone number is required')
+        setError('Phone number is required')  
         setLoading(false)
         return
       }
@@ -117,7 +122,25 @@ export default function SignUpPage() {
 
     } catch (error: any) {
       console.error('Sign up error:', error)
-      setError(error.message || 'Failed to create account')
+      
+      // Provide better error messages
+      let errorMessage = 'Failed to create account'
+      
+      if (error.message?.includes('Database error') || error.message?.includes('connection')) {
+        errorMessage = 'Unable to connect to database. Please check your internet connection and try again.'
+      } else if (error.message?.includes('User already registered')) {
+        errorMessage = 'An account with this email already exists. Please try signing in instead.'
+      } else if (error.message?.includes('Invalid email')) {
+        errorMessage = 'Please enter a valid email address.'
+      } else if (error.message?.includes('Weak password')) {
+        errorMessage = 'Password is too weak. Please choose a stronger password.'
+      } else if (error.message?.includes('Supabase configuration')) {
+        errorMessage = error.message
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
+      setError(errorMessage)
       setLoading(false)
     }
   }
