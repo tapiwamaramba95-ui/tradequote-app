@@ -65,12 +65,12 @@ export default function AboutPage() {
       <Header />
       
       {/* Hero Section */}
-      <section className="bg-gray-50 py-16 md:py-24">
+      <section className="bg-gradient-to-br from-gray-900 to-gray-800 py-16 md:py-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
             Built by tradies, for tradies
           </h1>
-          <p className="text-xl text-gray-700 mb-8">
+          <p className="text-xl text-gray-200 mb-8">
             TradeQuote was born from frustration with complicated business software 
             that just didn't work for trade businesses. We built something better.
           </p>
@@ -78,35 +78,35 @@ export default function AboutPage() {
       </section>
 
       {/* Our Story */}
-      <section className="bg-white py-16 md:py-24">
+      <section className="bg-gray-900 py-16 md:py-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
               Our Story
             </h2>
           </div>
           
           <div className="prose prose-lg max-w-none">
-            <p className="text-gray-700 mb-6">
+            <p className="text-gray-300 mb-6">
               In 2019, Mike was running a successful electrical contracting business in Melbourne. 
               But he was drowning in paperwork, struggling with invoicing, and losing track of jobs. 
               Every business software he tried was either too complicated, too expensive, or built 
               for office workers - not tradies.
             </p>
             
-            <p className="text-gray-700 mb-6">
+            <p className="text-gray-300 mb-6">
               After yet another frustrating evening trying to send a simple quote, Mike decided 
               to build his own solution. He teamed up with software engineer Sarah Chen to create 
               TradeQuote - business software designed specifically for Australian trade businesses.
             </p>
             
-            <p className="text-gray-700 mb-6">
+            <p className="text-gray-300 mb-6">
               We started with a simple goal: create the business software we wished we'd had as tradies. 
               No unnecessary features, no complicated setup, just the essential tools to run a professional 
               trade business efficiently.
             </p>
             
-            <p className="text-gray-700">
+            <p className="text-gray-300">
               Today, TradeQuote powers hundreds of trade businesses across Australia. We're still 
               Australian owned and operated, and we're still focused on keeping things simple 
               and effective for tradies.
@@ -116,22 +116,22 @@ export default function AboutPage() {
       </section>
 
       {/* Values */}
-      <section className="bg-gray-50 py-16 md:py-24">
+      <section className="bg-gray-900 py-16 md:py-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
               What We Stand For
             </h2>
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {values.map((value, index) => (
-              <div key={index} className="bg-white p-6 rounded-xl border border-gray-200 text-center">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-orange-100 rounded-lg mb-4">
-                  <value.icon className="w-6 h-6 text-orange-600" />
+              <div key={index} className="bg-gray-800 p-6 rounded-xl border border-gray-700 text-center">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-orange-500/10 rounded-lg mb-4">
+                  <value.icon className="w-6 h-6 text-orange-500" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">{value.title}</h3>
-                <p className="text-gray-700">{value.description}</p>
+                <h3 className="text-lg font-semibold text-white mb-3">{value.title}</h3>
+                <p className="text-gray-300">{value.description}</p>
               </div>
             ))}
           </div>
@@ -139,12 +139,12 @@ export default function AboutPage() {
       </section>
 
       {/* Stats */}
-      <section className="bg-[#2d3748] py-16">
+      <section className="bg-gradient-to-br from-gray-900 to-gray-800 py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {stats.map((stat, index) => (
               <div key={index}>
-                <div className="text-3xl md:text-4xl font-bold text-white mb-2">{stat.number}</div>
+                <div className="text-3xl md:text-4xl font-bold text-orange-500 mb-2">{stat.number}</div>
                 <div className="text-gray-300">{stat.label}</div>
               </div>
             ))}
@@ -153,13 +153,13 @@ export default function AboutPage() {
       </section>
 
       {/* Team */}
-      <section className="bg-white py-16 md:py-24">
+      <section className="bg-gray-900 py-16 md:py-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
               Meet the Team
             </h2>
-            <p className="text-xl text-gray-700">
+            <p className="text-xl text-gray-200">
               Real people who understand trade businesses
             </p>
           </div>
@@ -167,13 +167,13 @@ export default function AboutPage() {
           <div className="grid md:grid-cols-3 gap-8">
             {team.map((member, index) => (
               <div key={index} className="text-center">
-                <div className="w-32 h-32 bg-gradient-to-br from-orange-100 to-orange-200 rounded-full mx-auto mb-6 flex items-center justify-center">
-                  <Users className="w-12 h-12 text-orange-600" />
+                <div className="w-32 h-32 bg-gradient-to-br from-orange-500/20 to-orange-500/10 rounded-full mx-auto mb-6 flex items-center justify-center">
+                  <Users className="w-12 h-12 text-orange-500" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{member.name}</h3>
-                <div className="text-orange-600 font-semibold mb-3">{member.role}</div>
-                <p className="text-gray-700 mb-3">{member.bio}</p>
-                <div className="text-sm text-gray-600 font-medium">{member.background}</div>
+                <h3 className="text-xl font-bold text-white mb-2">{member.name}</h3>
+                <div className="text-orange-500 font-semibold mb-3">{member.role}</div>
+                <p className="text-gray-300 mb-3">{member.bio}</p>
+                <div className="text-sm text-gray-400 font-medium">{member.background}</div>
               </div>
             ))}
           </div>
@@ -181,27 +181,27 @@ export default function AboutPage() {
       </section>
 
       {/* Australian Focus */}
-      <section className="bg-gray-50 py-16">
+      <section className="bg-gray-900 py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="bg-white rounded-xl p-8 border border-gray-200">
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">
+          <div className="bg-gray-800 rounded-xl p-8 border border-gray-700">
+            <h3 className="text-2xl font-bold text-white mb-4">
               🇦🇺 Proudly Australian
             </h3>
-            <p className="text-gray-700 mb-6">
+            <p className="text-gray-300 mb-6">
               TradeQuote is 100% Australian owned and operated. Our servers are in Australia, 
               our team is in Australia, and we understand Australian business requirements.
             </p>
-            <div className="grid md:grid-cols-3 gap-4 text-sm text-gray-600">
+            <div className="grid md:grid-cols-3 gap-4 text-sm text-gray-400">
               <div>
-                <strong>Data Security:</strong><br />
+                <strong className="text-gray-200">Data Security:</strong><br />
                 Your data stays in Australia and is protected by Australian privacy laws
               </div>
               <div>
-                <strong>Local Support:</strong><br />
+                <strong className="text-gray-200">Local Support:</strong><br />
                 Talk to real Australians who understand your business during business hours
               </div>
               <div>
-                <strong>Built for Aussie Tradies:</strong><br />
+                <strong className="text-gray-200">Built for Aussie Tradies:</strong><br />
                 GST handling, ABN support, and features designed for Australian businesses
               </div>
             </div>
@@ -210,13 +210,13 @@ export default function AboutPage() {
       </section>
 
       {/* Contact Info */}
-      <section className="bg-white py-16">
+      <section className="bg-gray-900 py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold text-white mb-4">
               Get in Touch
             </h2>
-            <p className="text-gray-700">
+            <p className="text-gray-300">
               We'd love to hear from you. Whether you have questions, feedback, 
               or just want to chat about your business.
             </p>
@@ -224,37 +224,37 @@ export default function AboutPage() {
           
           <div className="grid md:grid-cols-3 gap-8 text-center">
             <div>
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-orange-100 rounded-lg mb-4">
-                <Mail className="w-6 h-6 text-orange-600" />
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-orange-500/10 rounded-lg mb-4">
+                <Mail className="w-6 h-6 text-orange-500" />
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Email Support</h3>
-              <p className="text-gray-700 mb-1">hello@tradequote.au</p>
-              <p className="text-sm text-gray-600">Usually respond within 2 hours</p>
+              <h3 className="font-semibold text-white mb-2">Email Support</h3>
+              <p className="text-gray-300 mb-1">hello@tradequote.au</p>
+              <p className="text-sm text-gray-400">Usually respond within 2 hours</p>
             </div>
             
             <div>
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-orange-100 rounded-lg mb-4">
-                <Phone className="w-6 h-6 text-orange-600" />
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-orange-500/10 rounded-lg mb-4">
+                <Phone className="w-6 h-6 text-orange-500" />
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Phone Support</h3>
-              <p className="text-gray-700 mb-1">1300 TRADEQUOTE</p>
-              <p className="text-sm text-gray-600">Mon-Fri, 8am-6pm AEST</p>
+              <h3 className="font-semibold text-white mb-2">Phone Support</h3>
+              <p className="text-gray-300 mb-1">1300 TRADEQUOTE</p>
+              <p className="text-sm text-gray-400">Mon-Fri, 8am-6pm AEST</p>
             </div>
             
             <div>
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-orange-100 rounded-lg mb-4">
-                <MapPin className="w-6 h-6 text-orange-600" />
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-orange-500/10 rounded-lg mb-4">
+                <MapPin className="w-6 h-6 text-orange-500" />
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Office</h3>
-              <p className="text-gray-700 mb-1">Melbourne, VIC</p>
-              <p className="text-sm text-gray-600">By appointment</p>
+              <h3 className="font-semibold text-white mb-2">Office</h3>
+              <p className="text-gray-300 mb-1">Melbourne, VIC</p>
+              <p className="text-sm text-gray-400">By appointment</p>
             </div>
           </div>
 
           <div className="text-center mt-12">
             <Link
               href="/contact"
-              className="inline-block px-6 py-3 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-700 transition-colors"
+              className="inline-block px-6 py-3 bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 transition-colors shadow-lg shadow-orange-500/30"
             >
               Send us a message
             </Link>

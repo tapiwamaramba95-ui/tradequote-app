@@ -149,19 +149,19 @@ export default function FeaturesPage() {
       <Header />
       
       {/* Hero Section */}
-      <section className="bg-gray-50 py-16 md:py-24">
+      <section className="bg-gradient-to-br from-gray-900 to-gray-800 py-16 md:py-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
               Everything you need to run your trade business
             </h1>
-            <p className="text-xl text-gray-700 max-w-3xl mx-auto mb-8">
+            <p className="text-xl text-gray-200 max-w-3xl mx-auto mb-8">
               Professional software designed specifically for Australian trade businesses. 
               Simple enough to use on site. Powerful enough to run your business.
             </p>
             <Link 
               href="/auth/sign-up"
-              className="inline-block px-8 py-4 bg-orange-600 text-white text-lg font-semibold rounded-lg hover:bg-orange-700 transition-colors"
+              className="inline-block px-8 py-4 bg-orange-500 text-white text-lg font-semibold rounded-lg hover:bg-orange-600 transition-colors shadow-lg shadow-orange-500/30"
             >
               Start Free Trial
             </Link>
@@ -170,7 +170,7 @@ export default function FeaturesPage() {
       </section>
 
       {/* Features Grid */}
-      <section className="bg-white py-16 md:py-24">
+      <section className="bg-gray-900 py-16 md:py-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="space-y-20">
             {features.map((feature, index) => (
@@ -182,24 +182,24 @@ export default function FeaturesPage() {
               >
                 {/* Content */}
                 <div className={index % 2 === 1 ? 'md:col-start-2' : ''}>
-                  <div className="w-16 h-16 bg-orange-100 rounded-xl flex items-center justify-center mb-6">
-                    <div className="text-orange-600">
+                  <div className="w-16 h-16 bg-orange-500/10 rounded-xl flex items-center justify-center mb-6">
+                    <div className="text-orange-500">
                       {feature.icon}
                     </div>
                   </div>
                   
-                  <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+                  <h3 className="text-2xl md:text-3xl font-bold text-white mb-4">
                     {feature.title}
                   </h3>
                   
-                  <p className="text-lg text-gray-700 mb-6">
+                  <p className="text-lg text-gray-200 mb-6">
                     {feature.description}
                   </p>
                   
                   <ul className="space-y-3">
                     {feature.benefits.map((benefit, benefitIndex) => (
-                      <li key={benefitIndex} className="flex items-center text-gray-700">
-                        <div className="w-2 h-2 bg-orange-600 rounded-full mr-3"></div>
+                      <li key={benefitIndex} className="flex items-center text-gray-300">
+                        <div className="w-2 h-2 bg-orange-500 rounded-full mr-3"></div>
                         {benefit}
                       </li>
                     ))}
@@ -208,19 +208,19 @@ export default function FeaturesPage() {
                 
                 {/* Image */}
                 <div className={`${index % 2 === 1 ? 'md:col-start-1 md:row-start-1' : ''}`}>
-                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl shadow-lg border border-gray-200 p-8 flex items-center justify-center">
+                  <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-lg border border-gray-700 p-8 flex items-center justify-center">
                     <div className="text-center">
-                      <div className="inline-flex items-center justify-center w-20 h-20 bg-orange-100 rounded-xl mb-6">
-                        <div className="text-orange-600">
+                      <div className="inline-flex items-center justify-center w-20 h-20 bg-orange-500/10 rounded-xl mb-6">
+                        <div className="text-orange-500">
                           {feature.icon}
                         </div>
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">{feature.title}</h3>
+                      <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
                       <div className="space-y-2">
                         {feature.benefits.slice(0, 3).map((benefit, benefitIndex) => (
-                          <div key={benefitIndex} className="bg-white rounded-lg p-3 shadow-sm">
-                            <div className="flex items-center text-sm text-gray-600">
-                              <CheckCircle className="w-4 h-4 text-green-600 mr-2" />
+                          <div key={benefitIndex} className="bg-gray-800 rounded-lg p-3 shadow-sm border border-gray-700">
+                            <div className="flex items-center text-sm text-gray-300">
+                              <CheckCircle className="w-4 h-4 text-orange-500 mr-2" />
                               {benefit}
                             </div>
                           </div>
@@ -236,29 +236,29 @@ export default function FeaturesPage() {
       </section>
 
       {/* Feature Comparison */}
-      <section className="bg-gray-50 py-16 md:py-24">
+      <section className="bg-gray-900 py-16 md:py-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
               Features by plan
             </h2>
-            <p className="text-xl text-gray-700">
+            <p className="text-xl text-gray-200">
               All features unlock as your business grows
             </p>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-900 border-b border-gray-700">
                   <tr>
-                    <th className="px-6 py-4 text-left font-semibold text-gray-900">Feature</th>
-                    <th className="px-6 py-4 text-center font-semibold text-gray-900">Starter</th>
-                    <th className="px-6 py-4 text-center font-semibold text-gray-900">Professional</th>
-                    <th className="px-6 py-4 text-center font-semibold text-gray-900">Business</th>
+                    <th className="px-6 py-4 text-left font-semibold text-white">Feature</th>
+                    <th className="px-6 py-4 text-center font-semibold text-white">Starter</th>
+                    <th className="px-6 py-4 text-center font-semibold text-white">Professional</th>
+                    <th className="px-6 py-4 text-center font-semibold text-white">Business</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-700">
                   {[
                     { feature: "Quotes & Invoices", starter: true, professional: true, business: true },
                     { feature: "Job Tracking", starter: true, professional: true, business: true },
@@ -278,26 +278,26 @@ export default function FeaturesPage() {
                     { feature: "Priority Support", starter: false, professional: true, business: true },
                   ].map((row, index) => (
                     <tr key={index}>
-                      <td className="px-6 py-4 font-medium text-gray-900">{row.feature}</td>
+                      <td className="px-6 py-4 font-medium text-gray-200">{row.feature}</td>
                       <td className="px-6 py-4 text-center">
                         {typeof row.starter === 'boolean' ? (
-                          row.starter ? <span className="text-green-600">✓</span> : <span className="text-gray-400">-</span>
+                          row.starter ? <span className="text-orange-500">✓</span> : <span className="text-gray-600">-</span>
                         ) : (
-                          <span className="text-gray-900">{row.starter}</span>
+                          <span className="text-gray-200">{row.starter}</span>
                         )}
                       </td>
                       <td className="px-6 py-4 text-center">
                         {typeof row.professional === 'boolean' ? (
-                          row.professional ? <span className="text-green-600">✓</span> : <span className="text-gray-400">-</span>
+                          row.professional ? <span className="text-orange-500">✓</span> : <span className="text-gray-600">-</span>
                         ) : (
-                          <span className="text-gray-900">{row.professional}</span>
+                          <span className="text-gray-200">{row.professional}</span>
                         )}
                       </td>
                       <td className="px-6 py-4 text-center">
                         {typeof row.business === 'boolean' ? (
-                          row.business ? <span className="text-green-600">✓</span> : <span className="text-gray-400">-</span>
+                          row.business ? <span className="text-orange-500">✓</span> : <span className="text-gray-600">-</span>
                         ) : (
-                          <span className="text-gray-900">{row.business}</span>
+                          <span className="text-gray-200">{row.business}</span>
                         )}
                       </td>
                     </tr>
@@ -310,7 +310,7 @@ export default function FeaturesPage() {
           <div className="text-center mt-8">
             <Link 
               href="/pricing" 
-              className="inline-block px-8 py-4 bg-orange-600 text-white text-lg font-semibold rounded-lg hover:bg-orange-700 transition-colors"
+              className="inline-block px-8 py-4 bg-orange-500 text-white text-lg font-semibold rounded-lg hover:bg-orange-600 transition-colors shadow-lg shadow-orange-500/30"
             >
               See Pricing
             </Link>

@@ -8,29 +8,29 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <header className="bg-gray-900 border-b border-gray-700 sticky top-0 z-50">
       <nav className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           
           {/* Logo */}
           <div className="flex items-center">
-            <Link href="/marketing" className="text-2xl font-bold text-gray-900">
+            <Link href="/marketing" className="text-2xl font-bold text-white">
               TradeQuote
             </Link>
           </div>
           
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link href="/features" className="text-gray-700 hover:text-gray-900 transition-colors">
+            <Link href="/features" className="text-gray-400 hover:text-white transition-colors">
               Features
             </Link>
-            <Link href="/pricing" className="text-gray-700 hover:text-gray-900 transition-colors">
+            <Link href="/pricing" className="text-gray-400 hover:text-white transition-colors">
               Pricing
             </Link>
-            <Link href="/about" className="text-gray-700 hover:text-gray-900 transition-colors">
+            <Link href="/about" className="text-gray-400 hover:text-white transition-colors">
               About
             </Link>
-            <Link href="/contact" className="text-gray-700 hover:text-gray-900 transition-colors">
+            <Link href="/contact" className="text-gray-400 hover:text-white transition-colors">
               Contact
             </Link>
           </div>
@@ -39,13 +39,13 @@ export default function Header() {
           <div className="hidden md:flex items-center space-x-4">
             <Link 
               href="/login" 
-              className="text-gray-700 hover:text-gray-900 transition-colors"
+              className="text-gray-400 hover:text-white transition-colors"
             >
               Log in
             </Link>
             <Link 
               href="/auth/sign-up" 
-              className="px-6 py-2 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-700 transition-colors"
+              className="px-6 py-2 bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 transition-colors shadow-lg shadow-orange-500/30"
             >
               Start Free Trial
             </Link>
@@ -57,56 +57,56 @@ export default function Header() {
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? (
-              <X className="w-6 h-6 text-gray-700" />
+              <X className="w-6 h-6 text-gray-400" />
             ) : (
-              <Menu className="w-6 h-6 text-gray-700" />
+              <Menu className="w-6 h-6 text-gray-400" />
             )}
           </button>
         </div>
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden absolute top-16 left-0 right-0 bg-white border-b border-gray-200 px-4 py-6">
+          <div className="md:hidden absolute top-16 left-0 right-0 bg-gray-800 border-b border-gray-700 px-4 py-6">
             <div className="space-y-4">
               <Link 
                 href="/features" 
-                className="block text-gray-700 hover:text-gray-900 transition-colors"
+                className="block text-gray-400 hover:text-white transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Features
               </Link>
               <Link 
                 href="/pricing" 
-                className="block text-gray-700 hover:text-gray-900 transition-colors"
+                className="block text-gray-400 hover:text-white transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Pricing
               </Link>
               <Link 
                 href="/about" 
-                className="block text-gray-700 hover:text-gray-900 transition-colors"
+                className="block text-gray-400 hover:text-white transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 About
               </Link>
               <Link 
                 href="/contact" 
-                className="block text-gray-700 hover:text-gray-900 transition-colors"
+                className="block text-gray-400 hover:text-white transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Contact
               </Link>
-              <div className="pt-4 border-t border-gray-200 space-y-4">
+              <div className="pt-4 border-t border-gray-700 space-y-4">
                 <Link 
                   href="/login" 
-                  className="block text-gray-700 hover:text-gray-900 transition-colors"
+                  className="block text-gray-400 hover:text-white transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Log in
                 </Link>
                 <Link 
                   href="/auth/sign-up" 
-                  className="block px-6 py-2 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-700 transition-colors text-center"
+                  className="block px-6 py-2 bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 transition-colors text-center shadow-lg shadow-orange-500/30"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Start Free Trial
