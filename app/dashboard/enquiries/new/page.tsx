@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useCallback } from 'react';
-import AddressInput from '@/components/AddressInput';
+import { AddressFields } from '@/components/AddressFields';
 import Link from 'next/link';
 import { formatAustralianPhone, isValidAustralianPhone, normalizeEmail, isValidEmail, suggestEmailCorrection } from '@/lib/utils/formatters'
 
@@ -11,14 +11,12 @@ export default function NewEnquiryPage() {
 		name: '',
 		phone: '',
 		email: '',
-		address: '',
+		street_address: '',
+		suburb: '',
+		state: '',
+		postcode: '',
 		description: '',
 	});
-
-	// Memoize the address change handler
-	const handleAddressChange = useCallback((address: string) => {
-		setForm(prev => ({ ...prev, address }))
-	}, [])
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
 		setForm({ ...form, [e.target.name]: e.target.value });
@@ -87,9 +85,15 @@ export default function NewEnquiryPage() {
 						</div>
 						<div className="mb-6">
 							<label className="block text-sm font-medium mb-2">Job Address</label>
-							<AddressInput
-								value={form.address}
-								onChange={handleAddressChange}
+							<AddressFields
+								streetAddress={form.street_address}
+								suburb={form.suburb}
+								state={form.state}
+								postcode={form.postcode}
+								onStreetAddressChange={(value) => setForm(prev => ({ ...prev, street_address: value }))}
+								onSuburbChange={(value) => setForm(prev => ({ ...prev, suburb: value }))}
+								onStateChange={(value) => setForm(prev => ({ ...prev, state: value }))}
+								onPostcodeChange={(value) => setForm(prev => ({ ...prev, postcode: value }))}
 								required={false}
 							/>
 						</div>

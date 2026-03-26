@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { FileText, Plus, Trash2 } from 'lucide-react'
 import NoteTemplateSelector from '@/components/NoteTemplateSelector'
 import PriceListBrowser from '@/components/PriceListBrowser'
 import Breadcrumb from '@/components/Breadcrumb'
+import { getBusinessId } from '@/lib/business'
 
 type LineItem = {
   id: string
@@ -49,13 +50,7 @@ export default function NewQuotePage() {
     valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   })
 
-  useEffect(() => {
-    fetchJobs()
-    fetchClients()
-    fetchBusinessSettings()
-  }, [])
-
-  const fetchBusinessSettings = async () => {
+  const fetchBusinessSettings = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
@@ -72,25 +67,27 @@ export default function NewQuotePage() {
     } catch (error) {
       console.error('Error fetching business settings:', error)
     }
-  }
+  }, [])
 
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     const { data } = await supabase
       .from('jobs')
       .select('id, job_number, job_name')
       .order('created_at', { ascending: false })
+      .limit(1000)
     
     setJobs(data || [])
-  }
+  }, [])
 
-  const fetchClients = async () => {
+  const fetchClients = useCallback(async () => {
     const { data } = await supabase
       .from('clients')
       .select('id, name, email')
       .order('name', { ascending: true })
+      .limit(1000)
     
     setClients(data || [])
-  }
+  }, [])
 
   const addLineItem = () => {
     const newId = String(lineItems.length + 1)
@@ -168,6 +165,13 @@ export default function NewQuotePage() {
         return
       }
 
+      const businessId = await getBusinessId()
+      if (!businessId) {
+        alert('No business found for user')
+        setLoading(false)
+        return
+      }
+
       // Fetch business settings to get quote numbering config
       const { data: settings } = await supabase
         .from('business_settings')
@@ -179,7 +183,7 @@ export default function NewQuotePage() {
       const { data: lastQuote } = await supabase
         .from('quotes')
         .select('quote_number')
-        .eq('user_id', user.id)
+        .eq('business_id', businessId)
         .like('quote_number', `${settings?.quote_prefix || 'Q'}%`)
         .order('quote_number', { ascending: false })
         .limit(1)
@@ -208,7 +212,7 @@ export default function NewQuotePage() {
         .from('quotes')
         .insert([
           {
-            user_id: user.id,
+            business_id: businessId,
             client_id: formData.client_id,
             job_id: formData.job_id || null,
             quote_number: quoteNumber,
@@ -231,7 +235,7 @@ export default function NewQuotePage() {
         const { count } = await supabase
           .from('quotes')
           .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id)
+          .eq('business_id', businessId)
 
         // If this is the first quote, mark onboarding complete
         if (count === 1) {

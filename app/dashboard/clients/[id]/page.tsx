@@ -11,7 +11,7 @@ type Job = {
   job_number: string;
   job_name: string;
   status: string;
-  total_amount: number;
+  quoted_amount: number;
   scheduled_date: string;
 };
 
@@ -40,6 +40,13 @@ export default function ClientDetailPage() {
   }, [clientId]);
 
   const fetchClientData = async () => {
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
     // Fetch client details including structured address fields
     const { data: clientData, error: clientError } = await supabase
       .from('clients')
@@ -58,11 +65,12 @@ export default function ClientDetailPage() {
     setForm(clientData);
 
     // Fetch related jobs with job_number
-    const { data: jobsData } = await supabase
+    const { data: jobsData, error: jobsError } = await supabase
       .from('jobs')
-      .select('id, job_number, job_name, status, total_amount, scheduled_date')
+      .select('*')
+      .eq('user_id', user.id)
       .eq('client_id', clientId)
-      .order('created_at', { ascending: false });
+      .order('job_number', { ascending: true });
 
     setJobs(jobsData || []);
 
@@ -77,6 +85,7 @@ export default function ClientDetailPage() {
         created_at,
         jobs!inner(client_id)
       `)
+      .eq('user_id', user.id)
       .eq('jobs.client_id', clientId)
       .order('created_at', { ascending: false });
 
@@ -101,10 +110,18 @@ export default function ClientDetailPage() {
   const handleSave = async () => {
     setLoading(true);
     
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      console.error('No user found');
+      setLoading(false);
+      return;
+    }
+    
     const { error } = await supabase
       .from('clients')
       .update(form)
-      .eq('id', clientId);
+      .eq('id', clientId)
+      .eq('user_id', user.id);
     
     if (!error) {
       setClient(form);
@@ -121,10 +138,19 @@ export default function ClientDetailPage() {
     }
 
     setLoading(true);
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      console.error('No user found');
+      setLoading(false);
+      return;
+    }
+    
     const { error } = await supabase
       .from('clients')
       .delete()
-      .eq('id', clientId);
+      .eq('id', clientId)
+      .eq('user_id', user.id);
 
     if (!error) {
       router.push('/dashboard/clients');
@@ -402,9 +428,8 @@ export default function ClientDetailPage() {
                             </Link>
                             <StatusBadge status={job.status} />
                           </div>
-                          <p className="text-gray-900 font-medium">{job.job_name}</p>
                           <p className="text-sm text-gray-600 mt-1">
-                            Value: <span className="font-medium">${job.total_amount?.toFixed(2) || '0.00'}</span>
+                            Value: <span className="font-medium">${job.quoted_amount?.toFixed(2) || '0.00'}</span>
                             {job.scheduled_date && (
                               <> • Scheduled: {new Date(job.scheduled_date).toLocaleDateString()}</>
                             )}
@@ -488,7 +513,7 @@ export default function ClientDetailPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Job Value</span>
                   <span className="font-semibold text-gray-900">
-                    ${jobs.reduce((sum, job) => sum + (job.total_amount || 0), 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ${jobs.reduce((sum, job) => sum + (job.quoted_amount || 0), 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">

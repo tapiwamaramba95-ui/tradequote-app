@@ -8,14 +8,14 @@ import { CheckCircle2, Camera, X } from 'lucide-react'
 
 interface CompleteJobModalProps {
   jobId: string
-  jobName: string
+  jobNumber?: string
   onClose: () => void
   onComplete: () => void
 }
 
 export default function CompleteJobModal({ 
   jobId, 
-  jobName,
+  jobNumber,
   onClose, 
   onComplete 
 }: CompleteJobModalProps) {
@@ -64,7 +64,7 @@ export default function CompleteJobModal({
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold text-gray-900">Complete Job</h2>
-            <p className="text-sm text-gray-600">{jobName}</p>
+            {jobNumber && <p className="text-sm text-gray-600">{jobNumber}</p>}
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <X className="w-5 h-5" />

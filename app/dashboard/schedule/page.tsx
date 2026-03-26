@@ -1,11 +1,14 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
-import Calendar, { Appointment } from '@/components/Calendar';
-import JobCreationForm from '@/components/JobCreationForm';
+import { Appointment } from '@/components/Calendar';
 import { ScheduleEvent, ScheduleEventType, Job } from '@/lib/types';
 import { CalendarDays, Calendar as CalendarIcon } from 'lucide-react';
 import { colors } from '@/lib/colors';
+import { getBusinessId } from '@/lib/business';
+
+const Calendar = lazy(() => import('@/components/Calendar'));
+const JobCreationForm = lazy(() => import('@/components/JobCreationForm'));
 
 export default function SchedulePage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -47,6 +50,10 @@ export default function SchedulePage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    const businessId = await getBusinessId();
+    if (!businessId) return;
+
+    // Fetch schedule_events
     let query = supabase
       .from('schedule_events')
       .select('*, jobs(job_name, id), staff(name)')
@@ -63,6 +70,23 @@ export default function SchedulePage() {
 
     const { data, error } = await query.order('scheduled_date', { ascending: true });
 
+    // Also fetch job_appointments
+    const { data: jobAppointments } = await supabase
+      .from('job_appointments')
+      .select('*, jobs!job_id(job_name, id)')
+      .eq('business_id', businessId)
+      .order('scheduled_date', { ascending: true });
+
+    // Also fetch from appointments table (main appointments)
+    const { data: mainAppointments } = await supabase
+      .from('appointments')
+      .select('*, jobs(job_name, id), clients(name)')
+      .eq('business_id', businessId)
+      .order('start_time', { ascending: true });
+
+    const allAppointments: Appointment[] = [];
+
+    // Add schedule_events
     if (!error && data) {
       const eventAppointments: Appointment[] = data.map(event => {
         const title = getEventLabel(event);
@@ -79,8 +103,46 @@ export default function SchedulePage() {
           eventType: event.event_type,
         };
       });
-      setAppointments(eventAppointments);
+      allAppointments.push(...eventAppointments);
     }
+
+    // Add job_appointments
+    if (jobAppointments) {
+      const jobAppts: Appointment[] = jobAppointments
+        .filter(apt => {
+          // Apply filter
+          if (scheduleFilter === 'measure_quote') return apt.appointment_type === 'measure_quote';
+          if (scheduleFilter === 'work') return apt.appointment_type === 'work';
+          if (scheduleFilter === 'admin') return false; // job appointments aren't admin tasks
+          return true; // all
+        })
+        .map(apt => ({
+          id: 'jobappt_' + apt.id,
+          title: `${apt.appointment_type === 'measure_quote' ? 'M&Q' : 'Work'} - ${apt.jobs?.job_name || 'Job'}`,
+          start: new Date(apt.scheduled_date),
+          end: new Date(apt.scheduled_date),
+          color: apt.appointment_type === 'measure_quote' ? '#F59E0B' : '#3B82F6',
+          jobId: apt.job_id,
+          eventType: apt.appointment_type as ScheduleEventType,
+        }));
+      allAppointments.push(...jobAppts);
+    }
+
+    // Add main appointments from appointments table
+    if (mainAppointments) {
+      const appts: Appointment[] = mainAppointments.map(apt => ({
+        id: 'apt_' + apt.id,
+        title: apt.title || (apt.jobs?.job_name ? `${apt.jobs.job_name}` : apt.clients?.name || 'Appointment'),
+        start: new Date(apt.start_time),
+        end: new Date(apt.end_time),
+        color: '#10B981', // green for general appointments
+        jobId: apt.job_id || undefined,
+        eventType: 'scheduled_work' as ScheduleEventType,
+      }));
+      allAppointments.push(...appts);
+    }
+
+    setAppointments(allAppointments);
   };
 
   const getEventLabel = (event: ScheduleEvent): string => {
@@ -106,10 +168,13 @@ export default function SchedulePage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    const businessId = await getBusinessId();
+    if (!businessId) return;
+
     const { data, error } = await supabase
       .from('staff')
       .select('*')
-      .eq('user_id', user.id);
+      .eq('business_id', businessId);
     if (!error && data) setStaffList(data);
   };
 
@@ -117,24 +182,30 @@ export default function SchedulePage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    const businessId = await getBusinessId();
+    if (!businessId) return;
+
     const { data, error } = await supabase
       .from('jobs')
-      .select('id, job_name, status, user_id, created_at, client_id, job_address')
-      .eq('user_id', user.id);
-    if (!error && data) setJobList(data);
+      .select('*')
+      .eq('business_id', businessId);
+    if (!error && data) setJobList(data as Job[]);
   };
 
   const fetchEnquiries = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    const businessId = await getBusinessId();
+    if (!businessId) return;
+
     const { data, error } = await supabase
       .from('jobs')
-      .select('id, job_name, status, user_id, created_at, description, job_address, client_id')
-      .eq('user_id', user.id)
+      .select('*')
+      .eq('business_id', businessId)
       .eq('status', 'enquiry') // Only enquiries
       .order('created_at', { ascending: false });
-    if (!error && data) setEnquiriesList(data);
+    if (!error && data) setEnquiriesList(data as Job[]);
   };
 
   const handleAddStaff = (staff: any) => {
@@ -223,22 +294,22 @@ export default function SchedulePage() {
   };
 
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-8 py-8 max-w-screen-2xl mx-auto">
+    <div className="w-full px-2 py-2">
       {/* Page Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-2">
         {/* Left: Icon + Title */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           {/* Icon Badge */}
-          <div className="w-12 h-12 bg-gradient-to-br from-pink-100 to-pink-50 rounded-xl flex items-center justify-center shadow-sm">
-            <CalendarIcon className="w-6 h-6 text-pink-600" />
+          <div className="w-8 h-8 bg-gradient-to-br from-pink-100 to-pink-50 rounded-lg flex items-center justify-center shadow-sm">
+            <CalendarIcon className="w-4 h-4 text-pink-600" />
           </div>
           
           {/* Title & Subtitle */}
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-lg font-bold text-gray-900">
               Schedule
             </h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-xs text-gray-500">
               {(() => {
                 const today = new Date();
                 const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
@@ -255,11 +326,11 @@ export default function SchedulePage() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="w-full overflow-x-auto mb-6">
-        <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
-          <div className="flex gap-1 bg-gray-50 p-1 rounded-lg min-w-max">
+      <div className="w-full overflow-x-auto mb-2">
+        <div className="bg-white rounded-lg p-1.5 shadow-sm">
+          <div className="flex gap-1 bg-gray-50 p-1 rounded-lg">
           <button 
-            className={`px-3 sm:px-6 py-2 rounded-lg font-semibold text-sm whitespace-nowrap transition-all ${
+            className={`px-2 py-1 rounded-lg font-semibold text-xs whitespace-nowrap transition-all ${
               scheduleFilter === 'all'
                 ? 'bg-orange-500 text-white shadow-md'
                 : 'text-gray-600 hover:bg-gray-100'
@@ -269,17 +340,17 @@ export default function SchedulePage() {
             All Jobs
           </button>
           <button 
-            className={`px-3 sm:px-6 py-2 rounded-lg font-semibold text-sm whitespace-nowrap transition-all ${
+            className={`px-2 py-1 rounded-lg font-semibold text-xs whitespace-nowrap transition-all ${
               scheduleFilter === 'measure_quote'
                 ? 'bg-amber-500 text-white shadow-md'
                 : 'text-gray-600 hover:bg-gray-100'
             }`}
             onClick={() => setScheduleFilter('measure_quote')}
           >
-            Measure & Quote
+            M&Q
           </button>
           <button 
-            className={`px-3 sm:px-6 py-2 rounded-lg font-semibold text-sm whitespace-nowrap transition-all ${
+            className={`px-2 py-1 rounded-lg font-semibold text-xs whitespace-nowrap transition-all ${
               scheduleFilter === 'work'
                 ? 'bg-orange-500 text-white shadow-md'
                 : 'text-gray-600 hover:bg-gray-100'
@@ -289,7 +360,7 @@ export default function SchedulePage() {
             Work
           </button>
           <button 
-            className={`px-3 sm:px-6 py-2 rounded-lg font-semibold text-sm whitespace-nowrap transition-all ${
+            className={`px-2 py-1 rounded-lg font-semibold text-xs whitespace-nowrap transition-all ${
               scheduleFilter === 'admin'
                 ? 'bg-gray-500 text-white shadow-md'
                 : 'text-gray-600 hover:bg-gray-100'
@@ -304,15 +375,21 @@ export default function SchedulePage() {
 
       {/* Calendar */}
       <div className="w-full overflow-x-auto">
-        <div className="min-w-[800px] lg:min-w-0">
-          <Calendar appointments={appointments} onCreate={handleCreate} />
+        <div className="min-w-[380px] lg:min-w-0">
+          <Suspense fallback={
+            <div className="flex items-center justify-center h-[600px]">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: colors.accent.DEFAULT }}></div>
+            </div>
+          }>
+            <Calendar appointments={appointments} onCreate={handleCreate} />
+          </Suspense>
         </div>
       </div>
       {/* Modern modal for appointment creation */}
       {showModal && (
-        <div className="fixed inset-0 bg-gray-900/20 backdrop-blur-lg flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-4 sm:p-6 lg:p-8 w-full max-w-sm sm:max-w-lg lg:max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">New Appointment</h3>
+        <div className="fixed inset-0 bg-gray-900/20 backdrop-blur-lg flex items-center justify-center p-3 z-50">
+          <div className="bg-white rounded-2xl p-3 sm:p-4 lg:p-6 w-full max-w-sm sm:max-w-lg lg:max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">New Appointment</h3>
             
             <div className="space-y-6">
               <div>
@@ -515,7 +592,13 @@ export default function SchedulePage() {
       {/* Job creation modal */}
       {showJobModal && (
         <div className="fixed inset-0 bg-gray-900/20 backdrop-blur-lg flex items-center justify-center p-4 z-50">
-          <JobCreationForm onJobCreated={handleJobCreated} onClose={() => setShowJobModal(false)} />
+          <Suspense fallback={
+            <div className="bg-white rounded-2xl p-8 shadow-2xl">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto" style={{ borderColor: colors.accent.DEFAULT }}></div>
+            </div>
+          }>
+            <JobCreationForm onJobCreated={handleJobCreated} onClose={() => setShowJobModal(false)} />
+          </Suspense>
         </div>
       )}
     </div>

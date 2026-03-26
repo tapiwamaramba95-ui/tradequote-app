@@ -66,10 +66,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     
+    // Get business_id for the user
+    const { data: userBusiness } = await supabase
+      .from('user_businesses')
+      .select('business_id')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+    
+    if (!userBusiness || !userBusiness.business_id) {
+      return NextResponse.json({ error: 'No business found for user' }, { status: 400 })
+    }
+    
     const body = await request.json()
     const { data, error } = await supabase
       .from('suppliers')
-      .insert([{ ...body, user_id: user.id }])
+      .insert([{ ...body, user_id: user.id, business_id: userBusiness.business_id }])
       .select()
       .single()
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })

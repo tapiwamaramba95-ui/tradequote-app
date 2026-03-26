@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { getBusinessId } from '@/lib/business'
 import { useParams, useRouter } from 'next/navigation'
 import { FileText, Edit, Send, Check, X, Calendar, Clock, DollarSign, ArrowRight, Download, Printer, Eye, Mail } from 'lucide-react'
 import { PDFDownloadLink } from '@react-pdf/renderer'
@@ -149,51 +150,109 @@ export default function QuoteDetailPage() {
   }, [])
 
   const fetchQuote = async () => {
-    const { data, error } = await supabase
-      .from('quotes')
-      .select(`
-        *,
-        clients!client_id (
-          id,
-          name,
-          email,
-          phone,
-          address
-        ),
-        jobs!job_id (
-          job_name,
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.push('/login')
+        return
+      }
+
+      const businessId = await getBusinessId()
+      if (!businessId) {
+        console.error('No business found for user')
+        setLoading(false)
+        return
+      }
+
+      console.log('Fetching quote:', params.id, 'for business:', businessId)
+
+      // First, try to get the quote without filtering to see if it exists and what business_id it has
+      const { data: checkData } = await supabase
+        .from('quotes')
+        .select('id, quote_number, business_id')
+        .eq('id', params.id)
+        .maybeSingle()
+
+      if (checkData) {
+        console.log('Quote exists:', checkData.quote_number, 'business_id:', checkData.business_id)
+        
+        // If business_id doesn't match, update it
+        if (checkData.business_id !== businessId) {
+          console.log('Updating quote business_id from', checkData.business_id, 'to', businessId)
+          await supabase
+            .from('quotes')
+            .update({ business_id: businessId })
+            .eq('id', checkData.id)
+        }
+      } else {
+        console.log('Quote does not exist:', params.id)
+      }
+
+      const { data, error } = await supabase
+        .from('quotes')
+        .select(`
+          *,
           clients!client_id (
             id,
             name,
             email,
             phone,
-            address
+            street_address,
+            suburb,
+            state,
+            postcode
+          ),
+          jobs!job_id (
+            job_name,
+            clients!client_id (
+              id,
+              name,
+              email,
+              phone,
+              street_address,
+              suburb,
+              state,
+              postcode
+            )
           )
-        )
-      `)
-      .eq('id', params.id)
-      .single()
+        `)
+        .eq('id', params.id)
+        .eq('business_id', businessId)
+        .maybeSingle()
 
-    if (!error && data) {
+      if (error) {
+        console.error('Error fetching quote:', error, JSON.stringify(error))
+        setLoading(false)
+        return
+      }
+
+      if (!data) {
+        console.error('Quote not found after business_id check/update')
+        setLoading(false)
+        return
+      }
+
+      // Quote found
+      console.log('Quote found:', data.quote_number)
       setQuote(data)
       
-      // Use user_id from quote directly
-      const userId = data.user_id
-      
-      if (userId) {
-        // Fetch business settings for branding
+      // Fetch business settings for branding using current user
+      if (user.id) {
         const { data: settings } = await supabase
           .from('business_settings')
           .select('company_name, company_logo_url, primary_brand_color')
-          .eq('user_id', userId)
+          .eq('user_id', user.id)
           .maybeSingle()
         
         if (settings) {
           setBusinessSettings(settings)
         }
       }
+    } catch (err) {
+      console.error('Exception fetching quote:', err)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const handleSendEmail = async (emailData: { subject: string; body: string; sendCopy: boolean }) => {
@@ -456,9 +515,13 @@ export default function QuoteDetailPage() {
             return client ? (
               <>
                 <p style={{ color: colors.text.primary }}>{client.name}</p>
-                <p className="text-sm" style={{ color: colors.text.secondary }}>{client.email}</p>
-                <p className="text-sm" style={{ color: colors.text.secondary }}>{client.phone}</p>
-                <p className="text-sm" style={{ color: colors.text.secondary }}>{client.address}</p>
+                {client.email && <p className="text-sm" style={{ color: colors.text.secondary }}>{client.email}</p>}
+                {client.phone && <p className="text-sm" style={{ color: colors.text.secondary }}>{client.phone}</p>}
+                {(client.street_address || client.suburb || client.state || client.postcode) && (
+                  <p className="text-sm" style={{ color: colors.text.secondary }}>
+                    {[client.street_address, client.suburb, client.state, client.postcode].filter(Boolean).join(', ')}
+                  </p>
+                )}
               </>
             ) : (
               <p className="text-red-500">No client information available</p>
@@ -484,12 +547,12 @@ export default function QuoteDetailPage() {
               </tr>
             </thead>
             <tbody>
-              {quote.line_items.map((item: any, index: number) => (
+              {quote.line_items?.map((item: any, index: number) => (
                 <tr key={index} className="hover:bg-gray-50 border-b">
-                  <td className="px-4 py-3 text-gray-900">{item.description}</td>
-                  <td className="px-4 py-3 text-right text-gray-900">{item.quantity}</td>
-                  <td className="px-4 py-3 text-right text-gray-900">${item.rate.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                  <td className="px-4 py-3 text-right font-medium text-gray-900">${item.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                  <td className="px-4 py-3 text-gray-900">{item.description || ''}</td>
+                  <td className="px-4 py-3 text-right text-gray-900">{item.quantity || 0}</td>
+                  <td className="px-4 py-3 text-right text-gray-900">${(item.rate || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                  <td className="px-4 py-3 text-right font-medium text-gray-900">${(item.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                 </tr>
               ))}
             </tbody>
@@ -500,11 +563,11 @@ export default function QuoteDetailPage() {
           <div className="w-64 pr-4"> {/* Added padding to align with Amount column */}
             <div className="flex justify-between py-2" style={{ color: colors.text.primary }}>
               <span>Subtotal:</span>
-              <span>${quote.subtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span>${(quote.subtotal || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
             <div className="flex justify-between py-2" style={{ color: colors.text.primary }}>
               <span>Tax:</span>
-              <span>${quote.tax.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span>${(quote.tax || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
             <div 
               className="flex justify-between py-2 border-t-2 font-bold text-lg"
@@ -514,7 +577,7 @@ export default function QuoteDetailPage() {
               }}
             >
               <span>Total:</span>
-              <span style={{ color: colors.accent.DEFAULT }}>${quote.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span style={{ color: colors.accent.DEFAULT }}>${(quote.total || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
           </div>
         </div>

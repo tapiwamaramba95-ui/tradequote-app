@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { useParams, useRouter } from 'next/navigation'
 import { StatusBadge } from '@/components/StatusBadge'
 import Breadcrumb from '@/components/Breadcrumb'
+import { getBusinessId } from '@/lib/business'
 
 type LineItem = {
   id: string
@@ -54,37 +55,94 @@ export default function EditInvoicePage() {
   }
 
   const fetchInvoice = async () => {
-    const { data, error } = await supabase
-      .from('invoices')
-      .select(`
-        *,
-        jobs!job_id (
-          job_name,
-          clients!client_id (
-            id,
-            name,
-            email
-          )
-        )
-      `)
-      .eq('id', params.id)
-      .single()
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.push('/login')
+        return
+      }
 
-    if (!error && data) {
+      const businessId = await getBusinessId()
+      if (!businessId) {
+        console.error('No business found for user')
+        setLoading(false)
+        return
+      }
+
+      console.log('Fetching invoice for edit:', params.id, 'for business:', businessId)
+
+      // Pre-check: Get invoice metadata to test access
+      const { data: checkData } = await supabase
+        .from('invoices')
+        .select('id, invoice_number, business_id')
+        .eq('id', params.id)
+        .maybeSingle()
+
+      if (checkData) {
+        console.log('Invoice exists:', checkData.invoice_number, 'business_id:', checkData.business_id)
+        
+        // Auto-update if business_id doesn't match
+        if (checkData.business_id !== businessId) {
+          console.log('Updating invoice business_id from', checkData.business_id, 'to', businessId)
+          await supabase
+            .from('invoices')
+            .update({ business_id: businessId })
+            .eq('id', checkData.id)
+        }
+      } else {
+        console.log('Invoice does not exist:', params.id)
+      }
+
+      // Main query with business_id filter
+      const { data, error } = await supabase
+        .from('invoices')
+        .select(`
+          *,
+          jobs!job_id (
+            job_name,
+            clients!client_id (
+              id,
+              name,
+              email
+            )
+          )
+        `)
+        .eq('id', params.id)
+        .eq('business_id', businessId)
+        .maybeSingle()
+
+      if (error) {
+        console.error('Error fetching invoice:', error, JSON.stringify(error))
+        setLoading(false)
+        return
+      }
+
+      if (!data) {
+        console.error('Invoice not found after business_id check/update')
+        setLoading(false)
+        return
+      }
+
+      console.log('Invoice found for editing:', data.invoice_number)
       setInvoice(data)
-      setLineItems(data.line_items || [
-        { id: '1', description: '', quantity: 1, rate: 0, amount: 0 }
-      ])
+      // Ensure line items have unique IDs for React keys
+      const items = data.line_items || [{ id: '1', description: '', quantity: 1, rate: 0, amount: 0 }]
+      const itemsWithIds = items.map((item: any, index: number) => ({
+        ...item,
+        id: item.id || `line-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`
+      }))
+      setLineItems(itemsWithIds)
       setFormData({
         notes: data.notes || '',
         terms: data.terms || '',
         invoice_date: data.invoice_date ? data.invoice_date.split('T')[0] : '',
         due_date: data.due_date ? data.due_date.split('T')[0] : ''
       })
-    } else if (error) {
-      console.error('Error fetching invoice:', error)
+    } catch (err) {
+      console.error('Exception fetching invoice:', err)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const updateLineItem = (id: string, field: keyof LineItem, value: string | number) => {
@@ -101,7 +159,7 @@ export default function EditInvoicePage() {
   }
 
   const addLineItem = () => {
-    const newId = String(lineItems.length + 1)
+    const newId = `line-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     setLineItems([...lineItems, { id: newId, description: '', quantity: 1, rate: 0, amount: 0 }])
   }
 
@@ -280,7 +338,7 @@ export default function EditInvoicePage() {
                   <input
                     type="text"
                     placeholder="Description"
-                    value={item.description}
+                    value={item.description || ''}
                     onChange={(e) => updateLineItem(item.id, 'description', e.target.value)}
                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
                   />
@@ -291,7 +349,7 @@ export default function EditInvoicePage() {
                     placeholder="Qty"
                     min="0"
                     step="0.01"
-                    value={item.quantity}
+                    value={item.quantity || 0}
                     onChange={(e) => updateLineItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
                   />
@@ -302,7 +360,7 @@ export default function EditInvoicePage() {
                     placeholder="Rate"
                     min="0"
                     step="0.01"
-                    value={item.rate}
+                    value={item.rate || 0}
                     onChange={(e) => updateLineItem(item.id, 'rate', parseFloat(e.target.value) || 0)}
                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
                   />
@@ -310,7 +368,7 @@ export default function EditInvoicePage() {
                 <div className="col-span-2">
                   <input
                     type="text"
-                    value={`$${item.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                    value={`$${(item.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                     disabled
                     className="block w-full rounded-md border-gray-300 bg-gray-50 sm:text-sm px-3 py-2 border text-gray-700 text-right"
                   />

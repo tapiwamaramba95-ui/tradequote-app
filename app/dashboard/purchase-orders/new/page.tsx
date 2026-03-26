@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { colors } from '@/lib/colors'
+import { getBusinessId } from '@/lib/business'
 import { useRouter } from 'next/navigation'
 import NoteTemplateSelector from '@/components/NoteTemplateSelector'
 import PriceListBrowser from '@/components/PriceListBrowser'
@@ -47,20 +48,19 @@ export default function NewPurchaseOrderPage() {
     { id: '1', description: '', quantity: 1, unit_price: 0, total: 0 }
   ])
 
-  useEffect(() => {
-    loadData()
-  }, [])
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+
+      const businessId = await getBusinessId()
+      if (!businessId) return
 
       // Load suppliers
       const { data: suppliersData } = await supabase
         .from('suppliers')
         .select('id, name')
-        .eq('user_id', user.id)
+        .eq('business_id', businessId)
         .eq('is_active', true)
         .order('name')
 
@@ -70,7 +70,7 @@ export default function NewPurchaseOrderPage() {
       const { data: jobsData } = await supabase
         .from('jobs')
         .select('id, job_number, job_name')
-        .eq('user_id', user.id)
+        .eq('business_id', businessId)
         .order('created_at', { ascending: false })
 
       if (jobsData) setJobs(jobsData)
@@ -79,7 +79,11 @@ export default function NewPurchaseOrderPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
 
   const addLineItem = () => {
     const newId = String(lineItems.length + 1)

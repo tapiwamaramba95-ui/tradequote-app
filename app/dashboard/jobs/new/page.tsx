@@ -4,13 +4,16 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { colors } from '@/lib/colors'
-import AddressInput from '@/components/AddressInput'
+import { AddressFields } from '@/components/AddressFields'
 import Link from 'next/link'
 
 type Client = {
   id: string
   name: string
-  address: string
+  street_address: string
+  suburb: string
+  state: string
+  postcode: string
   email: string
   phone: string
 }
@@ -25,7 +28,10 @@ export default function NewJobPage() {
   const [formData, setFormData] = useState({
     title: '',
     client_id: '',
-    address: '',
+    street_address: '',
+    suburb: '',
+    state: '',
+    postcode: '',
     scheduled_date: '',
     description: '',
     status: 'quoted',
@@ -34,23 +40,19 @@ export default function NewJobPage() {
   })
 
   // Fetch clients on load
-  useEffect(() => {
-    fetchClients()
-  }, [])
-
-  // Memoize the address change handler
-  const handleAddressChange = useCallback((address: string) => {
-    setFormData(prev => ({ ...prev, address }))
-  }, [])
-
-  const fetchClients = async () => {
+  const fetchClients = useCallback(async () => {
     const { data } = await supabase
       .from('clients')
       .select('*')
       .order('name')
+      .limit(1000)
     
     setClients(data || [])
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchClients()
+  }, [fetchClients])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -70,7 +72,10 @@ export default function NewJobPage() {
           user_id: user.id,
           title: formData.title,
           client_id: formData.client_id || null,
-          address: formData.address,
+          street_address: formData.street_address,
+          suburb: formData.suburb,
+          state: formData.state,
+          postcode: formData.postcode,
           scheduled_date: formData.scheduled_date || null,
           description: formData.description,
           status: formData.status,
@@ -97,7 +102,6 @@ export default function NewJobPage() {
     setFormData({
       ...formData,
       client_id: client.id,
-      address: client.address || formData.address,
     })
     setClientSearch(client.name)
     setShowClientDropdown(false)
@@ -258,9 +262,15 @@ export default function NewJobPage() {
                     <label className="block text-sm font-medium mb-1" style={{ color: colors.text.primary }}>
                       Address
                     </label>
-                    <AddressInput
-                      value={formData.address}
-                      onChange={handleAddressChange}
+                    <AddressFields
+                      streetAddress={formData.street_address}
+                      suburb={formData.suburb}
+                      state={formData.state}
+                      postcode={formData.postcode}
+                      onStreetAddressChange={(value) => setFormData(prev => ({ ...prev, street_address: value }))}
+                      onSuburbChange={(value) => setFormData(prev => ({ ...prev, suburb: value }))}
+                      onStateChange={(value) => setFormData(prev => ({ ...prev, state: value }))}
+                      onPostcodeChange={(value) => setFormData(prev => ({ ...prev, postcode: value }))}
                       required={false}
                     />
                   </div>

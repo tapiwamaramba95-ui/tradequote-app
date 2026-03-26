@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { colors } from '@/lib/colors'
-import AddressInput from '@/components/AddressInput'
+import { AddressFields } from '@/components/AddressFields'
 
 export default function NewEnquiryPage() {
   const router = useRouter()
@@ -13,7 +13,6 @@ export default function NewEnquiryPage() {
     customer_name: '',
     customer_email: '',
     customer_phone: '',
-    customer_address: '',
     street_address: '',
     suburb: '',
     state: '',
@@ -79,7 +78,6 @@ export default function NewEnquiryPage() {
               name: formData.customer_name,
               email: formData.customer_email || null,
               phone: formData.customer_phone || null,
-              address: formData.customer_address || null,
               street_address: formData.street_address || null,
               suburb: formData.suburb || null,
               state: formData.state || null,
@@ -135,16 +133,6 @@ export default function NewEnquiryPage() {
       ...formData,
       [e.target.name]: e.target.value
     })
-  }
-
-  const handleStructuredAddressChange = (structured: any) => {
-    setFormData(prev => ({ 
-      ...prev, 
-      street_address: structured.street || '',
-      suburb: structured.suburb || '',
-      state: structured.state || '',
-      postcode: structured.postcode || ''
-    }))
   }
 
   return (
@@ -255,17 +243,16 @@ export default function NewEnquiryPage() {
                   >
                     Job Address
                   </label>
-                  <AddressInput
-                    value={formData.customer_address}
-                    onChange={(address) => setFormData(prev => ({ ...prev, customer_address: address }))}
-                    onStructuredChange={handleStructuredAddressChange}
-                    initialStructured={{
-                      street_address: formData.street_address,
-                      suburb: formData.suburb,
-                      state: formData.state,
-                      postcode: formData.postcode
-                    }}
-                    placeholder="Job location"
+                  <AddressFields
+                    streetAddress={formData.street_address}
+                    suburb={formData.suburb}
+                    state={formData.state}
+                    postcode={formData.postcode}
+                    onStreetAddressChange={(value) => setFormData(prev => ({ ...prev, street_address: value }))}
+                    onSuburbChange={(value) => setFormData(prev => ({ ...prev, suburb: value }))}
+                    onStateChange={(value) => setFormData(prev => ({ ...prev, state: value }))}
+                    onPostcodeChange={(value) => setFormData(prev => ({ ...prev, postcode: value }))}
+                    required={false}
                   />
                 </div>
 
@@ -360,7 +347,7 @@ export default function NewEnquiryPage() {
               >
                 <button
                   type="button"
-                  onClick={() => router.back()}
+                  onClick={() => router.push('/')}
                   className="inline-flex justify-center rounded-md border px-4 py-2 text-sm font-medium shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors"
                   style={{
                     borderColor: colors.border.DEFAULT,

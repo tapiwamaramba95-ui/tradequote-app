@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { colors } from '@/lib/colors';
-import AddressInput from '@/components/AddressInput';
+import { AddressFields } from '@/components/AddressFields';
 
 export interface JobCreationFormProps {
   onJobCreated: (job: any) => void;
@@ -14,7 +14,6 @@ export default function JobCreationForm({ onJobCreated, onClose }: JobCreationFo
   const [showClientDropdown, setShowClientDropdown] = useState(false);
   const [clientSearch, setClientSearch] = useState('');
   const [formData, setFormData] = useState({
-    title: '',
     client_id: '',
     street_address: '',
     suburb: '',
@@ -72,7 +71,8 @@ export default function JobCreationForm({ onJobCreated, onClose }: JobCreationFo
       {
         user_id: user.id,
         job_number: jobNumber,
-        title: formData.title,
+        title: jobNumber,
+        job_name: jobNumber,
         client_id: formData.client_id || null,
         street_address: formData.street_address || null,
         suburb: formData.suburb || null,
@@ -93,17 +93,6 @@ export default function JobCreationForm({ onJobCreated, onClose }: JobCreationFo
       setLoading(false);
     }
   };
-
-  // Memoize the structured address change handler
-  const handleStructuredAddressChange = useCallback((structured: any) => {
-    setFormData(prev => ({ 
-      ...prev, 
-      street_address: structured.street || '',
-      suburb: structured.suburb || '',
-      state: structured.state || '',
-      postcode: structured.postcode || ''
-    }))
-  }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -134,20 +123,20 @@ export default function JobCreationForm({ onJobCreated, onClose }: JobCreationFo
   return (
     <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl border border-gray-200 p-8">
       <form onSubmit={handleSubmit}>
-        <h2 className="text-2xl font-semibold mb-6">New Job</h2>
+        <h2 className="text-3xl md:text-2xl font-semibold mb-6">New Job</h2>
         <div className="space-y-6">
           {/* Customer Search */}
           <div>
-            <label className="block text-sm font-medium mb-1">Customer *</label>
+            <label className="block text-base font-medium mb-2">Customer *</label>
             <div className="flex gap-2">
               <div className="flex-1 relative">
-                <input type="text" value={clientSearch} onChange={e => { setClientSearch(e.target.value); setShowClientDropdown(true); }} onFocus={() => setShowClientDropdown(true)} placeholder="Search or Add Customer" className="w-full rounded-md px-3 py-2 border" />
+                <input type="text" value={clientSearch} onChange={e => { setClientSearch(e.target.value); setShowClientDropdown(true); }} onFocus={() => setShowClientDropdown(true)} placeholder="Search or Add Customer" className="w-full rounded-md px-4 py-2.5 text-base border h-11" />
                 {showClientDropdown && filteredClients.length > 0 && (
                   <div className="absolute z-10 w-full mt-1 rounded-md shadow-lg border max-h-60 overflow-auto bg-white">
                     {filteredClients.map(client => (
-                      <button key={client.id} type="button" onClick={() => selectClient(client)} className="w-full text-left px-4 py-2 hover:bg-gray-50">
-                        <div className="font-medium text-sm">{client.name}</div>
-                        {client.email && <div className="text-xs text-gray-500">{client.email}</div>}
+                      <button key={client.id} type="button" onClick={() => selectClient(client)} className="w-full text-left px-4 py-3 hover:bg-gray-50 min-h-12">
+                        <div className="font-medium text-base">{client.name}</div>
+                        {client.email && <div className="text-sm text-gray-500">{client.email}</div>}
                       </button>
                     ))}
                   </div>
@@ -155,52 +144,43 @@ export default function JobCreationForm({ onJobCreated, onClose }: JobCreationFo
               </div>
             </div>
             {selectedClient && (
-              <div className="mt-2 p-3 rounded-md bg-gray-50">
-                <div className="text-sm font-medium">{selectedClient.name}</div>
-                {selectedClient.phone && <div className="text-xs text-gray-600">{selectedClient.phone}</div>}
+              <div className="mt-2 p-4 rounded-md bg-gray-50">
+                <div className="text-base font-medium">{selectedClient.name}</div>
+                {selectedClient.phone && <div className="text-sm text-gray-600">{selectedClient.phone}</div>}
               </div>
             )}
-          </div>
-          {/* Job Title */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Job Name</label>
-            <input type="text" name="title" value={formData.title} onChange={handleChange} placeholder="E.g. Kitchen Renovation, Roof Repair (optional)" className="w-full rounded-md px-3 py-2 border" />
           </div>
           {/* Address & Reference Row */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Job Address</label>
-              <p className="text-xs text-gray-500 mb-2">Enter the address where work will be performed</p>
-              <AddressInput
-                value=""
-                onChange={(address) => {
-                  // Handle simple string address updates
-                  setFormData(prev => ({ ...prev, address }))
-                }} 
-                onStructuredChange={handleStructuredAddressChange}
-                initialStructured={{
-                  street_address: formData.street_address,
-                  suburb: formData.suburb,
-                  state: formData.state,
-                  postcode: formData.postcode
-                }}
+              <label className="block text-base font-medium mb-2">Job Address</label>
+              <p className="text-sm text-gray-500 mb-2">Enter the address where work will be performed</p>
+              <AddressFields
+                streetAddress={formData.street_address}
+                suburb={formData.suburb}
+                state={formData.state}
+                postcode={formData.postcode}
+                onStreetAddressChange={(value) => setFormData(prev => ({ ...prev, street_address: value }))}
+                onSuburbChange={(value) => setFormData(prev => ({ ...prev, suburb: value }))}
+                onStateChange={(value) => setFormData(prev => ({ ...prev, state: value }))}
+                onPostcodeChange={(value) => setFormData(prev => ({ ...prev, postcode: value }))}
                 required={false}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Reference</label>
-              <input type="text" name="reference" value={formData.reference} onChange={handleChange} placeholder="Job reference or PO number" className="w-full rounded-md px-3 py-2 border" />
+              <label className="block text-base font-medium mb-2">Reference</label>
+              <input type="text" name="reference" value={formData.reference} onChange={handleChange} placeholder="Job reference or PO number" className="w-full rounded-md px-4 py-2.5 text-base border h-11" />
             </div>
           </div>
           {/* Scheduled Date & Status Row */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Scheduled Date</label>
-              <input type="date" name="scheduled_date" value={formData.scheduled_date} onChange={handleChange} className="w-full rounded-md px-3 py-2 border" />
+              <label className="block text-base font-medium mb-2">Scheduled Date</label>
+              <input type="date" name="scheduled_date" value={formData.scheduled_date} onChange={handleChange} className="w-full rounded-md px-4 py-2.5 text-base border h-11" />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Status</label>
-              <select name="status" value={formData.status} onChange={handleChange} className="w-full rounded-md px-3 py-2 border">
+              <label className="block text-base font-medium mb-2">Status</label>
+              <select name="status" value={formData.status} onChange={handleChange} className="w-full rounded-md px-4 py-2.5 text-base border h-11">
                 <option value="quoted">Quoted</option>
                 <option value="approved">Approved</option>
                 <option value="scheduled_measure_quote">Scheduled for Measure & Quote</option>
@@ -213,21 +193,21 @@ export default function JobCreationForm({ onJobCreated, onClose }: JobCreationFo
           </div>
           {/* Estimated Value */}
           <div>
-            <label className="block text-sm font-medium mb-1">Estimated Value</label>
+            <label className="block text-base font-medium mb-2">Estimated Value</label>
             <div className="relative">
-              <span className="absolute left-3 top-2 text-sm text-gray-400">$</span>
-              <input type="number" name="total_amount" value={formData.total_amount} onChange={handleChange} placeholder="0.00" step="0.01" className="w-full rounded-md pl-7 pr-3 py-2 border" />
+              <span className="absolute left-4 top-3 text-base text-gray-400">$</span>
+              <input type="number" name="total_amount" value={formData.total_amount} onChange={handleChange} placeholder="0.00" step="0.01" className="w-full rounded-md pl-8 pr-4 py-2.5 text-base border h-11" />
             </div>
           </div>
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium mb-1">Description</label>
-            <textarea name="description" value={formData.description} onChange={handleChange} rows={4} placeholder="Describe the scope of work..." className="w-full rounded-md px-3 py-2 border" />
+            <label className="block text-base font-medium mb-2">Description</label>
+            <textarea name="description" value={formData.description} onChange={handleChange} rows={4} placeholder="Describe the scope of work..." className="w-full rounded-md px-4 py-2.5 text-base border" />
           </div>
         </div>
         <div className="flex gap-4 mt-8 justify-end">
-          <button type="button" className="px-6 py-2 rounded bg-gray-200 text-gray-700 font-semibold" onClick={onClose}>Cancel</button>
-          <button type="submit" disabled={loading} className="px-6 py-2 rounded text-white font-semibold" style={{ backgroundColor: '#ea580c' }}>{loading ? 'Saving...' : 'Save Job'}</button>
+          <button type="button" className="px-6 py-3 rounded bg-gray-200 text-gray-700 text-base font-semibold min-h-12" onClick={onClose}>Cancel</button>
+          <button type="submit" disabled={loading} className="px-6 py-3 rounded text-white text-base font-semibold min-h-12" style={{ backgroundColor: '#ea580c' }}>{loading ? 'Saving...' : 'Save Job'}</button>
         </div>
       </form>
     </div>

@@ -63,7 +63,7 @@ export async function POST(request: Request) {
         if (job.client_id) {
           const { data: client, error: clientError } = await supabase
             .from('clients')
-            .select('name, email, phone, address, street_address, town_city, state_region, postal_code')
+            .select('name, email, phone, street_address, suburb, state, postcode')
             .eq('id', job.client_id)
             .single()
           console.log('[sendinvoice] Client fetch result:', { client, clientError })
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
           if (client) {
             clientName = client.name
             clientEmail = client.email || to
-            const parts = [client.street_address || client.address, client.town_city, client.state_region, client.postal_code]
+            const parts = [client.street_address, client.suburb, client.state, client.postcode]
               .filter(Boolean)
             clientAddress = parts.join(', ')
           }

@@ -2,7 +2,7 @@
 
 import { colors } from '@/lib/colors'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import {
   Building2,
   Inbox,
@@ -17,28 +17,32 @@ import {
   Users,
   Plug,
   Lock,
-  CreditCard
+  CreditCard,
+  Calendar
 } from 'lucide-react'
 
 const SETTINGS_SECTIONS = [
-  { id: 'company', label: 'Company Information', icon: Building2, path: '/dashboard/settings/company' },
-  { id: 'enquiries', label: 'Enquiries', icon: Inbox, path: '/dashboard/settings/enquiries' },
-  { id: 'invoice', label: 'Invoice Settings', icon: FileText, path: '/dashboard/settings/invoice' },
-  { id: 'jobs', label: 'Jobs Settings', icon: Briefcase, path: '/dashboard/settings/jobs' },
-  { id: 'purchase-orders', label: 'Purchase Orders', icon: Package, path: '/dashboard/settings/purchase-orders' },
-  { id: 'timesheets', label: 'Timesheets', icon: Clock, path: '/dashboard/settings/timesheets' },
-  { id: 'labour-rates', label: 'Labour Rates', icon: DollarSign, path: '/dashboard/settings/labour-rates' },
-  { id: 'note-templates', label: 'Note Templates', icon: StickyNote, path: '/dashboard/settings/note-templates' },
-  { id: 'price-list', label: 'Price List', icon: Clipboard, path: '/dashboard/settings/price-list' },
-  { id: 'pricing-levels', label: 'Pricing Levels', icon: BarChart3, path: '/dashboard/settings/pricing-levels' },
-  { id: 'staff-permissions', label: 'Staff & Permissions', icon: Users, path: '/dashboard/settings/staff-permissions' },
-  { id: 'integrations', label: 'Integrations', icon: Plug, path: '/dashboard/settings/integrations' },
-  { id: 'security', label: 'Security', icon: Lock, path: '/dashboard/settings/security' },
-  { id: 'billing', label: 'Billing & Plans', icon: CreditCard, path: '/dashboard/settings/billing' },
+  { id: 'company', label: 'Company Information', icon: Building2 },
+  { id: 'enquiries', label: 'Enquiries', icon: Inbox },
+  { id: 'invoice', label: 'Invoice Settings', icon: FileText },
+  { id: 'jobs', label: 'Jobs Settings', icon: Briefcase },
+  { id: 'purchase-orders', label: 'Purchase Orders', icon: Package },
+  { id: 'scheduler', label: 'Scheduler', icon: Calendar },
+  { id: 'timesheets', label: 'Timesheets', icon: Clock },
+  { id: 'labour-rates', label: 'Labour Rates', icon: DollarSign },
+  { id: 'payment-methods', label: 'Payment Methods', icon: CreditCard },
+  { id: 'note-templates', label: 'Note Templates', icon: StickyNote },
+  { id: 'price-list', label: 'Price List', icon: Clipboard },
+  { id: 'pricing-levels', label: 'Pricing Levels', icon: BarChart3 },
+  { id: 'staff-permissions', label: 'Staff & Permissions', icon: Users },
+  { id: 'integrations', label: 'Integrations', icon: Plug },
+  { id: 'security', label: 'Security', icon: Lock },
+  { id: 'billing', label: 'Billing & Plans', icon: CreditCard },
 ]
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const activeTab = searchParams.get('tab') || 'company'
 
   return (
     <div className="flex gap-6 px-4 sm:px-6 lg:px-8">
@@ -56,16 +60,16 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
           </h2>
           <nav className="space-y-1">
             {SETTINGS_SECTIONS.map((section) => {
-              const isActive = pathname === section.path
+              const isActive = section.id === activeTab
               const IconComponent = section.icon
               return (
                 <Link
                   key={section.id}
-                  href={section.path}
+                  href={`/dashboard/settings?tab=${section.id}`}
                   className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                   style={{
-                    backgroundColor: isActive ? `${colors.accent.DEFAULT}15` : 'transparent',
-                    color: isActive ? colors.accent.DEFAULT : colors.text.primary,
+                    backgroundColor: isActive ? colors.accent.DEFAULT : 'transparent',
+                    color: isActive ? 'white' : colors.text.primary,
                   }}
                 >
                   <IconComponent size={18} />

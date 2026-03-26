@@ -9,6 +9,8 @@ import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
 import { PaymentModal } from '@/components/PaymentModal'
 import { EmailComposer } from '@/components/EmailComposer'
+import { getInvoiceDisplayStatus, getInvoiceStatusConfig, getInvoiceDateInfo } from '@/lib/invoice-status'
+import { getBusinessId } from '@/lib/business'
 
 type Invoice = {
   id: string
@@ -22,10 +24,13 @@ type Invoice = {
   line_items: any[]
   notes?: string
   terms?: string
-  status: string
+  status: 'draft' | 'sent'
+  payment_status: 'unpaid' | 'partial' | 'paid'
+  created_at: string
+  paid_at?: string
+  issue_date?: string
   job_id?: string
   sent_at?: string
-  paid_at?: string
   payment_method?: string
   view_token?: string
   
@@ -68,6 +73,44 @@ export default function InvoiceDetailPage() {
 
   const fetchInvoice = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.push('/login')
+        return
+      }
+
+      const businessId = await getBusinessId()
+      if (!businessId) {
+        console.error('No business found for user')
+        setLoading(false)
+        return
+      }
+
+      console.log('Fetching invoice:', params.id, 'for business:', businessId)
+
+      // Pre-check: Get invoice metadata without full relations to test access
+      const { data: checkData } = await supabase
+        .from('invoices')
+        .select('id, invoice_number, business_id, user_id')
+        .eq('id', params.id)
+        .maybeSingle()
+
+      if (checkData) {
+        console.log('Invoice exists:', checkData.invoice_number, 'business_id:', checkData.business_id)
+        
+        // Auto-update if business_id doesn't match
+        if (checkData.business_id !== businessId) {
+          console.log('Updating invoice business_id from', checkData.business_id, 'to', businessId)
+          await supabase
+            .from('invoices')
+            .update({ business_id: businessId })
+            .eq('id', checkData.id)
+        }
+      } else {
+        console.log('Invoice does not exist:', params.id)
+      }
+
+      // Main query with business_id filter and full relations
       const { data: invoiceData, error: invoiceError } = await supabase
         .from('invoices')
         .select(`
@@ -79,39 +122,55 @@ export default function InvoiceDetailPage() {
               name,
               email,
               phone,
-              address
+              street_address,
+              suburb,
+              state,
+              postcode
             )
           )
         `)
         .eq('id', params.id)
-        .single()
+        .eq('business_id', businessId)
+        .maybeSingle()
 
-      if (!invoiceError && invoiceData) {
-        setInvoice(invoiceData)
+      if (invoiceError) {
+        console.error('Error fetching invoice:', invoiceError, JSON.stringify(invoiceError))
+        setLoading(false)
+        return
+      }
+
+      if (!invoiceData) {
+        console.error('Invoice not found after business_id check/update')
+        setLoading(false)
+        return
+      }
+
+      // Invoice found
+      console.log('Invoice found:', invoiceData.invoice_number)
+      setInvoice(invoiceData)
         
-        // Get user_id from invoice or job
-        const userId = invoiceData.user_id || invoiceData.jobs?.user_id
+      // Get user_id from invoice or job
+      const userId = invoiceData.user_id || invoiceData.jobs?.user_id
+      
+      // Fix invoice user_id if it's missing but job has one
+      if (!invoiceData.user_id && invoiceData.jobs?.user_id) {
+        supabase
+          .from('invoices')
+          .update({ user_id: invoiceData.jobs.user_id })
+          .eq('id', invoiceData.id)
+          .then(() => console.log('Fixed invoice user_id'))
+      }
+      
+      if (userId) {
+        // Fetch business settings including bank details
+        const { data: settings } = await supabase
+          .from('business_settings')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle()
         
-        // Fix invoice user_id if it's missing but job has one
-        if (!invoiceData.user_id && invoiceData.jobs?.user_id) {
-          supabase
-            .from('invoices')
-            .update({ user_id: invoiceData.jobs.user_id })
-            .eq('id', invoiceData.id)
-            .then(() => console.log('Fixed invoice user_id'))
-        }
-        
-        if (userId) {
-          // Fetch business settings including bank details
-          const { data: settings } = await supabase
-            .from('business_settings')
-            .select('*')
-            .eq('user_id', userId)
-            .maybeSingle() // Use maybeSingle to handle no results
-          
-          if (settings) {
-            setBusinessSettings(settings)
-          }
+        if (settings) {
+          setBusinessSettings(settings)
         }
       }
     } catch (error) {
@@ -262,6 +321,11 @@ export default function InvoiceDetailPage() {
 
   const isOverdue = invoice.status !== 'paid' && new Date(invoice.due_date) < new Date()
 
+  // Get display status and config
+  const displayStatus = getInvoiceDisplayStatus(invoice)
+  const statusConfig = getInvoiceStatusConfig(displayStatus)
+  const dateInfo = getInvoiceDateInfo(invoice)
+
   return (
     <div className="p-8 max-w-6xl mx-auto">
       <Breadcrumb items={[
@@ -287,35 +351,25 @@ export default function InvoiceDetailPage() {
               </h1>
             </div>
             <div className="flex items-center gap-3 mt-2">
-              <p className="text-sm" style={{ color: colors.text.secondary }}>
-                Created {new Date(invoice.invoice_date).toLocaleDateString()}
-              </p>
               <span
-                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium"
                 style={{
-                  backgroundColor: `${statusColor}15`,
-                  color: statusColor,
+                  backgroundColor: statusConfig.bg,
+                  color: statusConfig.text,
                 }}
               >
-                {invoice.status}
+                {statusConfig.icon && <span>{statusConfig.icon}</span>}
+                <span>{statusConfig.label}</span>
               </span>
-              {isOverdue && invoice.status !== 'paid' && (
-                <span
-                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                  style={{
-                    backgroundColor: `${colors.semantic.error}15`,
-                    color: colors.semantic.error,
-                  }}
-                >
-                  OVERDUE
-                </span>
-              )}
+              <p className="text-sm" style={{ color: colors.text.secondary }}>
+                {dateInfo}
+              </p>
             </div>
           </div>
           
           <div className="flex gap-3">
-            {/* Edit Invoice - only for draft and sent */}
-            {(invoice.status === 'draft' || invoice.status === 'sent') && (
+            {/* Edit Invoice - only for draft and sent (not paid) */}
+            {(invoice.status === 'draft' || (invoice.status === 'sent' && invoice.payment_status !== 'paid')) && (
               <Link
                 href={`/dashboard/invoices/edit/${invoice.id}`}
                 className="inline-flex items-center px-4 py-2 rounded-md shadow-sm text-sm font-medium text-white transition-all"
@@ -343,7 +397,7 @@ export default function InvoiceDetailPage() {
               </button>
             )}
 
-            {invoice.status !== 'paid' && (
+            {invoice.payment_status !== 'paid' && (
               <>
                 <button
                   onClick={() => setShowPaymentModal(true)}
@@ -430,7 +484,11 @@ export default function InvoiceDetailPage() {
             <p style={{ color: colors.text.primary }}>{invoice.jobs.clients.name}</p>
             {invoice.jobs.clients.email && <p className="text-sm" style={{ color: colors.text.secondary }}>{invoice.jobs.clients.email}</p>}
             {invoice.jobs.clients.phone && <p className="text-sm" style={{ color: colors.text.secondary }}>{invoice.jobs.clients.phone}</p>}
-            {invoice.jobs.clients.address && <p className="text-sm" style={{ color: colors.text.secondary }}>{invoice.jobs.clients.address}</p>}
+            {(invoice.jobs.clients.street_address || invoice.jobs.clients.suburb || invoice.jobs.clients.state || invoice.jobs.clients.postcode) && (
+              <p className="text-sm" style={{ color: colors.text.secondary }}>
+                {[invoice.jobs.clients.street_address, invoice.jobs.clients.suburb, invoice.jobs.clients.state, invoice.jobs.clients.postcode].filter(Boolean).join(', ')}
+              </p>
+            )}
           </div>
         )}
 
@@ -452,12 +510,12 @@ export default function InvoiceDetailPage() {
               </tr>
             </thead>
             <tbody>
-              {invoice.line_items.map((item: any, index: number) => (
+              {invoice.line_items?.map((item: any, index: number) => (
                 <tr key={index} className="hover:bg-gray-50 border-b">
-                  <td className="px-4 py-3 text-gray-900">{item.description}</td>
-                  <td className="px-4 py-3 text-right text-gray-900">{item.quantity}</td>
-                  <td className="px-4 py-3 text-right text-gray-900">${item.rate.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                  <td className="px-4 py-3 text-right font-medium text-gray-900">${item.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                  <td className="px-4 py-3 text-gray-900">{item.description || ''}</td>
+                  <td className="px-4 py-3 text-right text-gray-900">{item.quantity || 0}</td>
+                  <td className="px-4 py-3 text-right text-gray-900">${(item.rate || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                  <td className="px-4 py-3 text-right font-medium text-gray-900">${(item.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                 </tr>
               ))}
             </tbody>
@@ -468,16 +526,16 @@ export default function InvoiceDetailPage() {
           <div className="w-64 pr-4"> {/* Added padding to align with Amount column */}
             <div className="flex justify-between py-2" style={{ color: colors.text.primary }}>
               <span>Subtotal:</span>
-              <span>${invoice.subtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span>${(invoice.subtotal || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
             <div className="flex justify-between py-2" style={{ color: colors.text.primary }}>
               <span>Tax:</span>
-              <span>${invoice.tax.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span>${(invoice.tax || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
             {invoice.amount_paid > 0 && (
               <div className="flex justify-between py-2" style={{ color: colors.semantic.success }}>
                 <span>Paid:</span>
-                <span>-${invoice.amount_paid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                <span>-${(invoice.amount_paid || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
             )}
             <div
@@ -489,7 +547,7 @@ export default function InvoiceDetailPage() {
             >
               <span>{invoice.status === 'paid' ? 'Paid' : 'Amount Due'}:</span>
               <span style={{ color: invoice.status === 'paid' ? colors.semantic.success : colors.accent.DEFAULT }}>
-                ${(invoice.total - (invoice.amount_paid || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                ${((invoice.total || 0) - (invoice.amount_paid || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
           </div>

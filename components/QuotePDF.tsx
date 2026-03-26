@@ -172,9 +172,13 @@ export function QuotePDF({ quote }: { quote: Quote }) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Bill To</Text>
           <Text style={styles.text}>{quote.jobs.clients.name}</Text>
-          <Text style={styles.text}>{quote.jobs.clients.email}</Text>
-          <Text style={styles.text}>{quote.jobs.clients.phone}</Text>
-          <Text style={styles.text}>{quote.jobs.clients.address}</Text>
+          {quote.jobs.clients.email && <Text style={styles.text}>{quote.jobs.clients.email}</Text>}
+          {quote.jobs.clients.phone && <Text style={styles.text}>{quote.jobs.clients.phone}</Text>}
+          {(quote.jobs.clients.street_address || quote.jobs.clients.suburb || quote.jobs.clients.state || quote.jobs.clients.postcode) && (
+            <Text style={styles.text}>
+              {[quote.jobs.clients.street_address, quote.jobs.clients.suburb, quote.jobs.clients.state, quote.jobs.clients.postcode].filter(Boolean).join(', ')}
+            </Text>
+          )}
         </View>
 
         {/* Job Title */}
@@ -194,10 +198,10 @@ export function QuotePDF({ quote }: { quote: Quote }) {
           
           {quote.line_items.map((item, index) => (
             <View key={index} style={styles.tableRow}>
-              <Text style={styles.col1}>{item.description}</Text>
-              <Text style={styles.col2}>{item.quantity}</Text>
-              <Text style={styles.col3}>${item.rate.toFixed(2)}</Text>
-              <Text style={styles.col4}>${item.amount.toFixed(2)}</Text>
+              <Text style={styles.col1}>{item.description || ''}</Text>
+              <Text style={styles.col2}>{item.quantity || 0}</Text>
+              <Text style={styles.col3}>${(item.rate || 0).toFixed(2)}</Text>
+              <Text style={styles.col4}>${(item.amount || 0).toFixed(2)}</Text>
             </View>
           ))}
         </View>
@@ -206,15 +210,15 @@ export function QuotePDF({ quote }: { quote: Quote }) {
         <View style={styles.totals}>
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Subtotal:</Text>
-            <Text style={styles.totalValue}>${quote.subtotal.toFixed(2)}</Text>
+            <Text style={styles.totalValue}>${(quote.subtotal || 0).toFixed(2)}</Text>
           </View>
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Tax:</Text>
-            <Text style={styles.totalValue}>${quote.tax.toFixed(2)}</Text>
+            <Text style={styles.totalValue}>${(quote.tax || 0).toFixed(2)}</Text>
           </View>
           <View style={[styles.totalRow, styles.grandTotal]}>
             <Text style={styles.totalLabel}>Total:</Text>
-            <Text style={styles.totalValue}>${quote.total.toFixed(2)}</Text>
+            <Text style={styles.totalValue}>${(quote.total || 0).toFixed(2)}</Text>
           </View>
         </View>
 

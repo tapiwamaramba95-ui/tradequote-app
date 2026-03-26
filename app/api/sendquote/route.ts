@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     if (quote.client_id) {
       const { data: client, error: clientError } = await supabase
         .from('clients')
-        .select('name, email, phone, address')
+        .select('name, email, phone, street_address, suburb, state, postcode')
         .eq('id', quote.client_id)
         .single()
       
@@ -48,7 +48,16 @@ export async function POST(request: Request) {
         clientData = client
         clientName = client.name
         clientEmail = client.email || to
-        clientAddress = client.address || ''
+        // Format address from structured fields
+        const addressParts = []
+        if (client.street_address) addressParts.push(client.street_address)
+        if (client.suburb || client.state || client.postcode) {
+          const locationParts = [client.suburb, client.state, client.postcode].filter(Boolean)
+          if (locationParts.length > 0) {
+            addressParts.push(locationParts.join(' '))
+          }
+        }
+        clientAddress = addressParts.join(', ') || ''
       }
     }
 
@@ -83,7 +92,7 @@ export async function POST(request: Request) {
         if (job.client_id) {
           const { data: client, error: clientError } = await supabase
             .from('clients')
-            .select('name, email, phone, address')
+            .select('name, email, phone, street_address, suburb, state, postcode')
             .eq('id', job.client_id)
             .single()
           console.log('[sendquote] Client fetch via job result:', { client, clientError })
@@ -92,7 +101,16 @@ export async function POST(request: Request) {
             clientData = client
             clientName = client.name
             clientEmail = client.email || to
-            clientAddress = client.address || ''
+            // Format address from structured fields
+            const addressParts = []
+            if (client.street_address) addressParts.push(client.street_address)
+            if (client.suburb || client.state || client.postcode) {
+              const locationParts = [client.suburb, client.state, client.postcode].filter(Boolean)
+              if (locationParts.length > 0) {
+                addressParts.push(locationParts.join(' '))
+              }
+            }
+            clientAddress = addressParts.join(', ') || ''
           }
         }
       }

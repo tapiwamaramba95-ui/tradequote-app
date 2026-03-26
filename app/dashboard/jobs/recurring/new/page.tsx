@@ -1,6 +1,6 @@
 "use client";
 import { useState } from 'react';
-import AddressInput from '@/components/AddressInput';
+import { AddressFields } from '@/components/AddressFields';
 import Link from 'next/link';
 import Breadcrumb from '@/components/Breadcrumb';
 
@@ -10,7 +10,10 @@ export default function NewRecurringJobPage() {
     jobName: '',
     customer: '',
     reference: '',
-    address: '',
+    street_address: '',
+    suburb: '',
+    state: '',
+    postcode: '',
     staff: '',
     frequency: 'Daily',
     startTime: '',
@@ -93,9 +96,15 @@ export default function NewRecurringJobPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">Job Address</label>
-                <AddressInput
-                  value={form.address}
-                  onChange={(address) => setForm(prev => ({ ...prev, address }))}
+                <AddressFields
+                  streetAddress={form.street_address}
+                  suburb={form.suburb}
+                  state={form.state}
+                  postcode={form.postcode}
+                  onStreetAddressChange={(value) => setForm(prev => ({ ...prev, street_address: value }))}
+                  onSuburbChange={(value) => setForm(prev => ({ ...prev, suburb: value }))}
+                  onStateChange={(value) => setForm(prev => ({ ...prev, state: value }))}
+                  onPostcodeChange={(value) => setForm(prev => ({ ...prev, postcode: value }))}
                   required={false}
                 />
               </div>

@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { useParams, useRouter } from 'next/navigation'
 import { StatusBadge } from '@/components/StatusBadge'
 import Breadcrumb from '@/components/Breadcrumb'
+import { getBusinessId } from '@/lib/business'
 
 type LineItem = {
   id: string
@@ -89,34 +90,91 @@ export default function EditQuotePage() {
   }
 
   const fetchQuote = async () => {
-    const { data, error } = await supabase
-      .from('quotes')
-      .select(`
-        *,
-        clients!client_id (
-          id,
-          name,
-          email
-        ),
-        jobs!job_id (
-          id,
-          job_name,
-          job_number,
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.push('/login')
+        return
+      }
+
+      const businessId = await getBusinessId()
+      if (!businessId) {
+        console.error('No business found for user')
+        setLoading(false)
+        return
+      }
+
+      console.log('Fetching quote for edit:', params.id, 'for business:', businessId)
+
+      // Pre-check: Get quote metadata to test access
+      const { data: checkData } = await supabase
+        .from('quotes')
+        .select('id, quote_number, business_id')
+        .eq('id', params.id)
+        .maybeSingle()
+
+      if (checkData) {
+        console.log('Quote exists:', checkData.quote_number, 'business_id:', checkData.business_id)
+        
+        // Auto-update if business_id doesn't match
+        if (checkData.business_id !== businessId) {
+          console.log('Updating quote business_id from', checkData.business_id, 'to', businessId)
+          await supabase
+            .from('quotes')
+            .update({ business_id: businessId })
+            .eq('id', checkData.id)
+        }
+      } else {
+        console.log('Quote does not exist:', params.id)
+      }
+
+      // Main query with business_id filter
+      const { data, error } = await supabase
+        .from('quotes')
+        .select(`
+          *,
           clients!client_id (
             id,
             name,
             email
+          ),
+          jobs!job_id (
+            id,
+            job_name,
+            job_number,
+            clients!client_id (
+              id,
+              name,
+              email
+            )
           )
-        )
-      `)
-      .eq('id', params.id)
-      .single()
+        `)
+        .eq('id', params.id)
+        .eq('business_id', businessId)
+        .maybeSingle()
 
-    if (!error && data) {
+      if (error) {
+        console.error('Error fetching quote:', error, JSON.stringify(error))
+        setLoading(false)
+        return
+      }
+
+      if (!data) {
+        console.error('Quote not found after business_id check/update')
+        setLoading(false)
+        return
+      }
+
+      console.log('Quote found for editing:', data.quote_number)
       setQuote(data)
-      setLineItems(data.line_items || [
-        { id: '1', description: '', quantity: 1, rate: 0, amount: 0 }
-      ])
+      // Ensure line items have unique IDs for React keys
+      const items = data.line_items || [{ id: '1', description: '', quantity: 1, rate: 0, amount: 0 }]
+      const itemsWithIds = items.map((item: any, index: number) => ({
+        ...item,
+        id: item.id || `line-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`
+      }))
+      console.log('Line items with IDs:', itemsWithIds.map(i => ({ id: i.id, description: i.description })))
+      setLineItems(itemsWithIds)
       setFormData({
         client_id: data.client_id || '',
         job_id: data.job_id || '',
@@ -124,13 +182,16 @@ export default function EditQuotePage() {
         terms: data.terms || '',
         valid_until: data.valid_until ? data.valid_until.split('T')[0] : ''
       })
-    } else if (error) {
-      console.error('Error fetching quote:', error)
+    } catch (err) {
+      console.error('Exception fetching quote:', err)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const updateLineItem = (id: string, field: keyof LineItem, value: string | number) => {
+    console.log('Updating line item:', id, field, value)
+    console.log('Current line items:', lineItems.map(i => ({ id: i.id, [field]: i[field] })))
     setLineItems(lineItems.map(item => {
       if (item.id === id) {
         const updated = { ...item, [field]: value }
@@ -144,7 +205,7 @@ export default function EditQuotePage() {
   }
 
   const addLineItem = () => {
-    const newId = String(Date.now())
+    const newId = `line-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     setLineItems([...lineItems, { 
       id: newId, 
       description: '', 
@@ -226,7 +287,7 @@ export default function EditQuotePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
       </div>
     )
   }
@@ -295,7 +356,7 @@ export default function EditQuotePage() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50"
             >
               {saving ? 'Saving...' : 'Save Changes'}
             </button>
@@ -315,7 +376,7 @@ export default function EditQuotePage() {
                 required
                 value={formData.client_id}
                 onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm px-3 py-2 border"
               >
                 <option value="">Choose a client...</option>
                 {clients.map((client) => (
@@ -336,7 +397,7 @@ export default function EditQuotePage() {
                 id="job_id"
                 value={formData.job_id}
                 onChange={(e) => setFormData({ ...formData, job_id: e.target.value })}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm px-3 py-2 border"
               >
                 <option value="">No job linked</option>
                 {jobs.map((job) => (
@@ -355,7 +416,7 @@ export default function EditQuotePage() {
                   type="date"
                   value={formData.valid_until}
                   onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   required
                 />
               </div>
@@ -368,7 +429,7 @@ export default function EditQuotePage() {
                   step="0.1"
                   value={taxRate}
                   onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 />
               </div>
             </div>
@@ -380,7 +441,7 @@ export default function EditQuotePage() {
                 <button
                   type="button"
                   onClick={addLineItem}
-                  className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
                 >
                   + Add Line
                 </button>
@@ -393,9 +454,9 @@ export default function EditQuotePage() {
                       <input
                         type="text"
                         placeholder="Description"
-                        value={item.description}
+                        value={item.description || ''}
                         onChange={(e) => updateLineItem(item.id, 'description', e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                         required
                       />
                     </div>
@@ -405,9 +466,9 @@ export default function EditQuotePage() {
                         placeholder="Qty"
                         min="0"
                         step="0.01"
-                        value={item.quantity}
+                        value={item.quantity || 0}
                         onChange={(e) => updateLineItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                         required
                       />
                     </div>
@@ -417,16 +478,16 @@ export default function EditQuotePage() {
                         placeholder="Rate"
                         min="0"
                         step="0.01"
-                        value={item.rate}
+                        value={item.rate || 0}
                         onChange={(e) => updateLineItem(item.id, 'rate', parseFloat(e.target.value) || 0)}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                         required
                       />
                     </div>
                     <div className="col-span-2">
                       <input
                         type="text"
-                        value={`$${item.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                        value={`$${(item.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                         disabled
                         className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 text-gray-700"
                       />
@@ -471,7 +532,7 @@ export default function EditQuotePage() {
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   rows={4}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
                   placeholder="Add notes for this quote..."
                 />
               </div>
@@ -481,7 +542,7 @@ export default function EditQuotePage() {
                   value={formData.terms}
                   onChange={(e) => setFormData({ ...formData, terms: e.target.value })}
                   rows={4}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
                   placeholder="Payment terms and conditions..."
                 />
               </div>

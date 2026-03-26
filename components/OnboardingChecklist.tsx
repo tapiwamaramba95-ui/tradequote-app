@@ -132,37 +132,37 @@ export default function OnboardingChecklist() {
   const nextStep = steps.find(s => !s.completed)
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-6">
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-orange-50 rounded-xl flex items-center justify-center flex-shrink-0">
-            <svg className="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-14 h-14 md:w-12 md:h-12 bg-gradient-to-br from-orange-100 to-orange-50 rounded-xl flex items-center justify-center flex-shrink-0">
+            <svg className="w-7 h-7 md:w-6 md:h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
             </svg>
           </div>
           <div>
-            <h3 className="text-lg font-bold text-gray-900">Get Started with TradeQuote</h3>
-            <p className="text-sm text-gray-600">Complete these steps to start winning jobs</p>
+            <h3 className="text-xl md:text-lg font-bold text-gray-900">Get Started with TradeQuote</h3>
+            <p className="text-base md:text-sm text-gray-600">Complete these steps to start winning jobs</p>
           </div>
         </div>
         <button 
           onClick={handleDismiss} 
-          className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+          className="text-gray-400 hover:text-gray-600 transition-colors p-2 min-h-11 min-w-11 flex items-center justify-center"
           title="Dismiss (will reappear next visit)"
         >
-          <X className="w-5 h-5" />
+          <X className="w-6 h-6" />
         </button>
       </div>
 
       {/* Progress Bar */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-semibold text-gray-700">Setup Progress</span>
-          <span className="text-sm font-bold text-cyan-600">{completedCount} of {totalSteps} complete</span>
+          <span className="text-base md:text-sm font-semibold text-gray-700">Setup Progress</span>
+          <span className="text-base md:text-sm font-bold text-cyan-600">{completedCount} of {totalSteps} complete</span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+        <div className="w-full bg-gray-200 rounded-full h-3 md:h-2 overflow-hidden">
           <div 
-            className="from-orange-500 to-orange-600 rounded-full h-2 transition-all duration-500 ease-out"
+            className="from-orange-500 to-orange-600 rounded-full h-3 md:h-2 transition-all duration-500 ease-out"
             style={{ 
               background: 'linear-gradient(to right, #ea580c, #dc2626)',
               width: `${percentage}%`
@@ -188,25 +188,25 @@ export default function OnboardingChecklist() {
 function ChecklistItem({ title, description, completed, link, isNext }: any) {
   const content = (
     <>
-      <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
+      <div className={`w-7 h-7 md:w-6 md:h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
         completed 
           ? 'bg-green-600' 
           : 'bg-white border-2 border-gray-300'
       }`}>
         {completed ? (
-          <CheckCircle2 className="w-4 h-4 text-white" strokeWidth={3} />
+          <CheckCircle2 className="w-5 h-5 md:w-4 md:h-4 text-white" strokeWidth={3} />
         ) : (
-          <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+          <div className="w-2.5 h-2.5 md:w-2 md:h-2 bg-gray-300 rounded-full"></div>
         )}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <h4 className="text-sm font-semibold text-gray-900 truncate">{title}</h4>
-            <p className="text-xs text-gray-600 mt-0.5 line-clamp-1">{description}</p>
+            <h4 className="text-base md:text-sm font-semibold text-gray-900 truncate">{title}</h4>
+            <p className="text-sm md:text-xs text-gray-600 mt-1 md:mt-0.5 line-clamp-1">{description}</p>
           </div>
           {!completed && link && (
-            <ChevronRight className={`w-5 h-5 flex-shrink-0 transition-colors ${
+            <ChevronRight className={`w-6 h-6 md:w-5 md:h-5 flex-shrink-0 transition-colors ${
               isNext ? 'text-cyan-600' : 'text-gray-400'
             }`} />
           )}
@@ -215,7 +215,7 @@ function ChecklistItem({ title, description, completed, link, isNext }: any) {
     </>
   )
 
-  const className = `flex items-start gap-3 p-3 rounded-lg transition-all ${
+  const className = `flex items-start gap-3 p-4 md:p-3 rounded-lg transition-all min-h-14 md:min-h-12 ${
     completed 
       ? 'bg-green-50 border border-green-200'
       : isNext

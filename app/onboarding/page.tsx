@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { colors } from '@/lib/colors'
 import { CheckCircle2, Building2, DollarSign, FileText, ArrowRight, ArrowLeft, X } from 'lucide-react'
-import AddressInput from '@/components/AddressInput'
+import { AddressFields } from '@/components/AddressFields'
 
 type Step = 'profile' | 'invoice' | 'quote' | 'complete'
 
@@ -20,7 +20,10 @@ export default function OnboardingWizard() {
   const [tradeType, setTradeType] = useState('')
   const [phoneNumber, setPhoneNumber] = useState('')
   const [abn, setAbn] = useState('')
-  const [address, setAddress] = useState('')
+  const [streetAddress, setStreetAddress] = useState('')
+  const [suburb, setSuburb] = useState('')
+  const [state, setState] = useState('')
+  const [postcode, setPostcode] = useState('')
   const [logo, setLogo] = useState<File | null>(null)
   const [bsb, setBsb] = useState('')
   const [accountNumber, setAccountNumber] = useState('')
@@ -85,7 +88,7 @@ export default function OnboardingWizard() {
   }
 
   const handleProfileSubmit = async () => {
-    if (!abn || !address) return
+    if (!abn || !streetAddress) return
 
     setSaving(true)
     try {
@@ -100,7 +103,10 @@ export default function OnboardingWizard() {
           company_phone: phoneNumber,
           trade_type: tradeType,
           abn,
-          company_address: address,
+          street_address: streetAddress,
+          suburb: suburb,
+          state: state,
+          postcode: postcode,
           company_logo_url: logo ? 'pending-upload' : null // Handle file upload separately
         })
         .eq('user_id', user?.id)
@@ -404,10 +410,16 @@ function ProfileStep({
         <label className="block text-sm font-semibold text-gray-900 mb-2">
           Business Address <span className="text-red-500">*</span>
         </label>
-        <AddressInput
-          value={address}
-          onChange={setAddress}
-          placeholder="This appears on invoices and quotes"
+        <AddressFields
+          streetAddress={streetAddress}
+          suburb={suburb}
+          state={state}
+          postcode={postcode}
+          onStreetAddressChange={setStreetAddress}
+          onSuburbChange={setSuburb}
+          onStateChange={setState}
+          onPostcodeChange={setPostcode}
+          required={true}
         />
         <p className="text-xs text-gray-500 mt-1">This appears on invoices and quotes</p>
       </div>

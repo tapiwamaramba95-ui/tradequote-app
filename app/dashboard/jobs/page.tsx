@@ -13,6 +13,7 @@ import { useIsMobile } from '@/lib/utils/responsive'
 import { Skeleton, SkeletonTable } from '@/components/Skeleton'
 import { ActionButtons } from '@/components/ActionButtons'
 import Breadcrumb from '@/components/Breadcrumb'
+import { getBusinessId } from '@/lib/business'
 
 type JobWithClient = {
   id: string
@@ -24,7 +25,7 @@ type JobWithClient = {
   postcode: string
   status: string
   total_amount: number
-  scheduled_date: string | null
+  start_date: string | null  // Changed from scheduled_date to start_date
   client_id: string
   clients: { name: string; address?: string; street_address?: string; suburb?: string; state?: string; postcode?: string } | null
   created_at: string
@@ -57,15 +58,22 @@ export default function JobsPageOptimized() {
         return
       }
 
+      const businessId = await getBusinessId()
+      if (!businessId) {
+        console.error('No business found for user')
+        setLoading(false)
+        return
+      }
+
       // Build query
       let query = supabase
         .from('jobs')
         .select(`
           *, 
-          clients(name, address, street_address, suburb, state, postcode),
+          clients(name, street_address, suburb, state, postcode),
           photo_count:job_photos(count)
         `, { count: 'exact' })
-        .eq('user_id', user.id)
+        .eq('business_id', businessId)
 
       // Server-side status filter
       if (statusFilter !== 'all') {
@@ -88,7 +96,7 @@ export default function JobsPageOptimized() {
       // Pagination
       const start = (currentPage - 1) * ITEMS_PER_PAGE
       const end = start + ITEMS_PER_PAGE - 1
-      query = query.range(start, end).order('created_at', { ascending: false })
+      query = query.range(start, end).order('job_number', { ascending: true })
 
       const { data, count, error } = await query
 
@@ -161,7 +169,7 @@ export default function JobsPageOptimized() {
           </Link>
         </div>
         {/* Filters */}
-        <div className="bg-white rounded-xl p-4 md:p-6 shadow-sm mb-4 md:mb-6 space-y-4">
+        <div className="bg-white rounded-xl p-3 md:p-4 shadow-sm mb-3 md:mb-4 space-y-3">
           {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -185,7 +193,7 @@ export default function JobsPageOptimized() {
                 setStatusFilter('all')
                 setCurrentPage(1)
               }}
-              className={`px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-semibold transition-all ${
+              className={`px-2 md:px-3 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-semibold transition-all ${
                 statusFilter === 'all' ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-600'
               }`}
             >
@@ -196,7 +204,7 @@ export default function JobsPageOptimized() {
                 setStatusFilter('active')
                 setCurrentPage(1)
               }}
-              className={`inline-flex items-center gap-1.5 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-semibold transition-all ${
+              className={`inline-flex items-center gap-1.5 px-2 md:px-3 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-semibold transition-all ${
                 statusFilter === 'active' ? 'bg-green-100 text-green-700 ring-2 ring-green-200' : 'bg-gray-100 text-gray-600'
               }`}
             >
@@ -208,7 +216,7 @@ export default function JobsPageOptimized() {
                 setStatusFilter('pending')
                 setCurrentPage(1)
               }}
-              className={`inline-flex items-center gap-1.5 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-semibold transition-all ${
+              className={`inline-flex items-center gap-1.5 px-2 md:px-3 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-semibold transition-all ${
                 statusFilter === 'pending' ? 'bg-blue-100 text-blue-700 ring-2 ring-blue-200' : 'bg-gray-100 text-gray-600'
               }`}
             >
@@ -220,7 +228,7 @@ export default function JobsPageOptimized() {
                 setStatusFilter('complete')
                 setCurrentPage(1)
               }}
-              className={`inline-flex items-center gap-1.5 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-semibold transition-all ${
+              className={`inline-flex items-center gap-1.5 px-2 md:px-3 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-semibold transition-all ${
                 statusFilter === 'complete' ? 'bg-purple-100 text-purple-700 ring-2 ring-purple-200' : 'bg-gray-100 text-gray-600'
               }`}
             >
@@ -232,7 +240,7 @@ export default function JobsPageOptimized() {
                 setStatusFilter('cancelled')
                 setCurrentPage(1)
               }}
-              className={`inline-flex items-center gap-1.5 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-semibold transition-all ${
+              className={`inline-flex items-center gap-1.5 px-2 md:px-3 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-semibold transition-all ${
                 statusFilter === 'cancelled' ? 'bg-red-100 text-red-700 ring-2 ring-red-200' : 'bg-gray-100 text-gray-600'
               }`}
             >
@@ -273,25 +281,25 @@ export default function JobsPageOptimized() {
                     </colgroup>
                     <thead>
                       <tr className="bg-gray-50 border-b border-gray-200">
-                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                           Job #
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                          Job Name
+                        <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          Customer
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                          Client
+                        <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          Address
                         </th>
-                        <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        <th className="px-2 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
                           Status
                         </th>
-                        <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        <th className="px-2 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
                           Scheduled
                         </th>
-                        <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        <th className="px-2 py-2 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
                           Value
                         </th>
-                        <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        <th className="px-2 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
                           Actions
                         </th>
                       </tr>
@@ -304,23 +312,28 @@ export default function JobsPageOptimized() {
                             key={job.id} 
                             className="hover:bg-gray-50 transition-colors group"
                           >
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            <td className="px-2 py-2 whitespace-nowrap">
                               <Link
                                 href={`/dashboard/jobs/${job.id}`}
-                                className="text-sm font-medium text-cyan-600 hover:text-cyan-700 font-sans"
+                                className="text-xs font-medium text-cyan-600 hover:text-cyan-700 font-sans"
                               >
                                 {job.job_number}
                               </Link>
                             </td>
-                            <td className="px-6 py-4">
-                              <div className="text-sm font-medium text-gray-900">{job.job_name}</div>
+                            <td className="px-2 py-2">
+                              <div className="text-xs font-medium text-gray-900">{job.clients?.name || 'No client'}</div>
                             </td>
-                            <td className="px-6 py-4">
-                              <div className="text-sm text-gray-600">{job.clients?.name || 'No client'}</div>
+                            <td className="px-2 py-2">
+                              <div className="text-xs text-gray-600">
+                                {job.street_address && job.suburb 
+                                  ? `${job.street_address}, ${job.suburb}` 
+                                  : job.street_address || job.suburb || '-'
+                                }
+                              </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                            <td className="px-2 py-2 whitespace-nowrap text-center">
                               <span
-                                className="inline-flex px-2.5 py-1 rounded-full text-xs font-medium"
+                                className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
                                 style={{ 
                                   backgroundColor: statusConfig.bg, 
                                   color: statusConfig.text 
@@ -329,17 +342,17 @@ export default function JobsPageOptimized() {
                                 {statusConfig.label}
                               </span>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-center">
-                              <span className="text-sm text-gray-600">
-                                {job.scheduled_date ? formatDate(job.scheduled_date, 'short') : '-'}
+                            <td className="px-2 py-2 whitespace-nowrap text-center">
+                              <span className="text-xs text-gray-600">
+                                {job.start_date ? formatDate(job.start_date, 'short') : '-'}
                               </span>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right">
-                              <span className="text-sm font-medium text-gray-900">
+                            <td className="px-2 py-2 whitespace-nowrap text-right">
+                              <span className="text-xs font-medium text-gray-900">
                                 {formatCurrency(job.total_amount || 0)}
                               </span>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            <td className="px-2 py-2 whitespace-nowrap">
                               <div className="flex items-center justify-center gap-1">
                                 <Link href={`/dashboard/jobs/${job.id}`} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors" title="View">
                                   <Eye className="w-3.5 h-3.5 text-gray-600" />
@@ -388,12 +401,17 @@ export default function JobsPageOptimized() {
                             >
                               {job.job_number}
                             </Link>
-                            <h3 className="font-semibold text-base mb-1 truncate" style={{ color: colors.text.primary }}>
-                              {job.job_name}
-                            </h3>
-                            <p className="text-sm mb-1" style={{ color: colors.text.secondary }}>
+                            <p className="text-sm font-medium mb-1" style={{ color: colors.text.secondary }}>
                               {job.clients?.name || 'No client'}
                             </p>
+                            {(job.street_address || job.suburb) && (
+                              <p className="text-xs mb-1" style={{ color: colors.text.muted }}>
+                                {job.street_address && job.suburb 
+                                  ? `${job.street_address}, ${job.suburb}` 
+                                  : job.street_address || job.suburb
+                                }
+                              </p>
+                            )}
                             <div className="text-xs" style={{ color: colors.text.muted }}>
                               {/* Display client address only */}
                               {job.clients?.street_address || job.clients?.suburb || job.clients?.state || job.clients?.postcode ? (
@@ -405,8 +423,6 @@ export default function JobsPageOptimized() {
                                     </div>
                                   )}
                                 </div>
-                              ) : job.clients?.address ? (
-                                <div>{job.clients.address}</div>
                               ) : (
                                 'No address'
                               )}
@@ -424,7 +440,7 @@ export default function JobsPageOptimized() {
                           <div>
                             <span style={{ color: colors.text.secondary }}>Scheduled: </span>
                             <span className="font-medium" style={{ color: colors.text.primary }}>
-                              {job.scheduled_date ? formatDate(job.scheduled_date, 'short') : 'Not scheduled'}
+                              {job.start_date ? formatDate(job.start_date, 'short') : 'Not scheduled'}
                             </span>
                           </div>
                           <div className="font-bold" style={{ color: colors.text.primary }}>

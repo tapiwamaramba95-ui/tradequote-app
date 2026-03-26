@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { colors } from '@/lib/colors'
 import { getNextEnquiryNumber } from '@/lib/utils/enquiry'
+import { AddressFields } from '@/components/AddressFields'
 
 const ENQUIRY_SOURCES = [
   'Phone Call',
@@ -31,23 +32,16 @@ export default function NewEnquiryPage() {
   // Form state
   const [clientId, setClientId] = useState('')
   const [jobName, setJobName] = useState('')
-  const [jobAddress, setJobAddress] = useState('')
+  const [streetAddress, setStreetAddress] = useState('')
+  const [suburb, setSuburb] = useState('')
+  const [state, setState] = useState('')
+  const [postcode, setPostcode] = useState('')
   const [description, setDescription] = useState('')
   const [enquirySource, setEnquirySource] = useState('Phone Call')
   
   const [clients, setClients] = useState<Client[]>([])
 
-  useEffect(() => {
-    loadClients()
-    loadNextEnquiryNumber()
-  }, [])
-
-  const loadNextEnquiryNumber = async () => {
-    const number = await getNextEnquiryNumber()
-    setNextEnquiryNumber(number)
-  }
-
-  const loadClients = async () => {
+  const loadClients = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
@@ -56,9 +50,20 @@ export default function NewEnquiryPage() {
       .select('*')
       .eq('user_id', user.id)
       .order('name')
+      .limit(1000)
     
     if (data) setClients(data)
-  }
+  }, [])
+
+  const loadNextEnquiryNumber = useCallback(async () => {
+    const number = await getNextEnquiryNumber()
+    setNextEnquiryNumber(number)
+  }, [])
+
+  useEffect(() => {
+    loadClients()
+    loadNextEnquiryNumber()
+  }, [loadClients, loadNextEnquiryNumber])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -78,7 +83,10 @@ export default function NewEnquiryPage() {
           user_id: user.id,
           client_id: clientId,
           job_name: jobName,
-          job_address: jobAddress,
+          street_address: streetAddress,
+          suburb: suburb,
+          state: state,
+          postcode: postcode,
           description: description,
           enquiry_source: enquirySource.toLowerCase().replace(/\s+/g, '_'),
           enquiry_date: new Date().toISOString(),
@@ -178,14 +186,16 @@ export default function NewEnquiryPage() {
               <label className="block text-sm font-semibold mb-2" style={{ color: colors.text.primary }}>
                 Job Address
               </label>
-              <input
-                type="text"
-                value={jobAddress}
-                onChange={(e) => setJobAddress(e.target.value)}
-                required
-                className="w-full px-4 py-3 border-2 rounded-lg"
-                style={{ borderColor: colors.border.DEFAULT }}
-                placeholder="123 Main St, Melbourne VIC 3000"
+              <AddressFields
+                streetAddress={streetAddress}
+                suburb={suburb}
+                state={state}
+                postcode={postcode}
+                onStreetAddressChange={setStreetAddress}
+                onSuburbChange={setSuburb}
+                onStateChange={setState}
+                onPostcodeChange={setPostcode}
+                required={false}
               />
             </div>
 
@@ -229,7 +239,7 @@ export default function NewEnquiryPage() {
         <div className="flex gap-3 justify-end">
           <button
             type="button"
-            onClick={() => router.back()}
+            onClick={() => router.push('/dashboard/enquiries')}
             className="px-6 py-3 border-2 rounded-lg font-semibold"
             style={{ borderColor: colors.border.DEFAULT, color: colors.text.primary }}
           >

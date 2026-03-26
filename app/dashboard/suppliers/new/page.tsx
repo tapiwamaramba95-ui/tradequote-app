@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { colors } from '@/lib/colors'
 import { useRouter } from 'next/navigation'
 import Breadcrumb from '@/components/Breadcrumb'
-import AddressInput from '@/components/AddressInput'
+import { AddressFields } from '@/components/AddressFields'
 import { formatAustralianPhone, isValidAustralianPhone, normalizeEmail, isValidEmail, suggestEmailCorrection } from '@/lib/utils/formatters'
 import Link from 'next/link'
 
@@ -15,7 +15,10 @@ export default function NewSupplierPage() {
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [mobile, setMobile] = useState('')
-  const [address, setAddress] = useState('')
+  const [streetAddress, setStreetAddress] = useState('')
+  const [suburb, setSuburb] = useState('')
+  const [state, setState] = useState('')
+  const [postcode, setPostcode] = useState('')
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -37,7 +40,10 @@ export default function NewSupplierPage() {
           email: email.trim(), 
           phone: phone.trim(), 
           mobile: mobile.trim(), 
-          address: address.trim(), 
+          street_address: streetAddress.trim(),
+          suburb: suburb.trim(),
+          state: state.trim(),
+          postcode: postcode.trim(),
           notes: notes.trim() 
         })
       })
@@ -124,9 +130,15 @@ export default function NewSupplierPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                <AddressInput
-                  value={address}
-                  onChange={setAddress}
+                <AddressFields
+                  streetAddress={streetAddress}
+                  suburb={suburb}
+                  state={state}
+                  postcode={postcode}
+                  onStreetAddressChange={setStreetAddress}
+                  onSuburbChange={setSuburb}
+                  onStateChange={setState}
+                  onPostcodeChange={setPostcode}
                   required={false}
                 />
               </div>

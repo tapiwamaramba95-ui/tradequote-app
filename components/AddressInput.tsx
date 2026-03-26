@@ -114,7 +114,7 @@ export default function AddressInput({
   return (
     <div className="space-y-3">
       <div>
-        <label className="block text-sm font-semibold text-gray-900 mb-2">
+        <label className="block text-base font-semibold text-gray-900 mb-2">
           Street Address {required && <span className="text-red-500">*</span>}
         </label>
         <input
@@ -124,12 +124,12 @@ export default function AddressInput({
           placeholder={placeholder || "45 Workshop Street"}
           required={required}
           disabled={disabled}
-          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500 focus:ring-opacity-20 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
+          className="w-full px-4 py-2.5 text-base border border-gray-300 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500 focus:ring-opacity-20 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed h-11"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-gray-900 mb-2">
+        <label className="block text-base font-semibold text-gray-900 mb-2">
           Suburb {required && <span className="text-red-500">*</span>}
         </label>
         <input
@@ -139,13 +139,13 @@ export default function AddressInput({
           placeholder="Melbourne"
           required={required}
           disabled={disabled}
-          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500 focus:ring-opacity-20 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
+          className="w-full px-4 py-2.5 text-base border border-gray-300 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500 focus:ring-opacity-20 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed h-11"
         />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-2">
+          <label className="block text-base font-semibold text-gray-900 mb-2">
             State {required && <span className="text-red-500">*</span>}
           </label>
           <select
@@ -153,7 +153,7 @@ export default function AddressInput({
             onChange={(e) => setState(e.target.value)}
             required={required}
             disabled={disabled}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500 focus:ring-opacity-20 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
+            className="w-full px-4 py-2.5 text-base border border-gray-300 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500 focus:ring-opacity-20 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed h-11"
           >
             <option value="">Select...</option>
             <option value="VIC">VIC</option>
@@ -168,7 +168,7 @@ export default function AddressInput({
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-2">
+          <label className="block text-base font-semibold text-gray-900 mb-2">
             Postcode {required && <span className="text-red-500">*</span>}
           </label>
           <input
@@ -182,16 +182,16 @@ export default function AddressInput({
             maxLength={4}
             required={required}
             disabled={disabled}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500 focus:ring-opacity-20 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
+            className="w-full px-4 py-2.5 text-base border border-gray-300 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500 focus:ring-opacity-20 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed h-11"
           />
         </div>
       </div>
 
       {/* Preview */}
       {street && suburb && state && postcode && (
-        <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-          <p className="text-xs font-semibold text-gray-500 mb-1">Address Preview:</p>
-          <p className="text-sm text-gray-900 whitespace-pre-line">
+        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <p className="text-sm font-semibold text-gray-500 mb-2">Address Preview:</p>
+          <p className="text-base text-gray-900 whitespace-pre-line">
             {street}
             {'\n'}
             {suburb} {state} {postcode}

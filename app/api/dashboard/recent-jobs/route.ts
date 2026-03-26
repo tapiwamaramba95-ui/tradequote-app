@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     // Fetch only the 5 most recent jobs with client info
     const { data: jobs, error } = await supabase
       .from('jobs')
-      .select('id, job_number, job_name, status, total_amount, scheduled_date, job_address, clients(name)')
+      .select('id, job_number, job_name, status, total_amount, scheduled_date, clients(name)')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(5)

@@ -11,6 +11,7 @@ import PhotoGallery from '@/components/PhotoGallery'
 import CompleteJobModal from '@/components/CompleteJobModal'
 import Breadcrumb from '@/components/Breadcrumb'
 import { Camera, Briefcase } from 'lucide-react'
+import { getBusinessId } from '@/lib/business'
 
 interface Invoice {
   id: string
@@ -55,86 +56,90 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
 
   const loadJobData = async () => {
     try {
-      // Load job
-      const { data: jobData } = await supabase
-        .from('jobs')
-        .select(`
-          *,
-          client:clients(*)
-        `)
-        .eq('id', id)
-        .single()
-
-      if (jobData) setJob(jobData as JobWithClient)
-
-      // Load quotes
-      const { data: quotesData } = await supabase
-        .from('quotes')
-        .select('*')
-        .eq('job_id', id)
-        .order('quote_version', { ascending: false })
-
-      if (quotesData) setQuotes(quotesData)
-
-      // Load invoices
-      const { data: invoicesData } = await supabase
-        .from('invoices')
-        .select('id, invoice_number, total, status, created_at')
-        .eq('job_id', id)
-        .order('created_at', { ascending: false })
-
-      if (invoicesData) setInvoices(invoicesData)
-
-      // Load appointments
-      const { data: appointmentsData } = await supabase
-        .from('job_appointments')
-        .select('*')
-        .eq('job_id', id)
-        .order('scheduled_date')
-
-      if (appointmentsData) setAppointments(appointmentsData)
-
-      // Load timesheets
-      const { data: timesheetsData } = await supabase
-        .from('timesheet_entries')
-        .select(`
-          *,
-          staff:profiles!timesheet_entries_staff_member_id_fkey(first_name, last_name)
-        `)
-        .eq('job_id', id)
-        .order('date', { ascending: false })
-
-      if (timesheetsData) setTimesheets(timesheetsData)
-
-      // Load staff members for assignment
       const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data: staffData } = await supabase
-          .from('staff')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('first_name')
+      
+      // Parallelize all queries
+      const [
+        jobResult,
+        quotesResult,
+        invoicesResult,
+        appointmentsResult,
+        timesheetsResult,
+        staffResult,
+        photoResult
+      ] = await Promise.all([
+        // Load job
+        supabase
+          .from('jobs')
+          .select(`
+            *,
+            client:clients(*)
+          `)
+          .eq('id', id)
+          .single(),
         
-        if (staffData) setStaffMembers(staffData)
-      }
+        // Load quotes
+        supabase
+          .from('quotes')
+          .select('*')
+          .eq('job_id', id)
+          .order('quote_version', { ascending: false }),
+        
+        // Load invoices
+        supabase
+          .from('invoices')
+          .select('id, invoice_number, total, status, created_at')
+          .eq('job_id', id)
+          .order('created_at', { ascending: false }),
+        
+        // Load appointments
+        supabase
+          .from('job_appointments')
+          .select('*')
+          .eq('job_id', id)
+          .order('scheduled_date'),
+        
+        // Load timesheets
+        supabase
+          .from('timesheet_entries')
+          .select(`
+            *,
+            staff:profiles!timesheet_entries_staff_member_id_fkey(first_name, last_name)
+          `)
+          .eq('job_id', id)
+          .order('date', { ascending: false }),
+        
+        // Load staff members
+        user ? (async () => {
+          const businessId = await getBusinessId();
+          if (!businessId) return { data: null };
+          return supabase
+            .from('staff')
+            .select('*')
+            .eq('business_id', businessId)
+            .order('first_name');
+        })() : Promise.resolve({ data: null }),
+        
+        // Load photo count
+        supabase
+          .from('job_photos')
+          .select('*', { count: 'exact', head: true })
+          .eq('job_id', id)
+      ])
 
-      // Load photo count
-      await loadPhotoCount()
+      if (jobResult.data) setJob(jobResult.data as JobWithClient)
+      if (quotesResult.data) setQuotes(quotesResult.data)
+      if (invoicesResult.data) setInvoices(invoicesResult.data)
+      if (appointmentsResult.data) setAppointments(appointmentsResult.data)
+      if (timesheetsResult.data) setTimesheets(timesheetsResult.data)
+      if (staffResult.data) setStaffMembers(staffResult.data)
+      setPhotoCount(photoResult.count || 0)
 
     } catch (error) {
       console.error('Error loading job:', error)
     } finally {
       setLoading(false)
     }
-  }
-
-  const loadPhotoCount = async () => {
-    const { count } = await supabase
-      .from('job_photos')
-      .select('*', { count: 'exact', head: true })
-      .eq('job_id', id)
-    
-    setPhotoCount(count || 0)
   }
 
   const handleSaveJobInfo = async () => {
@@ -245,10 +250,10 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
             {/* Title & Subtitle */}
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                {job.job_name}
+                {job.client?.name || 'Job Details'}
               </h1>
               <p className="text-sm text-gray-500 mt-1">
-                {job.job_number ? `${job.job_number} • ` : ''}{job.client?.name}
+                {job.job_number || `Job ${job.id.slice(0, 8)}`}
               </p>
             </div>
           </div>
@@ -268,7 +273,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
         {/* Breadcrumb */}
         <Breadcrumb items={[
           { label: 'Jobs', href: '/dashboard/jobs' },
-          { label: job.job_name }
+          { label: job.job_number || 'Job Details' }
         ]} />
 
         {/* Job Status & Info Card */}
@@ -376,7 +381,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
           <div className="mb-6">
             <PhotoUpload 
               jobId={job.id} 
-              onUploadComplete={loadPhotoCount}
+              onUploadComplete={loadJobData}
               photoType="during"
               maxPhotos={50}
             />
@@ -816,7 +821,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
       {showCompleteModal && (
         <CompleteJobModal
           jobId={job.id}
-          jobName={job.job_name}
+          jobNumber={job.job_number}
           onClose={() => setShowCompleteModal(false)}
           onComplete={() => {
             setShowCompleteModal(false)

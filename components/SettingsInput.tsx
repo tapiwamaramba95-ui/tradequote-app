@@ -24,7 +24,7 @@ export const SettingsInput = memo(function SettingsInput({
 }: SettingsInputProps) {
   return (
     <div className="mb-4">
-      <label className="block text-sm font-medium mb-2" style={{ color: colors.text.primary }}>
+      <label className="block text-base font-medium mb-2" style={{ color: colors.text.primary }}>
         {label} {required && <span style={{ color: colors.semantic.error }}>*</span>}
       </label>
       <input
@@ -34,7 +34,7 @@ export const SettingsInput = memo(function SettingsInput({
         placeholder={placeholder}
         required={required}
         disabled={disabled}
-        className="w-full rounded-md border px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full rounded-md border px-4 py-2.5 text-base disabled:opacity-50 disabled:cursor-not-allowed h-11"
         style={{
           borderColor: colors.border.DEFAULT,
           backgroundColor: colors.background.card,
@@ -42,7 +42,7 @@ export const SettingsInput = memo(function SettingsInput({
         }}
       />
       {helpText && (
-        <p className="text-xs mt-1" style={{ color: colors.text.muted }}>
+        <p className="text-sm mt-1.5" style={{ color: colors.text.muted }}>
           {helpText}
         </p>
       )}

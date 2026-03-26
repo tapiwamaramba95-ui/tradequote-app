@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { colors } from '@/lib/colors'
+import { getBusinessId } from '@/lib/business'
 import Link from 'next/link'
 import { Package, Upload, Plus, CheckCircle, AlertTriangle, Mail, Phone } from 'lucide-react'
 
@@ -31,6 +32,9 @@ export default function SuppliersPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
+      const businessId = await getBusinessId()
+      if (!businessId) return
+
       // Load suppliers with product count
       const { data: suppliersData } = await supabase
         .from('suppliers')
@@ -38,7 +42,7 @@ export default function SuppliersPage() {
           *,
           supplier_products(count)
         `)
-        .eq('user_id', user.id)
+        .eq('business_id', businessId)
         .order('name')
 
       if (suppliersData) {
@@ -91,7 +95,7 @@ export default function SuppliersPage() {
         {/* Right: Action Buttons */}
         <div className="flex gap-3">
           <Link
-            href="/dashboard/settings/price-list?tab=supplier-price-lists"
+            href="/dashboard/settings?tab=price-list&section=supplier-price-lists"
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition-all"
           >
             <Upload className="w-4 h-4" />
@@ -135,7 +139,7 @@ export default function SuppliersPage() {
             Import a price list or add a supplier manually to get started
           </p>
           <Link
-            href="/dashboard/settings/price-list?tab=supplier-price-lists"
+            href="/dashboard/settings?tab=price-list&section=supplier-price-lists"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-white transition-all hover:opacity-90"
             style={{ backgroundColor: colors.accent.DEFAULT }}
           >

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { colors } from '@/lib/colors'
 import Papa from 'papaparse'
-import { formatAustralianPhone, isValidAustralianPhone, normalizeEmail, isValidEmail, suggestEmailCorrection } from '@/lib/utils/formatters'
+import { getBusinessId } from '@/lib/business'
 
 type CSVRow = {
   'Supplier Name': string
@@ -111,11 +111,18 @@ export default function UploadPriceListPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
+      const businessId = await getBusinessId()
+      if (!businessId) {
+        alert('No business found. Please complete onboarding first.')
+        setLoading(false)
+        return
+      }
+
       // Check if supplier exists
       const { data: existingSupplier } = await supabase
         .from('suppliers')
         .select('id, details_completed')
-        .eq('user_id', user.id)
+        .eq('business_id', businessId)
         .eq('name', previewData.supplierName)
         .single()
 
@@ -157,19 +164,25 @@ export default function UploadPriceListPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
+      const businessId = await getBusinessId()
+      if (!businessId) {
+        alert('No business found. Please complete onboarding first.')
+        setLoading(false)
+        return
+      }
+
       // Create supplier
       const { data: supplier, error: supplierError } = await supabase
         .from('suppliers')
         .insert({
           user_id: user.id,
+          business_id: businessId,
           name: previewData.supplierName,
           abn: skipDetails ? null : supplierABN || null,
           email: skipDetails ? null : supplierEmail || null,
           phone: skipDetails ? null : supplierPhone || null,
-          address: skipDetails ? null : supplierAddress || null,
+          street_address: skipDetails ? null : supplierAddress || null,
           website: skipDetails ? null : supplierWebsite || null,
-          auto_created: true,
-          details_completed: !skipDetails && (supplierEmail || supplierPhone) ? true : false,
         })
         .select()
         .single()
@@ -186,6 +199,13 @@ export default function UploadPriceListPage() {
     }
   }
 
+    } catch (error) {
+      console.error('Error creating supplier:', error)
+      alert('Failed to create supplier')
+      setLoading(false)
+    }
+  }
+
   const importProducts = async (supplierId: string) => {
     if (!previewData) return
 
@@ -193,10 +213,14 @@ export default function UploadPriceListPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
+      const businessId = await getBusinessId()
+      if (!businessId) return
+
       // Prepare products for insert
       const productsToInsert = previewData.products.map(p => ({
         supplier_id: supplierId,
         user_id: user.id,
+        business_id: businessId,
         product_code: p.code || null,
         product_name: p.name,
         description: p.description || null,

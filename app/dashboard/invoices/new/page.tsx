@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { colors } from '@/lib/colors'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -60,7 +60,7 @@ export default function NewInvoicePage() {
   const [showPriceList, setShowPriceList] = useState(false)
 
   // Fetch business settings for tax rate
-  const fetchBusinessSettings = async () => {
+  const fetchBusinessSettings = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
@@ -77,7 +77,7 @@ export default function NewInvoicePage() {
     } catch (error) {
       console.error('Error fetching business settings:', error)
     }
-  }
+  }, [])
 
   useEffect(() => {
     fetchJobs()
@@ -90,9 +90,9 @@ export default function NewInvoicePage() {
       due.setDate(due.getDate() + 30)
       setDueDate(due.toISOString().split('T')[0])
     }
-  }, [])
+  }, [fetchJobs, fetchBusinessSettings, loadQuoteData, quoteId])
 
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     const { data } = await supabase
       .from('jobs')
       .select(`
@@ -105,13 +105,14 @@ export default function NewInvoicePage() {
         )
       `)
       .order('created_at', { ascending: false })
+      .limit(1000)
 
     if (data) {
       setJobs(data)
     }
-  }
+  }, [])
 
-  const loadQuoteData = async () => {
+  const loadQuoteData = useCallback(async () => {
     if (!quoteId) return
 
     const { data: quote, error } = await supabase
@@ -145,7 +146,7 @@ export default function NewInvoicePage() {
     }
 
     setLoadingQuote(false)
-  }
+  }, [quoteId])
 
   const addLineItem = () => {
     const newId = (Math.max(...lineItems.map(item => parseInt(item.id)), 0) + 1).toString()

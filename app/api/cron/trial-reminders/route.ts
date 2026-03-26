@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { sendEmail } from '@/lib/email-sender'
+import * as emails from '@/lib/emails'
 
 // This endpoint should be called daily by a cron service (e.g., Vercel Cron, GitHub Actions)
 // Example cron setup in vercel.json:
@@ -35,8 +37,18 @@ export async function GET(request: Request) {
       .lt('trial_ends_at', new Date(fourDaysFromNow.getTime() + 24 * 60 * 60 * 1000).toISOString())
 
     // Send Day 10 reminder emails
-    // TODO: Integrate with email service (Resend, SendGrid)
-    console.log(`Day 10 reminders: ${day10Users?.length || 0} users`)
+    if (day10Users && day10Users.length > 0) {
+      for (const user of day10Users) {
+        const daysLeft = 4
+        const emailContent = emails.trialReminderDay10(user.full_name || 'there', daysLeft)
+        await sendEmail({
+          to: user.email,
+          subject: emailContent.subject,
+          html: emailContent.html,
+        })
+      }
+    }
+    console.log(`Day 10 reminders sent: ${day10Users?.length || 0} users`)
 
     // Find trials ending tomorrow (Day 13 reminder)
     const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000)
@@ -48,8 +60,17 @@ export async function GET(request: Request) {
       .lt('trial_ends_at', new Date(tomorrow.getTime() + 24 * 60 * 60 * 1000).toISOString())
 
     // Send Day 13 reminder emails
-    // TODO: Integrate with email service
-    console.log(`Day 13 reminders: ${day13Users?.length || 0} users`)
+    if (day13Users && day13Users.length > 0) {
+      for (const user of day13Users) {
+        const emailContent = emails.trialReminderDay13(user.full_name || 'there')
+        await sendEmail({
+          to: user.email,
+          subject: emailContent.subject,
+          html: emailContent.html,
+        })
+      }
+    }
+    console.log(`Day 13 reminders sent: ${day13Users?.length || 0} users`)
 
     // Find expired trials
     const { data: expiredUsers } = await supabase
@@ -72,8 +93,13 @@ export async function GET(request: Request) {
           .eq('id', user.id)
 
         // Send trial ended email
-        // TODO: Integrate with email service
-        console.log(`Trial ended for user: ${user.id}`)
+        const emailContent = emails.trialEnded(user.full_name || 'there')
+        await sendEmail({
+          to: user.email,
+          subject: emailContent.subject,
+          html: emailContent.html,
+        })
+        console.log(`Trial ended email sent to: ${user.email}`)
       }
     }
 
@@ -87,8 +113,17 @@ export async function GET(request: Request) {
       .lt('cancelled_at', new Date(sevenDaysAgo.getTime() + 24 * 60 * 60 * 1000).toISOString())
 
     // Send win-back emails
-    // TODO: Integrate with email service
-    console.log(`Win-back emails: ${winBackUsers?.length || 0} users`)
+    if (winBackUsers && winBackUsers.length > 0) {
+      for (const user of winBackUsers) {
+        const emailContent = emails.winBackDay7(user.full_name || 'there')
+        await sendEmail({
+          to: user.email,
+          subject: emailContent.subject,
+          html: emailContent.html,
+        })
+      }
+    }
+    console.log(`Win-back emails sent: ${winBackUsers?.length || 0} users`)
 
     // Find users approaching deletion (5 days warning)
     const fiveDaysFromNow = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000)
@@ -101,8 +136,23 @@ export async function GET(request: Request) {
       .is('data_deleted_at', null)
 
     // Send final deletion warning emails
-    // TODO: Integrate with email service
-    console.log(`Deletion warnings: ${deletionWarningUsers?.length || 0} users`)
+    if (deletionWarningUsers && deletionWarningUsers.length > 0) {
+      for (const user of deletionWarningUsers) {
+        const deletionDate = new Date(user.deletion_scheduled_at).toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        })
+        const emailContent = emails.finalDeletionWarning(user.full_name || 'there', deletionDate)
+        await sendEmail({
+          to: user.email,
+          subject: emailContent.subject,
+          html: emailContent.html,
+        })
+      }
+    }
+    console.log(`Deletion warnings sent: ${deletionWarningUsers?.length || 0} users`)
 
     return NextResponse.json({
       success: true,

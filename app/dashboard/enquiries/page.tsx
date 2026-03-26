@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 import { colors } from '@/lib/colors'
 import Link from 'next/link'
@@ -9,33 +9,39 @@ import { StatusBadge } from '@/components/StatusBadge'
 import Table from '@/components/Table'
 import { Inbox, Plus, Search, Settings, Globe, Mail, Phone, Users, PenTool, MessageSquare } from 'lucide-react'
 
-type EnquiryJob = {
+type Enquiry = {
   id: string
-  job_name: string
-  street_address: string | null
-  suburb: string | null
-  state: string | null
-  postcode: string | null
+  user_id: string
+  client_id: string | null
+  name: string
+  email: string | null
+  phone: string | null
+  address: string | null
   description: string | null
-  enquiry_source: string | null
-  enquiry_number: string | null
+  message: string | null
+  job_type: string | null
+  preferred_date: string | null
   status: string
+  converted_to_job_id: string | null
+  converted_to_quote_id: string | null
   created_at: string
   clients: {
     name: string
     email: string | null
     phone: string | null
-    address: string | null
     street_address: string | null
     suburb: string | null
     state: string | null
     postcode: string | null
   } | null
+  jobs: {
+    enquiry_source: string | null
+  } | null
 }
 
 export default function EnquiriesPage() {
 	const [loading, setLoading] = useState(true)
-	const [enquiries, setEnquiries] = useState<EnquiryJob[]>([])
+	const [enquiries, setEnquiries] = useState<Enquiry[]>([])
 	const [activeTab, setActiveTab] = useState<'todo' | 'done'>('todo')
 	const [search, setSearch] = useState('')
 	const [expandedRow, setExpandedRow] = useState<string | null>(null)
@@ -56,24 +62,24 @@ export default function EnquiriesPage() {
 				return
 			}
 
-			// Query jobs table for enquiries (status = 'enquiry')
+			// Query enquiries table with jobs join to get enquiry_source
 			const { data, error } = await supabase
-				.from('jobs')
-				.select('id, job_name, street_address, suburb, state, postcode, description, enquiry_source, enquiry_number, status, created_at, clients(name, email, phone, address, street_address, suburb, state, postcode)')
+				.from('enquiries')
+				.select(`
+					*,
+					jobs!converted_to_job_id(enquiry_source)
+				`)
 				.eq('user_id', user.id)
-				.eq('status', 'enquiry')
 				.order('created_at', { ascending: false })
+				.limit(100)
 
 			if (data) {
-				console.log('Enquiry data:', data)
-				// Transform the data to match our type expectations
+				// Set enquiries data with null clients
 				const transformedData = data.map(item => ({
 					...item,
-					clients: Array.isArray(item.clients) && item.clients.length > 0 
-						? item.clients[0] 
-						: null
+					clients: null
 				}))
-				setEnquiries(transformedData as EnquiryJob[])
+				setEnquiries(transformedData as Enquiry[])
 			}
 			if (error) {
 				console.error('Database error:', error)
@@ -85,16 +91,21 @@ export default function EnquiriesPage() {
 		}
 	}
 
-	const filteredEnquiries = enquiries.filter(e => {
-		const matchesSearch = !search || 
-			e.enquiry_number?.toLowerCase().includes(search.toLowerCase()) ||
-			e.clients?.name?.toLowerCase().includes(search.toLowerCase()) ||
-			e.clients?.email?.toLowerCase().includes(search.toLowerCase()) ||
-			e.clients?.phone?.toLowerCase().includes(search.toLowerCase()) ||
-			e.job_name.toLowerCase().includes(search.toLowerCase()) ||
-			e.description?.toLowerCase().includes(search.toLowerCase())
-		return matchesSearch
-	})
+	const filteredEnquiries = useMemo(() => {
+		if (!search) return enquiries
+		
+		const searchLower = search.toLowerCase()
+		return enquiries.filter(e => {
+			return e.name?.toLowerCase().includes(searchLower) ||
+				e.email?.toLowerCase().includes(searchLower) ||
+				e.phone?.toLowerCase().includes(searchLower) ||
+				e.clients?.name?.toLowerCase().includes(searchLower) ||
+				e.clients?.email?.toLowerCase().includes(searchLower) ||
+				e.clients?.phone?.toLowerCase().includes(searchLower) ||
+				e.description?.toLowerCase().includes(searchLower) ||
+				e.message?.toLowerCase().includes(searchLower)
+		})
+	}, [enquiries, search])
 
 	if (loading) {
 		return (
@@ -106,7 +117,7 @@ export default function EnquiriesPage() {
 
 	return (
 		<div className="min-h-screen bg-gray-50">
-			<div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+			<div className="px-4 sm:px-8 py-6">
 				<Breadcrumb items={[{ label: 'Enquiries', href: '/dashboard/enquiries' }]} />
 				
 				{/* Page Header */}
@@ -157,7 +168,7 @@ export default function EnquiriesPage() {
 							</div>
 							<input
 								type="text"
-								placeholder="Search by ENQ number, name, email, phone, or job..."
+								placeholder="Search by ENQ number, customer, job, or description..."
 								value={search}
 								onChange={e => setSearch(e.target.value)}
 								className="w-full pl-10 pr-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2"
@@ -191,283 +202,236 @@ export default function EnquiriesPage() {
 				</div>
 
 				{/* Desktop Table */}
-				<div className="hidden lg:block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-					<table className="min-w-full divide-y divide-gray-200">
+				<div className="hidden lg:block bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
+					<table className="w-full divide-y divide-gray-200">
 						<thead className="bg-gray-50">
 							<tr>
-								<th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
+								<th className="px-2 py-2 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider w-20">
 									Enquiry #
 								</th>
-								<th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
+								<th className="px-2 py-2 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
 									Customer
 								</th>
-								<th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
-									Job
-								</th>
-								<th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
-									Contact
-								</th>
-								<th className="px-6 py-3 text-center text-xs font-semibold text-gray-900 uppercase tracking-wider">
-									Source
-								</th>
-								<th className="px-6 py-3 text-center text-xs font-semibold text-gray-900 uppercase tracking-wider">
-									Received
-								</th>
-								<th className="px-6 py-3 text-right text-xs font-semibold text-gray-900 uppercase tracking-wider">
-									Actions
-								</th>
+								<th className="px-2 py-2 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
+								Job
+							</th>
+							<th className="px-2 py-2 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider w-28">
+								Contact
+							</th>
+							<th className="px-2 py-2 text-center text-xs font-semibold text-gray-900 uppercase tracking-wider w-16">
+								Source
+							</th>
+							<th className="px-2 py-2 text-center text-xs font-semibold text-gray-900 uppercase tracking-wider w-20">
+								Status
+							</th>
 							</tr>
 						</thead>
 						<tbody className="bg-white divide-y divide-gray-200">
-							{filteredEnquiries.map((enquiry) => (
+							{filteredEnquiries.map((enquiry, index) => (
 								<React.Fragment key={enquiry.id}>
 									{/* Main Row */}
 									<tr 
 										className="hover:bg-gray-50 cursor-pointer transition-colors"
 										onClick={() => toggleRow(enquiry.id)}
 									>
-										<td className="px-6 py-4 whitespace-nowrap">
-											<span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-md">
-												<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
-												</svg>
-												{enquiry.enquiry_number || `ENQ${enquiry.id.slice(0, 4)}`}
-												{enquiry.description && (
-													<svg className="w-3 h-3 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
-														<path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/>
-													</svg>
-												)}
-											</span>
+										<td className="px-2 py-2 whitespace-nowrap">
+											<Link
+												href={enquiry.converted_to_job_id ? `/dashboard/jobs/${enquiry.converted_to_job_id}` : `/dashboard/enquiries/${enquiry.id}`}
+												className="text-xs font-medium text-purple-600 hover:text-purple-700 font-sans"
+											>
+												{enquiry.enquiry_number || `ENQ${String(index + 1).padStart(5, '0')}`}
+											</Link>
 										</td>
 										
-										<td className="px-6 py-4 whitespace-nowrap">
+										<td className="px-2 py-2 whitespace-nowrap">
 											<div className="flex items-center">
-												<div className="flex-shrink-0 h-8 w-8 bg-gradient-to-br from-orange-100 to-orange-50 rounded-full flex items-center justify-center">
-													<span className="text-sm font-semibold text-orange-700">
-														{enquiry.clients?.name?.charAt(0).toUpperCase() || '?'}
+												<div className="flex-shrink-0 h-6 w-6 bg-gradient-to-br from-orange-100 to-orange-50 rounded-full flex items-center justify-center">
+													<span className="text-xs font-semibold text-orange-700">
+												{(enquiry.clients?.name || enquiry.name)?.charAt(0).toUpperCase() || '?'}
 													</span>
 												</div>
-												<div className="ml-3">
-													<div className="text-sm font-medium text-gray-900">
-														{enquiry.clients?.name || 'No client'}
+												<div className="ml-2">
+													<div className="text-xs font-medium text-gray-900">
+															{enquiry.clients?.name || enquiry.name || 'No client'}
 													</div>
 												</div>
 											</div>
 										</td>
 										
-										<td className="px-6 py-4">
-											<div className="text-sm font-medium text-gray-900">{enquiry.job_name}</div>
-											<div className="text-sm text-gray-500">
-												{(() => {
-													// Display client address only
-													let addressDisplay = 'No address';
-													
-													// Check client's structured address first
-													if (enquiry.clients?.street_address || enquiry.clients?.suburb || enquiry.clients?.state || enquiry.clients?.postcode) {
-														const parts = [];
-														if (enquiry.clients?.street_address) parts.push(enquiry.clients.street_address);
-										if (enquiry.clients?.suburb || enquiry.clients?.state || enquiry.clients?.postcode) {
-											const locationParts = [enquiry.clients?.suburb, enquiry.clients?.state, enquiry.clients?.postcode].filter(Boolean);
-															if (locationParts.length > 0) {
-																parts.push(locationParts.join(' '));
-															}
-														}
-														addressDisplay = parts.join(', ');
-													}
-													// Fall back to client's legacy address
-													else if (enquiry.clients?.address) {
-														addressDisplay = enquiry.clients.address;
-													}
-													
-													return addressDisplay;
-												})()}
+										<td className="px-2 py-2">
+											<div className="text-xs text-gray-500 truncate max-w-[150px]">
+												{enquiry.description || enquiry.message || 'No description'}
 											</div>
 										</td>
 										
-										<td className="px-6 py-4 whitespace-nowrap">
-											<div className="text-sm text-gray-900">{enquiry.clients?.email || '-'}</div>
-											<div className="text-sm text-gray-500">{enquiry.clients?.phone || '-'}</div>
+										<td className="px-2 py-2 whitespace-nowrap">
+											<div className="text-xs text-gray-900">{enquiry.clients?.email || enquiry.email || '-'}</div>
+											<div className="text-xs text-gray-500">{enquiry.clients?.phone || enquiry.phone || '-'}</div>
 										</td>
 										
-										<td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-											{enquiry.enquiry_source === 'website_form' && (
+										<td className="px-2 py-2 whitespace-nowrap text-center text-xs">
+											{enquiry.jobs?.enquiry_source === 'web_form' && (
 												<span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-medium">
-													<Globe size={14} />
+													<Globe size={12} />
 													Web
 												</span>
 											)}
-											{enquiry.enquiry_source === 'email' && (
+											{enquiry.jobs?.enquiry_source === 'email' && (
 												<span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-md text-xs font-medium">
-													<Mail size={14} />
+													<Mail size={12} />
 													Email
 												</span>
 											)}
-											{enquiry.enquiry_source === 'phone_call' && (
+											{enquiry.jobs?.enquiry_source === 'phone' && (
 												<span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded-md text-xs font-medium">
-													<Phone size={14} />
+													<Phone size={12} />
 													Phone
 												</span>
 											)}
-											{enquiry.enquiry_source === 'referral' && (
+											{enquiry.jobs?.enquiry_source === 'referral' && (
 												<span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-700 rounded-md text-xs font-medium">
-													<Users size={14} />
+													<Users size={12} />
 													Referral
 												</span>
 											)}
-											{!enquiry.enquiry_source && '-'}
+											{!enquiry.jobs?.enquiry_source && '-'}
 										</td>
 										
-										<td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
-											{new Date(enquiry.created_at).toLocaleDateString('en-AU', {
-												day: 'numeric',
-												month: 'short'
-											})}
-										</td>
-										
-										<td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-											<Link
-												href={`/dashboard/jobs/${enquiry.id}`}
-												onClick={(e) => e.stopPropagation()}
-												className="text-orange-600 hover:text-orange-900"
-											>
-												View
-											</Link>
+										<td className="px-2 py-2 whitespace-nowrap text-center">
+											<StatusBadge status={enquiry.status} />
 										</td>
 									</tr>
-									
-									{/* Expanded Row - Customer Request */}
-									{expandedRow === enquiry.id && enquiry.description && (
-										<tr>
-											<td colSpan={7} className="px-6 py-4 bg-orange-50 border-t border-orange-200">
-												<div className="flex items-start gap-4">
-													<div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-														<svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-															<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-														</svg>
-													</div>
-													
-													<div className="flex-1">
-														<h4 className="text-sm font-bold text-orange-900 mb-2">
-															Customer's Request:
-														</h4>
-														<p className="text-sm text-orange-800 whitespace-pre-wrap leading-relaxed mb-4">
-															{enquiry.description}
-														</p>
-														
-														<div className="flex gap-2">
-															<Link
-																href={`/dashboard/quotes/new?job_id=${enquiry.id}`}
-																onClick={(e) => e.stopPropagation()}
-																className="px-3 py-1.5 bg-orange-600 text-white text-xs font-semibold rounded-lg hover:bg-orange-700 transition-colors"
-															>
-																Create Quote
-															</Link>
-															<Link
-																href={`/dashboard/jobs/${enquiry.id}`}
-																onClick={(e) => e.stopPropagation()}
-																className="px-3 py-1.5 bg-white text-gray-700 text-xs font-semibold rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
-															>
-																View Full Details
-															</Link>
-														</div>
-													</div>
-													
-													<button
-														onClick={(e) => {
-															e.stopPropagation()
-															setExpandedRow(null)
-														}}
-														className="text-gray-400 hover:text-gray-600"
+							
+							{/* Expanded Row - Customer Request */}
+							{expandedRow === enquiry.id && (enquiry.description || enquiry.message) && (
+								<tr>
+									<td colSpan={6} className="px-6 py-4 bg-orange-50 border-t border-orange-200">
+										<div className="flex items-start gap-4">
+											<div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+												<svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+												</svg>
+											</div>
+											
+											<div className="flex-1">
+												<h4 className="text-sm font-bold text-orange-900 mb-2">
+													Description:
+												</h4>
+												<p className="text-sm text-orange-800 whitespace-pre-wrap leading-relaxed mb-4">
+													{enquiry.description || enquiry.message}
+												</p>
+												
+												<div className="flex gap-2">
+													<div className="flex gap-2">
+														<Link
+														href={enquiry.converted_to_job_id ? `/dashboard/quotes/new?job_id=${enquiry.converted_to_job_id}` : `/dashboard/enquiries/${enquiry.id}`}
+														onClick={(e) => e.stopPropagation()}
+														className="px-3 py-1.5 bg-orange-600 text-white text-xs font-semibold rounded-lg hover:bg-orange-700 transition-colors"
 													>
-														<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-															<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
-														</svg>
-													</button>
-												</div>
-											</td>
-										</tr>
-									)}
-									
-									{/* Show when row is expanded but no description exists */}
-									{expandedRow === enquiry.id && !enquiry.description && (
-										<tr>
-											<td colSpan={7} className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-												<div className="flex items-center justify-between">
-													<div className="flex items-center gap-3">
-														<div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-															<svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-																<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-															</svg>
-														</div>
-														<span className="text-sm text-gray-500">No description provided for this enquiry.</span>
+														Create Quote
+													</Link>
+													<Link
+														href={enquiry.converted_to_job_id ? `/dashboard/jobs/${enquiry.converted_to_job_id}` : `/dashboard/enquiries/${enquiry.id}`}
+															onClick={(e) => e.stopPropagation()}
+															className="px-3 py-1.5 bg-white text-gray-700 text-xs font-semibold rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+														>
+															View Details
+														</Link>
 													</div>
-													<button
-														onClick={(e) => {
-															e.stopPropagation()
-															setExpandedRow(null)
-														}}
-														className="text-gray-400 hover:text-gray-600"
-													>
-														<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-															<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
-														</svg>
-													</button>
 												</div>
-											</td>
-										</tr>
-									)}
-								</React.Fragment>
-							))}
-						</tbody>
-					</table>
-					
-					{/* Empty State */}
-					{filteredEnquiries.length === 0 && !loading && (
-						<div className="text-center py-12">
-							<div className="text-gray-500 mb-2">
-								No enquiries found.{' '}
-								<Link href="/dashboard/settings/enquiries" className="text-orange-600 hover:underline font-medium">
-									Set up your enquiry form →
-								</Link>
-							</div>
-						</div>
-					)}
-					
-					{/* Loading State */}
-					{loading && (
-						<div className="text-center py-12">
-							<div className="text-gray-500">Loading enquiries...</div>
-						</div>
-					)}
+											</div>
+											
+											<button
+												onClick={(e) => {
+													e.stopPropagation()
+													setExpandedRow(null)
+												}}
+												className="text-gray-400 hover:text-gray-600"
+											>
+												<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
+												</svg>
+											</button>
+										</div>
+									</td>
+								</tr>
+							)}
+							
+							{/* Show when row is expanded but no description exists */}
+							{expandedRow === enquiry.id && !enquiry.description && !enquiry.message && (
+								<tr>
+									<td colSpan={6} className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+											<div className="flex items-center justify-between">
+												<div className="flex items-center gap-3">
+													<div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+														<svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+															<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+														</svg>
+													</div>
+													<span className="text-sm text-gray-500">No description provided for this enquiry.</span>
+												</div>
+												<button
+													onClick={(e) => {
+														e.stopPropagation()
+														setExpandedRow(null)
+													}}
+													className="text-gray-400 hover:text-gray-600"
+												>
+													<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
+													</svg>
+												</button>
+											</div>
+										</td>
+									</tr>
+								)}
+							</React.Fragment>
+						))}
+					</tbody>
+				</table>
+				
+				{/* Empty State */}
+				{filteredEnquiries.length === 0 && !loading && (
+					<div className="text-center py-12">
+					<div className="text-gray-500 mb-2">
+						No enquiries found.{' '}
+						<Link href="/dashboard/settings/enquiries" className="text-orange-600 hover:underline font-medium">
+							Set up your enquiry form →
+						</Link>
+					</div>
 				</div>
+			)}
+			
+			{/* Loading State */}
+			{loading && (
+				<div className="text-center py-12">
+					<div className="text-gray-500">Loading enquiries...</div>
+				</div>
+			)}
+		</div>
 
-				{/* Mobile Cards */}
-				<div className="lg:hidden space-y-4">
-					{filteredEnquiries.map((enquiry) => (
-						<div 
-							key={enquiry.id}
-							className="bg-white rounded-lg border border-gray-200 shadow-sm p-4"
-						>
-							{/* Header */}
-							<div className="flex items-start justify-between mb-3">
+		{/* Mobile Cards */}
+		<div className="lg:hidden space-y-4">
+			{filteredEnquiries.map((enquiry, index) => (
+				<div 
+					key={enquiry.id}
+					className="bg-white rounded-lg border border-gray-200 shadow-sm p-4"
+				>
+					{/* Header */}
+					<div className="flex items-start justify-between mb-3">
 								<div className="flex items-center gap-3">
 									<div className="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-orange-100 to-orange-50 rounded-full flex items-center justify-center">
 										<span className="text-sm font-semibold text-orange-700">
-											{enquiry.clients?.name?.charAt(0).toUpperCase() || '?'}
+									{(enquiry.clients?.name || enquiry.name)?.charAt(0).toUpperCase() || '?'}
 										</span>
 									</div>
 									<div>
-										<span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-md">
-											<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
-											</svg>
-											{enquiry.enquiry_number || `ENQ${enquiry.id.slice(0, 4)}`}
-											{enquiry.description && (
-												<svg className="w-3 h-3 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
-													<path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/>
-												</svg>
-											)}
-										</span>
+										<Link
+												href={enquiry.converted_to_job_id ? `/dashboard/jobs/${enquiry.converted_to_job_id}` : `/dashboard/enquiries/${enquiry.id}`}
+											className="text-sm font-medium text-purple-600 hover:text-purple-700 font-sans"
+										>
+										ENQ{String(index + 1).padStart(5, '0')}
+										</Link>
 										<div className="text-xs text-gray-500 mt-1">
 											{new Date(enquiry.created_at).toLocaleDateString('en-AU', {
 												day: 'numeric',
@@ -477,32 +441,27 @@ export default function EnquiriesPage() {
 									</div>
 								</div>
 								<Link
-									href={`/dashboard/jobs/${enquiry.id}`}
+									href={enquiry.converted_to_job_id ? `/dashboard/jobs/${enquiry.converted_to_job_id}` : `/dashboard/enquiries/${enquiry.id}`}
 									className="text-orange-600 hover:text-orange-900 text-sm font-medium"
 								>
 									View
 								</Link>
 							</div>
 
-							{/* Customer & Job */}
+							{/* Customer & Subject */}
 							<div className="space-y-2 mb-3">
 								<div>
 									<span className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Customer</span>
 									<div className="text-sm font-medium text-gray-900 mt-1">
-										{enquiry.clients?.name || 'No client'}
+								{enquiry.clients?.name || enquiry.name}
 									</div>
 								</div>
 								<div>
 									<span className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Job</span>
-									<div className="text-sm font-medium text-gray-900 mt-1">
-										{enquiry.job_name}
-									</div>
 									<div className="text-sm text-gray-500 mt-1">
 										{(() => {
-											// Display client address only
 											let addressDisplay = 'No address';
 											
-											// Check client's structured address first
 											if (enquiry.clients?.street_address || enquiry.clients?.suburb || enquiry.clients?.state || enquiry.clients?.postcode) {
 												const parts = [];
 												if (enquiry.clients?.street_address) parts.push(enquiry.clients.street_address);
@@ -513,10 +472,6 @@ export default function EnquiriesPage() {
 													}
 												}
 												addressDisplay = parts.join(', ');
-											}
-											// Fall back to client's legacy address
-											else if (enquiry.clients?.address) {
-												addressDisplay = enquiry.clients.address;
 											}
 											
 											return addressDisplay;
@@ -530,42 +485,42 @@ export default function EnquiriesPage() {
 								<div>
 									<span className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Contact</span>
 									<div className="space-y-1 mt-1">
-										<div className="text-sm text-gray-900">{enquiry.clients?.email || '-'}</div>
-										<div className="text-sm text-gray-500">{enquiry.clients?.phone || '-'}</div>
+								<div className="text-sm text-gray-900">{enquiry.clients?.email || enquiry.email || '-'}</div>
+								<div className="text-sm text-gray-500">{enquiry.clients?.phone || enquiry.phone || '-'}</div>
 									</div>
 								</div>
 								<div className="flex flex-col items-start sm:items-end">
 									<span className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Source</span>
-									{enquiry.enquiry_source === 'website_form' && (
+								{enquiry.jobs?.enquiry_source === 'web_form' && (
 										<span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-medium">
 											<Globe size={14} />
 											Web
 										</span>
 									)}
-									{enquiry.enquiry_source === 'email' && (
+									{enquiry.jobs?.enquiry_source === 'email' && (
 										<span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-md text-xs font-medium">
 											<Mail size={14} />
 											Email
 										</span>
 									)}
-									{enquiry.enquiry_source === 'phone_call' && (
+									{enquiry.jobs?.enquiry_source === 'phone' && (
 										<span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded-md text-xs font-medium">
 											<Phone size={14} />
 											Phone
 										</span>
 									)}
-									{enquiry.enquiry_source === 'referral' && (
+									{enquiry.jobs?.enquiry_source === 'referral' && (
 										<span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-700 rounded-md text-xs font-medium">
 											<Users size={14} />
 											Referral
 										</span>
 									)}
-									{!enquiry.enquiry_source && '-'}
+									{!enquiry.jobs?.enquiry_source && '-'}
 								</div>
 							</div>
 
 							{/* Description Expandable */}
-							{enquiry.description && (
+							{(enquiry.description || enquiry.message) && (
 								<>
 									<button
 										onClick={() => toggleRow(enquiry.id)}
@@ -595,21 +550,23 @@ export default function EnquiriesPage() {
 												</div>
 												<div className="flex-1">
 													<p className="text-sm text-orange-800 whitespace-pre-wrap leading-relaxed mb-3">
-														{enquiry.description}
+														{enquiry.description || enquiry.message}
 													</p>
 													<div className="flex flex-col sm:flex-row gap-2">
-														<Link
-															href={`/dashboard/quotes/new?job_id=${enquiry.id}`}
-															className="inline-flex items-center justify-center px-3 py-2 bg-orange-600 text-white text-sm font-semibold rounded-lg hover:bg-orange-700 transition-colors"
-														>
-															Create Quote
-														</Link>
-														<Link
-															href={`/dashboard/jobs/${enquiry.id}`}
-															className="inline-flex items-center justify-center px-3 py-2 bg-white text-gray-700 text-sm font-semibold rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
-														>
-															View Details
-														</Link>
+														<div className="flex flex-col sm:flex-row gap-2">
+															<Link
+																href={`/dashboard/quotes/new?job_id=${enquiry.id}`}
+																className="inline-flex items-center justify-center px-3 py-2 bg-orange-600 text-white text-sm font-semibold rounded-lg hover:bg-orange-700 transition-colors"
+															>
+																Create Quote
+															</Link>
+															<Link
+																href={`/dashboard/jobs/${enquiry.id}`}
+																className="inline-flex items-center justify-center px-3 py-2 bg-white text-gray-700 text-sm font-semibold rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+															>
+																View Details
+															</Link>
+														</div>
 													</div>
 												</div>
 											</div>

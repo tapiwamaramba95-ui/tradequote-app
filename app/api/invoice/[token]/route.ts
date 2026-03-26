@@ -57,12 +57,24 @@ export async function GET(
         if (jobData.client_id) {
           const { data: clientData } = await supabase
             .from('clients')
-            .select('name, email, phone, address')
+            .select('name, email, phone, street_address, suburb, state, postcode')
             .eq('id', jobData.client_id)
             .single()
 
           if (clientData) {
-            client = clientData
+            // Format address from structured fields
+            const addressParts = []
+            if (clientData.street_address) addressParts.push(clientData.street_address)
+            if (clientData.suburb || clientData.state || clientData.postcode) {
+              const locationParts = [clientData.suburb, clientData.state, clientData.postcode].filter(Boolean)
+              if (locationParts.length > 0) {
+                addressParts.push(locationParts.join(' '))
+              }
+            }
+            client = {
+              ...clientData,
+              address: addressParts.join(', ') || ''
+            }
           }
         }
       }

@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { supabase } from '@/lib/supabase'
 import { colors } from '@/lib/colors'
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
 import { CheckCircle2, BarChart3, AlertTriangle, Info } from 'lucide-react'
+import { getBusinessId } from '@/lib/business'
+
+const CostBreakdownChart = lazy(() => import('@/components/CostBreakdownChart'))
 
 type MarginMetrics = {
   totalGrossProfit: number
@@ -33,8 +35,6 @@ type ProfitableJob = {
   invoice_count: number
 }
 
-const CHART_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6']
-
 export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true)
   const [metrics, setMetrics] = useState<MarginMetrics>({
@@ -62,11 +62,14 @@ export default function AnalyticsPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      // Fetch jobs with financial data (all aggregated by triggers)
+      const businessId = await getBusinessId()
+      if (!businessId) return
+
+      // Fetch jobs with financial data
       const { data: jobs } = await supabase
         .from('jobs')
-        .select('id, job_name, job_number, status, invoiced_amount, quoted_amount, total_cost, total_material_cost, total_labour_cost, total_acquisition_cost, total_subcontractor_cost, gross_profit, margin')
-        .eq('user_id', user.id)
+        .select('id, job_name, job_number, status, invoiced_amount, quoted_amount, total_cost, gross_profit, margin')
+        .eq('business_id', businessId)
         .not('invoiced_amount', 'is', null) // Only jobs that have been invoiced
 
       if (jobs && jobs.length > 0) {
@@ -79,13 +82,25 @@ export default function AnalyticsPage() {
         const { count: totalJobsCount } = await supabase
           .from('jobs')
           .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id)
+          .eq('business_id', businessId)
 
-        // Cost breakdown (aggregated from all jobs)
-        const materialCostTotal = jobs.reduce((sum, job) => sum + (job.total_material_cost || 0), 0)
-        const labourCostTotal = jobs.reduce((sum, job) => sum + (job.total_labour_cost || 0), 0)
-        const acquisitionCostTotal = jobs.reduce((sum, job) => sum + (job.total_acquisition_cost || 0), 0)
-        const subcontractorCostTotal = jobs.reduce((sum, job) => sum + (job.total_subcontractor_cost || 0), 0)
+        // Cost breakdown - Calculate from timesheets and purchase orders
+        const { data: timesheets } = await supabase
+          .from('timesheets')
+          .select('hours, hourly_rate')
+          .eq('business_id', businessId)
+          .in('job_id', jobs.map(j => j.id))
+        
+        const { data: purchaseOrders } = await supabase
+          .from('purchase_orders')
+          .select('total')
+          .eq('business_id', businessId)
+          .in('job_id', jobs.map(j => j.id).filter(Boolean))
+
+        const labourCostTotal = timesheets?.reduce((sum, ts) => sum + ((ts.hours || 0) * (ts.hourly_rate || 0)), 0) || 0
+        const materialCostTotal = purchaseOrders?.reduce((sum, po) => sum + (po.total || 0), 0) || 0
+        const acquisitionCostTotal = 0 // Would need to track M&Q time separately
+        const subcontractorCostTotal = 0 // Would need a subcontractors field
 
         setCostBreakdown({
           materialCost: materialCostTotal,
@@ -94,15 +109,15 @@ export default function AnalyticsPage() {
           subcontractorCost: subcontractorCostTotal,
         })
 
-        // Quote win rate (quotes with is_accepted = true vs total)
+        // Quote win rate (quotes with status = 'accepted' vs total)
         const { data: allQuotes } = await supabase
           .from('quotes')
-          .select('is_accepted')
-          .eq('user_id', user.id)
+          .select('status, accepted_at')
+          .eq('business_id', businessId)
 
         let winRate = 0
         if (allQuotes && allQuotes.length > 0) {
-          const acceptedQuotes = allQuotes.filter((q) => q.is_accepted === true).length
+          const acceptedQuotes = allQuotes.filter((q) => q.status === 'accepted' || q.accepted_at !== null).length
           winRate = (acceptedQuotes / allQuotes.length) * 100
         }
 
@@ -235,37 +250,13 @@ export default function AnalyticsPage() {
             <h2 className="text-xl font-bold mb-6" style={{ color: colors.text.primary }}>
               Cost Breakdown
             </h2>
-            {pieChartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={pieChartData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }: any) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={100}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {pieChartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value: number | undefined) => {
-                      if (value === undefined) return '$0.00'
-                      return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                    }}
-                  />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="text-center py-12 text-gray-500">
-                No cost data available yet
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-[300px]">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: colors.accent.DEFAULT }}></div>
               </div>
-            )}
+            }>
+              <CostBreakdownChart data={pieChartData} />
+            </Suspense>
           </div>
 
           {/* Customer Acquisition Cost */}

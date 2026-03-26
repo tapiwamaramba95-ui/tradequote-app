@@ -138,7 +138,12 @@ export interface Job {
   job_number?: string
   enquiry_number?: string
   job_name: string
-  job_address: string
+  job_address?: string // Legacy field, now optional
+  title?: string
+  street_address?: string | null
+  suburb?: string | null
+  state?: string | null
+  postcode?: string | null
   description?: string
   staff_member_id?: string
   
@@ -270,6 +275,11 @@ export type ActionItem = {
   amount?: number
   entityId: string
   daysOverdue?: number
+  invoice_number?: string
+  quote_number?: string
+  job_number?: string
+  client_id?: string
+  client_name?: string
 }
 
 // =====================================================

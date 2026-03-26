@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { colors } from '@/lib/colors'
+import { getBusinessId } from '@/lib/business'
 import Link from 'next/link'
 
 type Supplier = {
@@ -38,20 +39,30 @@ export default function SupplierDetailPage({ params }: { params: { id: string } 
 
   const loadSupplierData = async () => {
     try {
-      // Load supplier
+      // Get business_id for filtering
+      const businessId = await getBusinessId()
+      if (!businessId) {
+        console.error('No business found')
+        setLoading(false)
+        return
+      }
+
+      // Load supplier with business_id verification
       const { data: supplierData } = await supabase
         .from('suppliers')
         .select('*')
         .eq('id', params.id)
+        .eq('business_id', businessId)
         .single()
 
       if (supplierData) setSupplier(supplierData)
 
-      // Load products
+      // Load products with business_id verification
       const { data: productsData } = await supabase
         .from('supplier_products')
         .select('*')
         .eq('supplier_id', params.id)
+        .eq('business_id', businessId)
         .eq('is_active', true)
         .order('product_name')
 

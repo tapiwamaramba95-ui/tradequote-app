@@ -119,21 +119,21 @@ export function ActionButtons({ type, id, status, onActionComplete }: ActionButt
         <button
           onClick={handleSendReminder}
           disabled={loading}
-          className="px-3 py-1.5 bg-blue-500 text-white rounded-md text-sm font-semibold hover:bg-blue-600 disabled:opacity-50 transition-colors"
+          className="px-4 py-2.5 bg-blue-500 text-white rounded-md text-base font-semibold hover:bg-blue-600 disabled:opacity-50 transition-colors min-h-11"
         >
           {loading ? 'Sending...' : 'Send Reminder'}
         </button>
         <button
           onClick={handleMarkPaid}
           disabled={loading}
-          className="px-3 py-1.5 border-2 rounded-md text-sm font-semibold hover:bg-gray-50 disabled:opacity-50 transition-colors"
+          className="px-4 py-2.5 border-2 rounded-md text-base font-semibold hover:bg-gray-50 disabled:opacity-50 transition-colors min-h-11"
           style={{ borderColor: colors.border.DEFAULT, color: colors.text.primary }}
         >
           Mark Paid
         </button>
         <a
           href={`/dashboard/invoices/${id}`}
-          className="px-3 py-1.5 border-2 rounded-md text-sm font-semibold hover:bg-gray-50 transition-colors inline-block"
+          className="px-4 py-2.5 border-2 rounded-md text-base font-semibold hover:bg-gray-50 transition-colors inline-block min-h-11 flex items-center"
           style={{ borderColor: colors.border.DEFAULT, color: colors.text.primary }}
         >
           View Invoice
@@ -149,21 +149,21 @@ export function ActionButtons({ type, id, status, onActionComplete }: ActionButt
         <button
           onClick={handleFollowUp}
           disabled={loading}
-          className="px-3 py-1.5 bg-blue-500 text-white rounded-md text-sm font-semibold hover:bg-blue-600 disabled:opacity-50 transition-colors"
+          className="px-4 py-2.5 bg-blue-500 text-white rounded-md text-base font-semibold hover:bg-blue-600 disabled:opacity-50 transition-colors min-h-11"
         >
           {loading ? 'Sending...' : 'Follow Up'}
         </button>
         <button
           onClick={handleExtendValidity}
           disabled={loading}
-          className="px-3 py-1.5 border-2 rounded-md text-sm font-semibold hover:bg-gray-50 disabled:opacity-50 transition-colors"
+          className="px-4 py-2.5 border-2 rounded-md text-base font-semibold hover:bg-gray-50 disabled:opacity-50 transition-colors min-h-11"
           style={{ borderColor: colors.border.DEFAULT, color: colors.text.primary }}
         >
           Extend Validity
         </button>
         <a
           href={`/dashboard/quotes/${id}`}
-          className="px-3 py-1.5 border-2 rounded-md text-sm font-semibold hover:bg-gray-50 transition-colors inline-block"
+          className="px-4 py-2.5 border-2 rounded-md text-base font-semibold hover:bg-gray-50 transition-colors inline-block min-h-11 flex items-center"
           style={{ borderColor: colors.border.DEFAULT, color: colors.text.primary }}
         >
           View Quote
@@ -178,13 +178,13 @@ export function ActionButtons({ type, id, status, onActionComplete }: ActionButt
       <div className="flex gap-2 flex-wrap">
         <button
           onClick={handleScheduleWork}
-          className="px-3 py-1.5 bg-blue-500 text-white rounded-md text-sm font-semibold hover:bg-blue-600 transition-colors"
+          className="px-4 py-2.5 bg-blue-500 text-white rounded-md text-base font-semibold hover:bg-blue-600 transition-colors min-h-11"
         >
           Schedule Work
         </button>
         <a
           href={`/dashboard/jobs/${id}`}
-          className="px-3 py-1.5 border-2 rounded-md text-sm font-semibold hover:bg-gray-50 transition-colors inline-block"
+          className="px-4 py-2.5 border-2 rounded-md text-base font-semibold hover:bg-gray-50 transition-colors inline-block min-h-11 flex items-center"
           style={{ borderColor: colors.border.DEFAULT, color: colors.text.primary }}
         >
           View Job

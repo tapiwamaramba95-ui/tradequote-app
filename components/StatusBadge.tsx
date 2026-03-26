@@ -51,7 +51,7 @@ export function StatusBadge({ status }: StatusBadgeProps) {
 
   return (
     <span
-      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize"
+      className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium capitalize"
       style={{
         backgroundColor: `${color}20`,
         color: color,

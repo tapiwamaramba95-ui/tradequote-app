@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { colors } from '@/lib/colors';
 import Breadcrumb from '@/components/Breadcrumb';
+import { getBusinessId } from '@/lib/business';
+import { PermissionToggle } from '@/components/permissions/PermissionToggle';
+import { StaffPermissions, DEFAULT_PERMISSIONS } from '@/lib/permissions/types';
 
 export type Staff = {
   id: string;
@@ -17,20 +20,10 @@ export type Staff = {
   hourly_cost?: number;
   billing_rate?: string;
   licence_number?: string;
-  permissions?: {
-    timesheets?: boolean;
-    jobs?: boolean;
-    invoicing?: boolean;
-    quoting?: boolean;
-    purchases?: boolean;
-    reports_financials?: boolean;
-    scheduling_dispatch?: boolean;
-    enquiries?: boolean;
-    staff_tracking?: boolean;
-    settings?: boolean;
-    staff_members?: boolean;
-    plan_billing?: boolean;
-  };
+  permissions?: StaffPermissions;
+  invited_at?: string;
+  accepted_at?: string;
+  is_active?: boolean;
 };
 
 export default function StaffMembersPage() {
@@ -38,32 +31,22 @@ export default function StaffMembersPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'active' | 'inactive'>('active');
+  const [activeModalTab, setActiveModalTab] = useState<'personal' | 'permissions'>('personal');
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [invitingStaffId, setInvitingStaffId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<Staff>>({
     name: '',
     email: '',
     username: '',
     mobile: '',
     phone: '',
-    role: 'Account Owner',
+    role: 'Staff',
     billing_rate: 'Standard Labour Rate',
     hourly_cost: 0,
     licence_number: '',
     status: 'active',
-    permissions: {
-      timesheets: true,
-      jobs: true,
-      invoicing: true,
-      quoting: true,
-      purchases: true,
-      reports_financials: true,
-      scheduling_dispatch: true,
-      enquiries: true,
-      staff_tracking: true,
-      settings: true,
-      staff_members: true,
-      plan_billing: true,
-    }
+    permissions: DEFAULT_PERMISSIONS
   });
 
   useEffect(() => {
@@ -74,10 +57,13 @@ export default function StaffMembersPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    const businessId = await getBusinessId();
+    if (!businessId) return;
+
     const { data, error } = await supabase
       .from('staff')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('business_id', businessId)
       .order('created_at', { ascending: false });
     
     if (!error && data) setStaff(data);
@@ -86,46 +72,166 @@ export default function StaffMembersPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
+    
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    if (editingStaff) {
-      // Update existing staff
-      const { error } = await supabase
-        .from('staff')
-        .update(formData)
-        .eq('id', editingStaff.id);
-      
-      if (error) {
-        console.error('Error updating staff:', error);
-      }
-    } else {
-      // Create new staff
-      const { error } = await supabase
-        .from('staff')
-        .insert([{ ...formData, user_id: user.id }]);
-      
-      if (error) {
-        console.error('Error creating staff:', error);
-      }
+    if (!user) {
+      setIsSaving(false);
+      return;
     }
 
-    setShowModal(false);
-    setEditingStaff(null);
+    const businessId = await getBusinessId();
+    if (!businessId) {
+      setIsSaving(false);
+      return;
+    }
+
+    try {
+      if (editingStaff) {
+        // Update existing staff
+        const { error } = await supabase
+          .from('staff')
+          .update({
+            name: formData.name,
+            phone: formData.phone,
+            mobile: formData.mobile,
+            role: formData.role,
+            hourly_cost: formData.hourly_cost,
+            billing_rate: formData.billing_rate,
+            licence_number: formData.licence_number,
+            permissions: formData.permissions,
+            is_active: formData.status === 'active'
+          })
+          .eq('id', editingStaff.id);
+        
+        if (error) {
+          console.error('Error updating staff:', error);
+          alert(`Failed to update staff: ${error.message}`);
+        }
+      } else {
+        // Create staff record first
+        const { data: newStaff, error: staffError } = await supabase
+          .from('staff')
+          .insert([{
+            owner_id: user.id,
+            business_id: businessId,
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            mobile: formData.mobile,
+            role: formData.role || 'Staff',
+            hourly_cost: formData.hourly_cost,
+            billing_rate: formData.billing_rate,
+            licence_number: formData.licence_number,
+            permissions: formData.permissions || DEFAULT_PERMISSIONS,
+            is_active: false // Will be activated when they accept invitation
+          }])
+          .select()
+          .single();
+        
+        if (staffError) {
+          console.error('Error creating staff:', staffError);
+          alert(`Failed to create staff: ${staffError.message}`);
+          setIsSaving(false);
+          return;
+        }
+
+        // Send invitation email
+        try {
+          const inviteResponse = await fetch('/api/staff/invite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              staffId: newStaff.id,
+              email: formData.email,
+              name: formData.name,
+              businessName: profile?.company_name || 'your team'
+            })
+          });
+
+          const inviteResult = await inviteResponse.json();
+
+          if (!inviteResponse.ok) {
+            console.error('Failed to send invitation:', inviteResult);
+            alert(`Staff created but invitation email failed: ${inviteResult.error}`);
+          } else {
+            alert('Staff member created and invitation sent successfully!');
+          }
+        } catch (inviteError: any) {
+          console.error('Error sending invitation:', inviteError);
+          alert(`Staff created but failed to send invitation: ${inviteError.message}`);
+        }
+      }
+
+      setShowModal(false);
+      setEditingStaff(null);
+      resetForm();
+      fetchStaff();
+    } catch (error: any) {
+      console.error('Error:', error);
+      alert(`An error occurred: ${error.message}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const resetForm = () => {
     setFormData({
       name: '',
       email: '',
       username: '',
       mobile: '',
       phone: '',
-      role: 'Account Owner',
+      role: 'Staff',
       billing_rate: 'Standard Labour Rate',
       hourly_cost: 0,
       licence_number: '',
       status: 'active',
-      permissions: {}
+      permissions: DEFAULT_PERMISSIONS
     });
-    fetchStaff();
+    setActiveModalTab('personal');
+  };
+
+  const handleResendInvitation = async (staffId: string, email: string, name: string) => {
+    setInvitingStaffId(staffId);
+    
+    try {
+      const response = await fetch('/api/staff/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          staffId,
+          email,
+          name,
+          businessName: profile?.company_name || 'your team'
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        console.error('Failed to resend invitation:', result);
+        alert(`Failed to resend invitation: ${result.error}`);
+      } else {
+        alert('Invitation resent successfully!');
+        fetchStaff();
+      }
+    } catch (error: any) {
+      console.error('Error:', error);
+      alert(`An error occurred: ${error.message}`);
+    } finally {
+      setInvitingStaffId(null);
+    }
+  };
+
+  const getInvitationStatus = (member: Staff) => {
+    if (member.accepted_at) {
+      return { label: 'Active', color: 'bg-green-100 text-green-800' };
+    }
+    if (member.invited_at) {
+      return { label: 'Pending', color: 'bg-yellow-100 text-yellow-800' };
+    }
+    return { label: 'Not Invited', color: 'bg-gray-100 text-gray-800' };
   };
 
   const handleEdit = (member: Staff) => {
@@ -135,6 +241,8 @@ export default function StaffMembersPage() {
   };
 
   const handleToggleStatus = async (member: Staff) => {
+    const businessId = await getBusinessId();
+    if (!businessId) return;
     const newStatus = member.status === 'active' ? 'inactive' : 'active';
     const { error } = await supabase
       .from('staff')
@@ -202,32 +310,7 @@ export default function StaffMembersPage() {
       <button
         onClick={() => {
           setEditingStaff(null);
-          setFormData({
-            name: '',
-            email: '',
-            username: '',
-            mobile: '',
-            phone: '',
-            role: 'Account Owner',
-            billing_rate: 'Standard Labour Rate',
-            hourly_cost: 0,
-            licence_number: '',
-            status: 'active',
-            permissions: {
-              timesheets: true,
-              jobs: true,
-              invoicing: true,
-              quoting: true,
-              purchases: true,
-              reports_financials: true,
-              scheduling_dispatch: true,
-              enquiries: true,
-              staff_tracking: true,
-              settings: true,
-              staff_members: true,
-              plan_billing: true,
-            }
-          });
+          resetForm();
           setShowModal(true);
         }}
         className="mb-6 inline-flex items-center rounded bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
@@ -270,60 +353,89 @@ export default function StaffMembersPage() {
                 <th className="px-4 py-5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-b">Name</th>
                 <th className="px-4 py-5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-b">Role</th>
                 <th className="px-4 py-5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-b">Status</th>
+                <th className="px-4 py-5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-b">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredStaff.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="py-8 text-center text-gray-400 border-b">
+                  <td colSpan={4} className="py-8 text-center text-gray-400 border-b">
                     No {activeTab} staff members yet.
                   </td>
                 </tr>
               ) : (
-                filteredStaff.map((member) => (
-                  <tr
-                    key={member.id}
-                    className="hover:bg-gray-50 border-b cursor-pointer"
-                    onClick={() => handleEdit(member)}
-                  >
-                    <td className="px-4 py-5 whitespace-nowrap">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-slate-600 flex items-center justify-center text-white font-semibold text-sm">
-                          {getInitials(member.name)}
+                filteredStaff.map((member) => {
+                  const invitationStatus = getInvitationStatus(member);
+                  return (
+                    <tr
+                      key={member.id}
+                      className="hover:bg-gray-50 border-b"
+                    >
+                      <td className="px-4 py-5 whitespace-nowrap">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-slate-600 flex items-center justify-center text-white font-semibold text-sm">
+                            {getInitials(member.name)}
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-900">{member.name}</div>
+                            <div className="text-xs text-gray-500">{member.email}</div>
+                          </div>
                         </div>
-                        <span className="font-medium text-gray-900">{member.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-5 whitespace-nowrap text-gray-700">
-                      <div className="flex items-center gap-2">
-                        {member.role || '-'}
-                        {member.role === 'Account Owner' && (
-                          <svg className="h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-5 whitespace-nowrap">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggleStatus(member);
-                        }}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                          member.status === 'active' ? 'bg-orange-500' : 'bg-gray-200'
-                        }`}
-                        style={member.status === 'active' ? { backgroundColor: colors.accent.DEFAULT } : {}}
-                      >
-                        <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                            member.status === 'active' ? 'translate-x-6' : 'translate-x-1'
-                          }`}
-                        />
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className="px-4 py-5 whitespace-nowrap text-gray-700">
+                        <div className="flex items-center gap-2">
+                          {member.role || '-'}
+                          {member.role === 'Account Owner' && (
+                            <svg className="h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-5 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${invitationStatus.color}`}>
+                          {invitationStatus.label}
+                        </span>
+                      </td>
+                      <td className="px-4 py-5 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleEdit(member)}
+                            className="text-cyan-600 hover:text-cyan-800 text-sm font-medium"
+                          >
+                            Edit
+                          </button>
+                          {!member.accepted_at && member.invited_at && (
+                            <button
+                              onClick={() => handleResendInvitation(member.id, member.email, member.name)}
+                              disabled={invitingStaffId === member.id}
+                              className="text-orange-600 hover:text-orange-800 text-sm font-medium disabled:opacity-50"
+                              style={{ color: colors.accent.DEFAULT }}
+                            >
+                              {invitingStaffId === member.id ? 'Sending...' : 'Resend Invite'}
+                            </button>
+                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleStatus(member);
+                            }}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                              member.status === 'active' ? 'bg-orange-500' : 'bg-gray-200'
+                            }`}
+                            style={member.status === 'active' ? { backgroundColor: colors.accent.DEFAULT } : {}}
+                          >
+                            <span
+                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                member.status === 'active' ? 'translate-x-6' : 'translate-x-1'
+                              }`}
+                            />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -355,32 +467,33 @@ export default function StaffMembersPage() {
                   <div className="flex gap-6">
                     <button
                       type="button"
-                      className="pb-3 px-1 border-b-2 border-cyan-600 text-cyan-600 font-medium text-sm"
+                      onClick={() => setActiveModalTab('personal')}
+                      className={`pb-3 px-1 border-b-2 ${
+                        activeModalTab === 'personal'
+                          ? 'border-cyan-600 text-cyan-600'
+                          : 'border-transparent text-gray-500'
+                      } font-medium text-sm`}
                     >
                       Personal Information
                     </button>
                     <button
                       type="button"
-                      className="pb-3 px-1 border-b-2 border-transparent text-gray-500 font-medium text-sm"
-                    >
-                      External Calendars
-                    </button>
-                    <button
-                      type="button"
-                      className="pb-3 px-1 border-b-2 border-transparent text-gray-500 font-medium text-sm"
-                    >
-                      Notifications
-                    </button>
-                    <button
-                      type="button"
-                      className="pb-3 px-1 border-b-2 border-transparent text-gray-500 font-medium text-sm"
+                      onClick={() => setActiveModalTab('permissions')}
+                      className={`pb-3 px-1 border-b-2 ${
+                        activeModalTab === 'permissions'
+                          ? 'border-cyan-600 text-cyan-600'
+                          : 'border-transparent text-gray-500'
+                      } font-medium text-sm`}
                     >
                       Staff Permissions
                     </button>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {activeModalTab === 'personal' ? (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {activeModalTab === 'personal' ? (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Left Column - Personal Information */}
                   <div className="space-y-6">
                     <h3 className="text-lg font-semibold text-gray-900">Personal Information</h3>
@@ -407,25 +520,14 @@ export default function StaffMembersPage() {
                         required
                         value={formData.email || ''}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                        disabled={!!editingStaff}
+                        className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:bg-gray-50 disabled:text-gray-500"
                       />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Username <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.username || formData.email || ''}
-                        onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                        className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        <button type="button" className="text-cyan-600 hover:underline">
-                          Learn about changing usernames.
-                        </button>
-                      </p>
+                      {editingStaff && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Email cannot be changed after invitation is sent
+                        </p>
+                      )}
                     </div>
 
                     <div>
@@ -450,22 +552,17 @@ export default function StaffMembersPage() {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Default Billing Rate <span className="text-red-500">*</span>
+                        Role
                       </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={formData.billing_rate || 'Standard Labour Rate'}
-                          onChange={(e) => setFormData({ ...formData, billing_rate: e.target.value })}
-                          className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                        />
-                        <button
-                          type="button"
-                          className="px-3 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
-                        >
-                          +
-                        </button>
-                      </div>
+                      <select
+                        value={formData.role || 'Staff'}
+                        onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                        className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                      >
+                        <option value="Staff">Staff</option>
+                        <option value="Manager">Manager</option>
+                        <option value="Account Owner">Account Owner</option>
+                      </select>
                     </div>
 
                     <div>
@@ -476,7 +573,7 @@ export default function StaffMembersPage() {
                         type="number"
                         step="0.01"
                         value={formData.hourly_cost || ''}
-                        onChange={(e) => setFormData({ ...formData, hourly_cost: parseFloat(e.target.value) })}
+                        onChange={(e) => setFormData({ ...formData, hourly_cost: parseFloat(e.target.value) || 0 })}
                         className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
                         placeholder="0.00"
                       />
@@ -495,60 +592,64 @@ export default function StaffMembersPage() {
                     </div>
                   </div>
 
-                  {/* Right Column - Staff Permissions */}
+                  {/* Right Column - Info */}
                   <div className="space-y-6">
-                    <h3 className="text-lg font-semibold text-gray-900">Staff Permissions</h3>
-                    
-                    <div className="space-y-3">
-                      {[
-                        { key: 'timesheets', label: 'Timesheets', icon: '⏱️' },
-                        { key: 'jobs', label: 'Jobs', icon: '📋' },
-                        { key: 'invoicing', label: 'Invoicing', icon: '📄' },
-                        { key: 'quoting', label: 'Quoting', icon: '💰' },
-                        { key: 'purchases', label: 'Purchases', icon: '🛒' },
-                        { key: 'reports_financials', label: 'Reports & Financials', icon: '📊' },
-                        { key: 'scheduling_dispatch', label: 'Scheduling & Dispatch', icon: '📅' },
-                        { key: 'enquiries', label: 'Enquiries', icon: '📧' },
-                        { key: 'staff_tracking', label: 'Staff Tracking', icon: '📍' },
-                        { key: 'settings', label: 'Settings', icon: '⚙️' },
-                        { key: 'staff_members', label: 'Staff Members', icon: '👥' },
-                        { key: 'plan_billing', label: 'Plan & Billing', icon: '💳' },
-                      ].map((permission) => (
-                        <label
-                          key={permission.key}
-                          className="flex items-center gap-3 p-3 rounded hover:bg-gray-50 cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={formData.permissions?.[permission.key as keyof typeof formData.permissions] || false}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                permissions: {
-                                  ...formData.permissions,
-                                  [permission.key]: e.target.checked,
-                                },
-                              })
-                            }
-                            className="h-4 w-4 rounded border-gray-300 text-cyan-600 focus:ring-cyan-500"
-                          />
-                          <span className="flex-1 text-sm text-gray-700">
-                            {permission.label}
-                          </span>
-                          <svg className="h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                          </svg>
-                        </label>
-                      ))}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="flex items-start gap-3">
+                        <svg className="h-5 w-5 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                        </svg>
+                        <div>
+                          <p className="text-sm text-blue-900 font-medium mb-1">
+                            Invitation Process
+                          </p>
+                          <p className="text-sm text-blue-800">
+                            {editingStaff 
+                              ? 'Update the information and permissions for this staff member.'
+                              : 'An invitation email will be sent to this address. The staff member can accept the invitation and create their password to access the system.'}
+                          </p>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="pt-4 border-t">
-                      <p className="text-sm text-gray-500">
-                        <span className="font-medium">No Access</span> - This staff member has no permissions enabled.
-                      </p>
-                    </div>
+                    {editingStaff && (
+                      <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                        <h4 className="font-medium text-gray-900">Invitation Status</h4>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Invited:</span>
+                            <span className="font-medium text-gray-900">
+                              {editingStaff.invited_at ? new Date(editingStaff.invited_at).toLocaleDateString() : 'Not sent'}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Accepted:</span>
+                            <span className="font-medium text-gray-900">
+                              {editingStaff.accepted_at ? new Date(editingStaff.accepted_at).toLocaleDateString() : 'Pending'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
+                ) : (
+                  <div>
+                    {editingStaff && formData.permissions ? (
+                      <PermissionToggle
+                        staffMemberId={editingStaff.id}
+                        staffName={formData.name || 'Staff Member'}
+                        permissions={formData.permissions}
+                        onChange={(newPermissions) => setFormData({ ...formData, permissions: newPermissions })}
+                        isLoading={isSaving}
+                      />
+                    ) : (
+                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center text-gray-600">
+                        <p>Save the staff member first to configure permissions.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Modal Footer */}
@@ -558,6 +659,7 @@ export default function StaffMembersPage() {
                   onClick={() => {
                     setShowModal(false);
                     setEditingStaff(null);
+                    resetForm();
                   }}
                   className="px-6 py-2 rounded border border-gray-300 bg-white text-gray-700 font-semibold hover:bg-gray-50"
                 >
@@ -565,12 +667,13 @@ export default function StaffMembersPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 rounded text-white font-semibold transition-colors"
+                  disabled={isSaving}
+                  className="px-6 py-2 rounded text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ backgroundColor: colors.accent.DEFAULT }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.accent.hover}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = colors.accent.DEFAULT}
+                  onMouseEnter={(e) => !isSaving && (e.currentTarget.style.backgroundColor = colors.accent.hover)}
+                  onMouseLeave={(e) => !isSaving && (e.currentTarget.style.backgroundColor = colors.accent.DEFAULT)}
                 >
-                  Save
+                  {isSaving ? (editingStaff ? 'Saving...' : 'Sending Invitation...') : (editingStaff ? 'Save Changes' : 'Send Invitation')}
                 </button>
               </div>
             </form>

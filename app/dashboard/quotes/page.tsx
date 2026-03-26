@@ -38,7 +38,8 @@ type Quote = {
     email: string
   } | null
   jobs: {
-    job_name: string
+    id: string
+    job_number: string
     clients: {
       id: string
       name: string
@@ -78,7 +79,8 @@ export default function QuotesPage() {
           *,
           clients (id, name, email),
           jobs (
-            job_name,
+            id,
+            job_number,
             clients (id, name)
           )
         `, { count: 'exact' })
@@ -183,7 +185,7 @@ export default function QuotesPage() {
         </div>
 
         {/* Filters Bar */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-6">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 mb-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <div className="relative flex-1 w-full sm:max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -233,14 +235,14 @@ export default function QuotesPage() {
               </colgroup>
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Quote #</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Customer</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Job</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Status</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Amount</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Created</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Valid Until</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Actions</th>
+                  <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Quote #</th>
+                  <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Customer</th>
+                  <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Job</th>
+                  <th className="px-2 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Status</th>
+                  <th className="px-2 py-2 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Amount</th>
+                  <th className="px-2 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Created</th>
+                  <th className="px-2 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Valid Until</th>
+                  <th className="px-2 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
             <tbody className="divide-y divide-gray-200">
@@ -248,32 +250,41 @@ export default function QuotesPage() {
                 const statusConfig = getQuoteStatusConfig(quote.status as any)
                 return (
                   <tr key={quote.id} className="hover:bg-gray-50 transition-colors group">
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <Link href={`/dashboard/quotes/${quote.id}`} className="text-sm font-medium text-cyan-600 hover:text-cyan-700 font-sans">
+                    <td className="px-2 py-2 whitespace-nowrap">
+                      <Link href={`/dashboard/quotes/${quote.id}`} className="text-xs font-medium text-cyan-600 hover:text-cyan-700 font-sans">
                         {quote.quote_number}
                       </Link>
                     </td>
-                    <td className="px-4 py-4">
-                      <div className="text-sm font-medium text-gray-900 truncate max-w-32">{getClientName(quote)}</div>
+                    <td className="px-2 py-2">
+                      <div className="text-xs font-medium text-gray-900 truncate max-w-32">{getClientName(quote)}</div>
                     </td>
-                    <td className="px-4 py-4">
-                      <div className="text-sm text-gray-600 truncate max-w-32">{quote.jobs?.job_name || '-'}</div>
+                    <td className="px-2 py-2">
+                      {quote.jobs?.id && quote.jobs?.job_number ? (
+                        <Link
+                          href={`/dashboard/jobs/${quote.jobs.id}`}
+                          className="text-xs text-purple-600 hover:text-purple-700 font-medium truncate max-w-32 block"
+                        >
+                          {quote.jobs.job_number}
+                        </Link>
+                      ) : (
+                        <div className="text-xs text-gray-600 truncate max-w-32">-</div>
+                      )}
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-center">
-                      <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: statusConfig.bg, color: statusConfig.text }}>
+                    <td className="px-2 py-2 whitespace-nowrap text-center">
+                      <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium" style={{ backgroundColor: statusConfig.bg, color: statusConfig.text }}>
                         {statusConfig.label}
                       </span>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-right">
-                      <span className="text-sm font-medium text-gray-900">{formatCurrency(quote.total)}</span>
+                    <td className="px-2 py-2 whitespace-nowrap text-right">
+                      <span className="text-xs font-medium text-gray-900">{formatCurrency(quote.total)}</span>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-center">
-                      <span className="text-sm text-gray-600">{formatDate(quote.created_at)}</span>
+                    <td className="px-2 py-2 whitespace-nowrap text-center">
+                      <span className="text-xs text-gray-600">{formatDate(quote.created_at)}</span>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-center">
-                      <span className="text-sm text-gray-600">{quote.valid_until ? formatDate(quote.valid_until) : '-'}</span>
+                    <td className="px-2 py-2 whitespace-nowrap text-center">
+                      <span className="text-xs text-gray-600">{quote.valid_until ? formatDate(quote.valid_until) : '-'}</span>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-2 py-2 whitespace-nowrap">
                       <div className="flex items-center justify-center gap-1">
                         <Link href={`/dashboard/quotes/${quote.id}`} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors" title="View">
                           <Eye className="w-3.5 h-3.5 text-gray-600" />
@@ -319,11 +330,11 @@ export default function QuotesPage() {
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Quote #</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Customer</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Status</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Amount</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Actions</th>
+                  <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Quote #</th>
+                  <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Customer</th>
+                  <th className="px-2 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Status</th>
+                  <th className="px-2 py-2 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Amount</th>
+                  <th className="px-2 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -331,26 +342,31 @@ export default function QuotesPage() {
                   const statusConfig = getQuoteStatusConfig(quote.status as any)
                   return (
                     <tr key={quote.id} className="hover:bg-gray-50 transition-colors group">
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        <Link href={`/dashboard/quotes/${quote.id}`} className="text-sm font-medium text-cyan-600 hover:text-cyan-700 font-sans">
+                      <td className="px-2 py-2 whitespace-nowrap">
+                        <Link href={`/dashboard/quotes/${quote.id}`} className="text-xs font-medium text-cyan-600 hover:text-cyan-700 font-sans">
                           {quote.quote_number}
                         </Link>
                       </td>
-                      <td className="px-4 py-4">
-                        <div className="text-sm font-medium text-gray-900">{getClientName(quote)}</div>
-                        {quote.jobs?.job_name && (
-                          <div className="text-xs text-gray-500">{quote.jobs.job_name}</div>
+                      <td className="px-2 py-2">
+                        <div className="text-xs font-medium text-gray-900">{getClientName(quote)}</div>
+                        {quote.jobs?.id && quote.jobs?.job_number && (
+                          <Link
+                            href={`/dashboard/jobs/${quote.jobs.id}`}
+                            className="text-xs text-purple-600 hover:text-purple-700 font-medium"
+                          >
+                            {quote.jobs.job_number}
+                          </Link>
                         )}
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-center">
-                        <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: statusConfig.bg, color: statusConfig.text }}>
+                      <td className="px-2 py-2 whitespace-nowrap text-center">
+                        <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium" style={{ backgroundColor: statusConfig.bg, color: statusConfig.text }}>
                           {statusConfig.label}
                         </span>
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-right">
-                        <span className="text-sm font-medium text-gray-900">{formatCurrency(quote.total)}</span>
+                      <td className="px-2 py-2 whitespace-nowrap text-right">
+                        <span className="text-xs font-medium text-gray-900">{formatCurrency(quote.total)}</span>
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap">
+                      <td className="px-2 py-2 whitespace-nowrap">
                         <div className="flex items-center justify-center gap-1">
                           <Link href={`/dashboard/quotes/${quote.id}`} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors" title="View">
                             <Eye className="w-3.5 h-3.5 text-gray-600" />
@@ -400,7 +416,16 @@ export default function QuotesPage() {
                   <div>
                     <div className="text-sm font-medium text-gray-500 mb-1 font-sans">{quote.quote_number}</div>
                     <div className="font-semibold text-gray-900 mb-1">{getClientName(quote)}</div>
-                    <div className="text-sm text-gray-600">{quote.jobs?.job_name || 'No job'}</div>
+                    {quote.jobs?.id && quote.jobs?.job_number ? (
+                      <Link
+                        href={`/dashboard/jobs/${quote.jobs.id}`}
+                        className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+                      >
+                        {quote.jobs.job_number}
+                      </Link>
+                    ) : (
+                      <div className="text-sm text-gray-600">No job</div>
+                    )}
                   </div>
                   <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: statusConfig.bg, color: statusConfig.text }}>
                     {statusConfig.label}

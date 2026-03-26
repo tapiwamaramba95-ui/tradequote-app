@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { colors } from '@/lib/colors'
-import AddressInput from '@/components/AddressInput'
+import { AddressFields } from '@/components/AddressFields'
 import { formatAustralianPhone, isValidAustralianPhone, normalizeEmail, isValidEmail, suggestEmailCorrection } from '@/lib/utils/formatters'
 
 // GOOGLE PLACES: Set this to true when you've added your API key
@@ -19,14 +19,12 @@ export default function NewClientPage() {
     name: '',
     email: '',
     phone: '',
-    address: '',
+    street_address: '',
+    suburb: '',
+    state: '',
+    postcode: '',
     notes: ''
   })
-
-  // Memoize the address change handler to prevent useEffect loops
-  const handleAddressChange = useCallback((address: string) => {
-    setFormData(prev => ({ ...prev, address }))
-  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -207,9 +205,15 @@ export default function NewClientPage() {
                   >
                     Address
                   </label>
-                  <AddressInput
-                    value={formData.address}
-                    onChange={handleAddressChange}
+                  <AddressFields
+                    streetAddress={formData.street_address}
+                    suburb={formData.suburb}
+                    state={formData.state}
+                    postcode={formData.postcode}
+                    onStreetAddressChange={(value) => setFormData(prev => ({ ...prev, street_address: value }))}
+                    onSuburbChange={(value) => setFormData(prev => ({ ...prev, suburb: value }))}
+                    onStateChange={(value) => setFormData(prev => ({ ...prev, state: value }))}
+                    onPostcodeChange={(value) => setFormData(prev => ({ ...prev, postcode: value }))}
                     required={false}
                   />
                 </div>
@@ -247,7 +251,7 @@ export default function NewClientPage() {
               >
                 <button
                   type="button"
-                  onClick={() => router.back()}
+                  onClick={() => router.push('/dashboard/clients')}
                   className="inline-flex justify-center rounded-md border px-4 py-2 text-sm font-medium shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors"
                   style={{
                     borderColor: colors.border.DEFAULT,

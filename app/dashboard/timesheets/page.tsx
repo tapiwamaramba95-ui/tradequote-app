@@ -90,7 +90,7 @@ export default function TimesheetsPage() {
       // Load jobs
       const { data: jobsData } = await supabase
         .from('jobs')
-        .select('id, job_name, enquiry_number, user_id, client_id, job_address, status, created_at')
+        .select('id, job_name, enquiry_number, user_id, client_id, status, created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
@@ -269,8 +269,8 @@ export default function TimesheetsPage() {
 
     return (
       <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
-        <div className="p-8 border-b">
-          <h2 className="text-3xl font-bold text-gray-900">
+        <div className="p-4 sm:p-6 border-b">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
             {currentDate.toLocaleDateString('en-AU', { 
               weekday: 'long', 
               month: 'long', 
@@ -279,17 +279,17 @@ export default function TimesheetsPage() {
             })}
           </h2>
           <p className="text-gray-600 mt-2">
-            Total: <strong className="text-orange-600 text-xl">{totalHours.toFixed(1)} hours</strong>
+            Total: <strong className="text-orange-600 text-lg sm:text-xl">{totalHours.toFixed(1)} hours</strong>
           </p>
         </div>
-        <div className="p-8">
+        <div className="p-4 sm:p-6">
           <div className="space-y-4">
             {dayEntries.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">No time entries for this day</p>
+              <div className="text-center py-8 sm:py-12">
+                <p className="text-gray-500 text-base sm:text-lg">No time entries for this day</p>
                 <button 
                   onClick={() => handleAddHours()}
-                  className="mt-4 px-6 py-3 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700"
+                  className="mt-4 px-5 py-2.5 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700"
                 >
                   + Add Hours
                 </button>
@@ -348,15 +348,15 @@ export default function TimesheetsPage() {
       <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
         <div className="grid grid-cols-7 bg-gray-50 border-b">
           {days.map((day, i) => (
-            <div key={day} className="p-4 text-center">
-              <div className="font-semibold text-orange-600">{day}</div>
-              <div className="text-2xl font-bold text-gray-900 mt-1">
+            <div key={day} className="p-2 sm:p-3 text-center">
+              <div className="font-semibold text-orange-600 text-sm">{day}</div>
+              <div className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">
                 {weekDays[i].getDate()}
               </div>
             </div>
           ))}
         </div>
-        <div className="grid grid-cols-7 min-h-[500px]">
+        <div className="grid grid-cols-7 min-h-[400px] sm:min-h-[500px]">
           {weekDays.map((day, i) => {
             const dayEntries = calendarEntries.filter(
               entry => entry.date === day.toISOString().split('T')[0]
@@ -366,7 +366,7 @@ export default function TimesheetsPage() {
             return (
               <div
                 key={i}
-                className="p-4 border-r border-b cursor-pointer hover:bg-gray-50 transition-colors min-h-[140px]"
+                className="p-2 sm:p-3 border-r border-b cursor-pointer hover:bg-gray-50 transition-colors min-h-[120px]"
                 style={{ borderColor: '#e5e7eb' }}
                 onClick={() => {
                   setCurrentDate(day)
@@ -375,7 +375,7 @@ export default function TimesheetsPage() {
               >
                 {dayTotal > 0 && (
                   <>
-                    <div className="bg-orange-600 text-white px-3 py-1 rounded-md text-xs font-semibold mb-2 inline-block">
+                    <div className="bg-orange-600 text-white px-2 py-0.5 rounded-md text-xs font-semibold mb-2 inline-block">
                       {dayTotal.toFixed(1)} hrs
                     </div>
                     {dayEntries.slice(0, 2).map((entry, idx) => (
@@ -394,9 +394,9 @@ export default function TimesheetsPage() {
             )
           })}
         </div>
-        <div className="p-6 border-t bg-gray-50 flex justify-between items-center">
-          <strong className="text-gray-900">Week Total:</strong>
-          <span className="text-4xl font-bold text-orange-600">{weekTotal.toFixed(1)} hrs</span>
+        <div className="p-4 sm:p-6 border-t bg-gray-50 flex justify-between items-center">
+          <strong className="text-gray-900 text-sm sm:text-base">Week Total:</strong>
+          <span className="text-2xl sm:text-4xl font-bold text-orange-600">{weekTotal.toFixed(1)} hrs</span>
         </div>
       </div>
     )
@@ -433,7 +433,7 @@ export default function TimesheetsPage() {
       <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
         <div className="grid grid-cols-7 bg-gray-50 border-b">
           {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-            <div key={day} className="p-4 text-center font-semibold text-orange-600">
+            <div key={day} className="p-2 sm:p-3 text-center font-semibold text-orange-600 text-sm">
               {day}
             </div>
           ))}
@@ -448,7 +448,7 @@ export default function TimesheetsPage() {
             return (
               <div
                 key={i}
-                className={`p-3 border-r border-b min-h-[100px] cursor-pointer hover:bg-gray-50 transition-colors ${
+                className={`p-2 border-r border-b min-h-[80px] sm:min-h-[100px] cursor-pointer hover:bg-gray-50 transition-colors ${
                   !isCurrentMonth ? 'bg-gray-50 text-gray-400' : ''
                 }`}
                 style={{ borderColor: '#e5e7eb' }}
@@ -459,11 +459,11 @@ export default function TimesheetsPage() {
                   }
                 }}
               >
-                <div className={`font-semibold ${isCurrentMonth ? 'text-gray-900' : 'text-gray-400'}`}>
+                <div className={`font-semibold text-sm ${isCurrentMonth ? 'text-gray-900' : 'text-gray-400'}`}>
                   {date.getDate()}
                 </div>
                 {dayTotal > 0 && isCurrentMonth && (
-                  <div className="bg-orange-600 text-white px-2 py-1 rounded text-xs font-semibold mt-2 inline-block">
+                  <div className="bg-orange-600 text-white px-1.5 py-0.5 rounded text-xs font-semibold mt-2 inline-block">
                     {dayTotal.toFixed(1)}h
                   </div>
                 )}
@@ -471,11 +471,11 @@ export default function TimesheetsPage() {
             )
           })}
         </div>
-        <div className="p-6 border-t bg-gray-50 flex justify-between items-center">
-          <strong className="text-gray-900">
+        <div className="p-4 sm:p-6 border-t bg-gray-50 flex justify-between items-center">
+          <strong className="text-gray-900 text-sm sm:text-base">
             {currentDate.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' })} Total:
           </strong>
-          <span className="text-4xl font-bold text-orange-600">{monthTotal.toFixed(1)} hrs</span>
+          <span className="text-2xl sm:text-4xl font-bold text-orange-600">{monthTotal.toFixed(1)} hrs</span>
         </div>
       </div>
     )
@@ -577,24 +577,24 @@ export default function TimesheetsPage() {
       <div className="flex gap-1 mb-6 bg-white p-1 rounded-xl shadow-sm w-fit">
         <button
           onClick={() => setCurrentView('clock')}
-          className={`flex items-center gap-2 px-8 py-3 rounded-lg font-semibold text-sm transition-all ${
+          className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 rounded-lg font-semibold text-sm transition-all ${
             currentView === 'clock'
               ? 'bg-orange-600 text-white shadow-md'
               : 'text-gray-600 hover:text-gray-800'
           }`}
         >
-          <Clock size={18} />
+          <Clock size={16} />
           Clock In/Out
         </button>
         <button
           onClick={() => setCurrentView('calendar')}
-          className={`flex items-center gap-2 px-8 py-3 rounded-lg font-semibold text-sm transition-all ${
+          className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 rounded-lg font-semibold text-sm transition-all ${
             currentView === 'calendar'
               ? 'bg-orange-600 text-white shadow-md'
               : 'text-gray-600 hover:text-gray-800'
           }`}
         >
-          <Calendar size={18} />
+          <Calendar size={16} />
           Calendar
         </button>
       </div>
@@ -811,11 +811,11 @@ export default function TimesheetsPage() {
       {currentView === 'calendar' && (
         <div>
           {/* Calendar Toolbar */}
-          <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="flex gap-3 items-center">
+          <div className="bg-white rounded-2xl p-3 sm:p-4 mb-6 shadow-sm flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
+            <div className="flex flex-wrap gap-2 items-center">
               <button 
                 onClick={goToToday}
-                className="px-5 py-2 bg-orange-50 text-orange-600 rounded-lg font-semibold text-sm hover:bg-orange-100"
+                className="px-3 py-2 bg-orange-50 text-orange-600 rounded-lg font-semibold text-sm hover:bg-orange-100"
               >
                 Today
               </button>
@@ -824,7 +824,7 @@ export default function TimesheetsPage() {
                   <button
                     key={view}
                     onClick={() => setCalendarView(view)}
-                    className={`px-6 py-2 rounded-lg font-semibold text-sm transition-all capitalize ${
+                    className={`px-3 sm:px-4 py-2 rounded-lg font-semibold text-sm transition-all capitalize ${
                       calendarView === view
                         ? 'bg-orange-600 text-white shadow-md'
                         : 'text-gray-600 hover:bg-gray-100'
@@ -836,19 +836,19 @@ export default function TimesheetsPage() {
               </div>
             </div>
 
-            <div className="flex gap-4 items-center">
+            <div className="flex gap-2 items-center">
               <button 
                 onClick={prevPeriod}
-                className="w-10 h-10 border-2 border-gray-200 rounded-lg hover:border-orange-500 hover:bg-orange-50 flex items-center justify-center text-lg"
+                className="w-9 h-9 border-2 border-gray-200 rounded-lg hover:border-orange-500 hover:bg-orange-50 flex items-center justify-center text-lg"
               >
                 ‹
               </button>
-              <span className="text-xl font-semibold text-gray-900 min-w-[280px] text-center">
+              <span className="text-base sm:text-lg font-semibold text-gray-900 min-w-[180px] sm:min-w-[240px] text-center">
                 {getDisplayTitle()}
               </span>
               <button 
                 onClick={nextPeriod}
-                className="w-10 h-10 border-2 border-gray-200 rounded-lg hover:border-orange-500 hover:bg-orange-50 flex items-center justify-center text-lg"
+                className="w-9 h-9 border-2 border-gray-200 rounded-lg hover:border-orange-500 hover:bg-orange-50 flex items-center justify-center text-lg"
               >
                 ›
               </button>
@@ -856,7 +856,7 @@ export default function TimesheetsPage() {
 
             <button 
               onClick={() => handleAddHours()}
-              className="px-6 py-3 bg-orange-600 text-white rounded-lg font-semibold text-sm shadow-md hover:bg-orange-700"
+              className="px-4 py-2 bg-orange-600 text-white rounded-lg font-semibold text-sm shadow-md hover:bg-orange-700 whitespace-nowrap"
             >
               + Add Hours
             </button>
