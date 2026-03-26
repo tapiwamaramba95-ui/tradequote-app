@@ -3,7 +3,7 @@
  * Automatically creates invoices when jobs complete or on schedule
  */
 
-import { createClient } from '@/lib/supabase-server'
+import { createSupabaseServer } from '@/lib/supabase-server'
 import { sendEmail } from '@/lib/email-sender'
 import { 
   startOfMonth, 
@@ -20,7 +20,7 @@ import type { LineItem } from './types'
  * Called when a job status changes to 'completed'
  */
 export async function handleJobCompletion(jobId: string) {
-  const supabase = await createClient()
+  const supabase = await createSupabaseServer()
   
   // Get job details
   const { data: job } = await supabase
@@ -69,7 +69,7 @@ export async function handleJobCompletion(jobId: string) {
  * Create invoice for a single job instance
  */
 async function createInvoiceForInstance(job: any) {
-  const supabase = await createClient()
+  const supabase = await createSupabaseServer()
   
   console.log(`Creating invoice for job instance ${job.id}`)
   
@@ -144,7 +144,7 @@ async function checkAndCreateBatchInvoice(recurringJob: any, triggeringJob: any)
     return
   }
   
-  const supabase = await createClient()
+  const supabase = await createSupabaseServer()
   
   // Determine period
   const periodStart = recurringJob.invoice_timing === 'batch_monthly'
@@ -353,7 +353,7 @@ async function sendInvoiceEmail(
  * Called from cron job
  */
 export async function processBatchInvoices() {
-  const supabase = await createClient()
+  const supabase = await createSupabaseServer()
   const today = new Date()
   const todayDay = today.getDate()
   

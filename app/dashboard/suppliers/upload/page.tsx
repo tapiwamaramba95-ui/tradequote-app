@@ -199,6 +199,9 @@ export default function UploadPriceListPage() {
     }
   }
 
+  const importProducts = async (supplierId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
       const businessId = await getBusinessId()

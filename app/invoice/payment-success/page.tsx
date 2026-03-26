@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { CheckCircle, ArrowRight, Loader2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 
 export default function PaymentSuccessPage() {
   const searchParams = useSearchParams()
@@ -23,8 +23,6 @@ export default function PaymentSuccessPage() {
   }, [searchParams])
 
   const fetchInvoice = async (invoiceId: string) => {
-    const supabase = createClient()
-    
     const { data, error } = await supabase
       .from('invoices')
       .select('*, clients(*), users(*)')

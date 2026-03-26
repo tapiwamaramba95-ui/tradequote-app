@@ -3,7 +3,7 @@
  * Calculates future dates and creates job instances based on recurring schedule
  */
 
-import { createClient } from '@/lib/supabase-server'
+import { createSupabaseServer } from '@/lib/supabase-server'
 import { 
   addDays, 
   addWeeks, 
@@ -23,7 +23,7 @@ import type { RecurringJob } from './types'
  * Checks generation window and creates instances that don't exist yet
  */
 export async function generateRecurringJobInstances(recurringJobId: string) {
-  const supabase = await createClient()
+  const supabase = await createSupabaseServer()
   
   // Get recurring job details
   const { data: recurringJob, error } = await supabase
@@ -273,7 +273,7 @@ function getNextDate(currentDate: Date, recurringJob: RecurringJob): Date {
  * Update a single job instance
  */
 export async function updateJobInstance(jobId: string, updates: Record<string, any>) {
-  const supabase = await createClient()
+  const supabase = await createSupabaseServer()
   
   const { data, error } = await supabase
     .from('jobs')
@@ -297,7 +297,7 @@ export async function updateFutureInstances(
   startingInstanceNumber: number,
   updates: Record<string, any>
 ) {
-  const supabase = await createClient()
+  const supabase = await createSupabaseServer()
   
   const { data, error } = await supabase
     .from('jobs')
@@ -329,7 +329,7 @@ export async function updateRecurringJobTemplate(
   updates: Record<string, any>,
   updateFutureInstances: boolean = false
 ) {
-  const supabase = await createClient()
+  const supabase = await createSupabaseServer()
   
   // Update the template
   const { data: recurringJob, error } = await supabase
@@ -384,7 +384,7 @@ export async function updateRecurringJobTemplate(
  * Delete a single job instance
  */
 export async function deleteJobInstance(jobId: string) {
-  const supabase = await createClient()
+  const supabase = await createSupabaseServer()
   
   const { error } = await supabase
     .from('jobs')
@@ -400,7 +400,7 @@ export async function deleteJobInstance(jobId: string) {
  * Delete all future instances (typically when cancelling a recurring job)
  */
 export async function deleteFutureInstances(recurringJobId: string, startingInstanceNumber: number) {
-  const supabase = await createClient()
+  const supabase = await createSupabaseServer()
   
   const { error } = await supabase
     .from('jobs')
