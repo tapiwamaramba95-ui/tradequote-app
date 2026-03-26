@@ -199,18 +199,6 @@ export default function UploadPriceListPage() {
     }
   }
 
-    } catch (error) {
-      console.error('Error creating supplier:', error)
-      alert('Failed to create supplier')
-      setLoading(false)
-    }
-  }
-
-  const importProducts = async (supplierId: string) => {
-    if (!previewData) return
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
       const businessId = await getBusinessId()

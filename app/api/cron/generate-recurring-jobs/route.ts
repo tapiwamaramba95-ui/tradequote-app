@@ -12,7 +12,7 @@
  */
 
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase-server'
+import { createSupabaseServer } from '@/lib/supabase-server'
 import { generateRecurringJobInstances } from '@/lib/recurring-jobs/generate'
 import { processBatchInvoices } from '@/lib/recurring-jobs/auto-invoice'
 
@@ -26,7 +26,7 @@ export async function GET(request: Request) {
   
   console.log('Starting recurring jobs cron...')
   
-  const supabase = await createClient()
+  const supabase = await createSupabaseServer()
   
   try {
     // 1. Get all active recurring jobs

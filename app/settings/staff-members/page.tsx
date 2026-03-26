@@ -492,8 +492,6 @@ export default function StaffMembersPage() {
 
                 {activeModalTab === 'personal' ? (
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {activeModalTab === 'personal' ? (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Left Column - Personal Information */}
                   <div className="space-y-6">
                     <h3 className="text-lg font-semibold text-gray-900">Personal Information</h3>
