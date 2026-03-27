@@ -281,16 +281,17 @@ export default function DashboardPage() {
 
     // Add appointments
     appointments?.forEach(apt => {
+      const jobData = (apt as any).jobs // Type assertion to handle Supabase relation
       todayItems.push({
         id: apt.id,
-        job_number: apt.jobs?.job_number || apt.title,
+        job_number: jobData?.job_number || apt.title,
         job_name: apt.title,
         scheduled_date: apt.start_time,
         client: Array.isArray(apt.clients) && apt.clients.length > 0 ? { name: apt.clients[0].name } : null,
-        street_address: apt.jobs?.street_address,
-        suburb: apt.jobs?.suburb,
-        state: apt.jobs?.state,
-        postcode: apt.jobs?.postcode,
+        street_address: jobData?.street_address,
+        suburb: jobData?.suburb,
+        state: jobData?.state,
+        postcode: jobData?.postcode,
       })
     })
 

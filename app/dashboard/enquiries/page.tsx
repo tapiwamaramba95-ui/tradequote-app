@@ -13,6 +13,7 @@ type Enquiry = {
   id: string
   user_id: string
   client_id: string | null
+  enquiry_number: string | null
   name: string
   email: string | null
   phone: string | null

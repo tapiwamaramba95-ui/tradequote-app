@@ -2,6 +2,9 @@ import { supabase } from '@/lib/supabase'
 import { getBusinessId } from '@/lib/business'
 import { PermissionKey, StaffPermissions, OWNER_PERMISSIONS } from './types'
 
+// Re-export types
+export type { PermissionKey, StaffPermissions } from './types'
+
 /**
  * Get current user's permissions
  */

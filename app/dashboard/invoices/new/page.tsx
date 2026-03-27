@@ -79,19 +79,6 @@ export default function NewInvoicePage() {
     }
   }, [])
 
-  useEffect(() => {
-    fetchJobs()
-    fetchBusinessSettings()
-    if (quoteId) {
-      loadQuoteData()
-    } else {
-      // Set default due date (30 days from now)
-      const due = new Date()
-      due.setDate(due.getDate() + 30)
-      setDueDate(due.toISOString().split('T')[0])
-    }
-  }, [fetchJobs, fetchBusinessSettings, loadQuoteData, quoteId])
-
   const fetchJobs = useCallback(async () => {
     const { data } = await supabase
       .from('jobs')
@@ -146,6 +133,19 @@ export default function NewInvoicePage() {
     }
 
     setLoadingQuote(false)
+  }, [quoteId])
+
+  useEffect(() => {
+    fetchJobs()
+    fetchBusinessSettings()
+    if (quoteId) {
+      loadQuoteData()
+    } else {
+      // Set default due date (30 days from now)
+      const due = new Date()
+      due.setDate(due.getDate() + 30)
+      setDueDate(due.toISOString().split('T')[0])
+    }
   }, [quoteId])
 
   const addLineItem = () => {

@@ -173,7 +173,7 @@ export default function EditQuotePage() {
         ...item,
         id: item.id || `line-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`
       }))
-      console.log('Line items with IDs:', itemsWithIds.map(i => ({ id: i.id, description: i.description })))
+      console.log('Line items with IDs:', itemsWithIds.map((i: any) => ({ id: i.id, description: i.description })))
       setLineItems(itemsWithIds)
       setFormData({
         client_id: data.client_id || '',

@@ -18,6 +18,7 @@ type Invoice = {
   invoice_date: string
   due_date: string
   total: number
+  total_amount: number
   subtotal: number
   tax: number
   amount_paid: number
@@ -27,7 +28,7 @@ type Invoice = {
   status: 'draft' | 'sent'
   payment_status: 'unpaid' | 'partial' | 'paid'
   created_at: string
-  paid_at?: string
+  paid_at: string | null
   issue_date?: string
   job_id?: string
   sent_at?: string
@@ -51,6 +52,10 @@ type Invoice = {
       email?: string
       phone?: string
       address?: string
+      street_address?: string
+      suburb?: string
+      state?: string
+      postcode?: string
     }
   }
 }
@@ -313,18 +318,18 @@ export default function InvoiceDetailPage() {
     )
   }
 
-  const statusColor = invoice.status === 'paid' ? colors.semantic.success :
-                      invoice.status === 'partial' ? colors.semantic.warning :
-                      invoice.status === 'overdue' ? colors.semantic.error :
-                      invoice.status === 'sent' || invoice.status === 'viewed' ? colors.semantic.info :
-                      colors.text.muted
-
-  const isOverdue = invoice.status !== 'paid' && new Date(invoice.due_date) < new Date()
-
   // Get display status and config
   const displayStatus = getInvoiceDisplayStatus(invoice)
   const statusConfig = getInvoiceStatusConfig(displayStatus)
   const dateInfo = getInvoiceDateInfo(invoice)
+
+  const statusColor = displayStatus === 'paid' ? colors.semantic.success :
+                      displayStatus === 'partially_paid' ? colors.semantic.warning :
+                      displayStatus === 'overdue' ? colors.semantic.error :
+                      displayStatus === 'awaiting_payment' ? colors.semantic.info :
+                      colors.text.muted
+
+  const isOverdue = invoice.payment_status !== 'paid' && invoice.due_date && new Date(invoice.due_date) < new Date()
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
@@ -545,8 +550,8 @@ export default function InvoiceDetailPage() {
                 color: colors.text.primary
               }}
             >
-              <span>{invoice.status === 'paid' ? 'Paid' : 'Amount Due'}:</span>
-              <span style={{ color: invoice.status === 'paid' ? colors.semantic.success : colors.accent.DEFAULT }}>
+              <span>{invoice.payment_status === 'paid' ? 'Paid' : 'Amount Due'}:</span>
+              <span style={{ color: invoice.payment_status === 'paid' ? colors.semantic.success : colors.accent.DEFAULT }}>
                 ${((invoice.total || 0) - (invoice.amount_paid || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
@@ -590,7 +595,7 @@ export default function InvoiceDetailPage() {
         )}
 
         {/* Bank Account Details - Bottom Left */}
-        {invoice.status !== 'paid' && businessSettings && (businessSettings.bank_name || businessSettings.bsb || businessSettings.account_number) && (
+        {invoice.payment_status !== 'paid' && businessSettings && (businessSettings.bank_name || businessSettings.bsb || businessSettings.account_number) && (
           <div className="mt-12 text-left">
             <div className="text-sm font-bold mb-2">PAYMENTS BY DIRECT BANK DEPOSIT</div>
             <div className="text-sm mb-2">Please use the following details when paying by Direct Bank Deposit:</div>

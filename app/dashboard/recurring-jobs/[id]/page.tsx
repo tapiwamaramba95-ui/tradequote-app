@@ -144,9 +144,12 @@ export default function RecurringJobDetailPage() {
       <div className="max-w-6xl mx-auto p-6">
         <div className="text-center py-12">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Recurring job not found</h2>
-          <Button onClick={() => router.push('/dashboard/recurring-jobs')}>
+          <button 
+            onClick={() => router.push('/dashboard/recurring-jobs')}
+            className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded"
+          >
             Back to Recurring Jobs
-          </Button>
+          </button>
         </div>
       </div>
     )
@@ -185,30 +188,30 @@ export default function RecurringJobDetailPage() {
           
           <div className="flex gap-2">
             {recurringJob.status === 'active' ? (
-              <Button variant="outline" onClick={pauseRecurring}>
+              <button className="border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded flex items-center" onClick={pauseRecurring}>
                 <Pause className="w-4 h-4 mr-2" />
                 Pause
-              </Button>
+              </button>
             ) : recurringJob.status === 'paused' ? (
-              <Button onClick={resumeRecurring} className="bg-orange-600 hover:bg-orange-700">
+              <button onClick={resumeRecurring} className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded flex items-center">
                 <Play className="w-4 h-4 mr-2" />
                 Resume
-              </Button>
+              </button>
             ) : null}
             
-            <Button 
-              variant="outline" 
+            <button 
+              className="border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded flex items-center"
               onClick={() => router.push(`/dashboard/recurring-jobs/${params.id}/edit`)}
             >
               <Edit className="w-4 h-4 mr-2" />
               Edit
-            </Button>
+            </button>
             
             {recurringJob.status !== 'cancelled' && (
-              <Button variant="destructive" onClick={cancelRecurring}>
+              <button className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded flex items-center" onClick={cancelRecurring}>
                 <XCircle className="w-4 h-4 mr-2" />
                 Cancel Series
-              </Button>
+              </button>
             )}
           </div>
         </div>
@@ -216,7 +219,7 @@ export default function RecurringJobDetailPage() {
       
       {/* Overview Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <Card className="p-6">
+        <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center gap-3 mb-2">
             <Calendar className="w-5 h-5 text-blue-600" />
             <span className="text-sm text-gray-600">Progress</span>
@@ -230,9 +233,9 @@ export default function RecurringJobDetailPage() {
               style={{ width: `${stats.total > 0 ? (stats.completed / stats.total) * 100 : 0}%` }}
             />
           </div>
-        </Card>
+        </div>
         
-        <Card className="p-6">
+        <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center gap-3 mb-2">
             <DollarSign className="w-5 h-5 text-green-600" />
             <span className="text-sm text-gray-600">Revenue</span>
@@ -243,9 +246,9 @@ export default function RecurringJobDetailPage() {
           <div className="text-sm text-gray-600 mt-1">
             ${stats.completed > 0 ? (stats.revenue / stats.completed).toFixed(2) : '0.00'} per job
           </div>
-        </Card>
+        </div>
         
-        <Card className="p-6">
+        <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center gap-3 mb-2">
             <Clock className="w-5 h-5 text-orange-600" />
             <span className="text-sm text-gray-600">Next Instance</span>
@@ -260,7 +263,7 @@ export default function RecurringJobDetailPage() {
               : 'None scheduled'
             }
           </div>
-        </Card>
+        </div>
       </div>
       
       {/* Upcoming Instances */}
