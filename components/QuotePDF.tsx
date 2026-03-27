@@ -26,6 +26,10 @@ type Quote = {
       email: string
       phone: string
       address: string
+      street_address?: string | null
+      suburb?: string |null
+      state?: string | null
+      postcode?: string | null
     }
   }
 }
