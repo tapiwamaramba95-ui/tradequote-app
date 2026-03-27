@@ -1,16 +1,16 @@
 'use server'
 
 import Stripe from 'stripe'
-import { createClient } from '@/lib/supabase-server'
+import { createSupabaseServer } from '@/lib/supabase-server'
 import { calculateCardFee, calculateDirectDebitFee, toStripeCents } from './stripe-fees'
 
 // Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-11-20.acacia',
+  apiVersion: '2026-03-25.dahlia',
 })
 
 export async function createInvoicePaymentLink(invoiceId: string, paymentMethod: 'card' | 'direct_debit') {
-  const supabase = await createClient()
+  const supabase = await createSupabaseServer()
   
   // Get invoice details
   const { data: invoice, error } = await supabase
