@@ -11,10 +11,10 @@ type ErrorBoundaryState = {
 }
 
 export class ErrorBoundary extends React.Component<
-  { children: React.ReactNode },
+  { children: React.ReactNode; fallback?: React.ReactElement },
   ErrorBoundaryState
 > {
-  constructor(props: { children: React.ReactNode }) {
+  constructor(props: { children: React.ReactNode; fallback?: React.ReactElement }) {
     super(props)
     this.state = { hasError: false, error: null, eventId: null }
   }
@@ -40,6 +40,12 @@ export class ErrorBoundary extends React.Component<
 
   render() {
     if (this.state.hasError) {
+      // Use custom fallback if provided
+      if (this.props.fallback) {
+        return this.props.fallback
+      }
+      
+      // Default fallback UI
       return (
         <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: colors.background.main }}>
           <div className="bg-white rounded-xl p-8 shadow-lg max-w-md text-center">

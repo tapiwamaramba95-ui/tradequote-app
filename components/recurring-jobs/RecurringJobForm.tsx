@@ -80,7 +80,7 @@ export function RecurringJobForm({
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Job Type Toggle */}
       <div className="bg-white rounded-lg shadow p-4">
-        <Label className="text-sm font-medium text-gray-700 mb-2 block">Job Type</Label>
+        <label className="text-sm font-medium text-gray-700 mb-2 block">Job Type</label>
         <div className="grid grid-cols-2 gap-4">
           <button
             type="button"
@@ -110,26 +110,28 @@ export function RecurringJobForm({
             <div className="text-xs text-gray-500 mt-1">Auto-generates instances</div>
           </button>
         </div>
-      </Card>
+      </div>
       
       {/* Basic Info */}
-      <Card className="p-6">
+      <div className="bg-white rounded-lg shadow p-6">
         <h3 className="text-lg font-semibold mb-4">Job Details</h3>
         
         <div className="space-y-4">
           <div>
-            <Label htmlFor="title">Job Title *</Label>
-            <Input
+            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">Job Title *</label>
+            <input
               id="title"
+              type="text"
               value={formData.title}
-              onChange={(e) => updateField('title', e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField('title', e.target.value)}
               placeholder="e.g., Lawn Mowing, Pool Cleaning"
               required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
           
           <div>
-            <Label htmlFor="description">Description</Label>
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">Description</label>
             <textarea
               id="description"
               value={formData.description || ''}
@@ -140,7 +142,7 @@ export function RecurringJobForm({
           </div>
           
           <div>
-            <Label htmlFor="client_id">Client *</Label>
+            <label htmlFor="client_id" className="block text-sm font-medium text-gray-700 mb-1">Client *</label>
             <select
               id="client_id"
               value={formData.client_id}
@@ -158,27 +160,31 @@ export function RecurringJobForm({
           {/* Address Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
-              <Label htmlFor="street_address">Street Address</Label>
-              <Input
+              <label htmlFor="street_address" className="block text-sm font-medium text-gray-700 mb-1">Street Address</label>
+              <input
                 id="street_address"
+                type="text"
                 value={formData.street_address || ''}
-                onChange={(e) => updateField('street_address', e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField('street_address', e.target.value)}
                 placeholder="123 Main Street"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
             
             <div>
-              <Label htmlFor="suburb">Suburb</Label>
-              <Input
+              <label htmlFor="suburb" className="block text-sm font-medium text-gray-700 mb-1">Suburb</label>
+              <input
                 id="suburb"
+                type="text"
                 value={formData.suburb || ''}
-                onChange={(e) => updateField('suburb', e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField('suburb', e.target.value)}
                 placeholder="Sydney"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
             
             <div>
-              <Label htmlFor="state">State</Label>
+              <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">State</label>
               <select
                 id="state"
                 value={formData.state || ''}
@@ -201,7 +207,7 @@ export function RecurringJobForm({
           {/* Staff/Connection Assignment */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="staff_member_id">Assign to Staff</Label>
+              <label htmlFor="staff_member_id" className="block text-sm font-medium text-gray-700 mb-1">Assign to Staff</label>
               <select
                 id="staff_member_id"
                 value={formData.staff_member_id || ''}
@@ -216,7 +222,7 @@ export function RecurringJobForm({
             </div>
             
             <div>
-              <Label htmlFor="assigned_connection_id">Assign to Connection</Label>
+              <label htmlFor="assigned_connection_id" className="block text-sm font-medium text-gray-700 mb-1">Assign to Connection</label>
               <select
                 id="assigned_connection_id"
                 value={formData.assigned_connection_id || ''}
@@ -231,11 +237,11 @@ export function RecurringJobForm({
             </div>
           </div>
         </div>
-      </Card>
+      </div>
       
       {/* Recurring Schedule - Only show if recurring */}
       {jobType === 'recurring' && (
-        <Card className="p-6 border-2 border-orange-200 bg-orange-50/30">
+        <div className="bg-white rounded-lg shadow p-6 border-2 border-orange-200 bg-orange-50/30">
           <div className="flex items-center gap-2 mb-4">
             <Repeat className="w-5 h-5 text-orange-600" />
             <h3 className="text-lg font-semibold">Recurring Schedule</h3>
@@ -244,7 +250,7 @@ export function RecurringJobForm({
           <div className="space-y-4">
             {/* Frequency */}
             <div>
-              <Label htmlFor="frequency">Frequency *</Label>
+              <label htmlFor="frequency" className="block text-sm font-medium text-gray-700 mb-1">Frequency *</label>
               <select
                 id="frequency"
                 value={formData.frequency}
@@ -263,7 +269,7 @@ export function RecurringJobForm({
             {/* Days of Week - Show for weekly/fortnightly */}
             {(formData.frequency === 'weekly' || formData.frequency === 'fortnightly') && (
               <div>
-                <Label>Repeat on *</Label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Repeat on *</label>
                 <div className="flex gap-2 mt-2 flex-wrap">
                   {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => (
                     <button
@@ -292,16 +298,17 @@ export function RecurringJobForm({
             {/* Day of Month - Show for monthly */}
             {formData.frequency === 'monthly' && (
               <div>
-                <Label htmlFor="day_of_month">Day of Month *</Label>
-                <Input
+                <label htmlFor="day_of_month" className="block text-sm font-medium text-gray-700 mb-1">Day of Month *</label>
+                <input
                   id="day_of_month"
                   type="number"
                   min="1"
                   max="31"
                   value={formData.day_of_month || ''}
-                  onChange={(e) => updateField('day_of_month', parseInt(e.target.value))}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField('day_of_month', parseInt(e.target.value))}
                   placeholder="e.g., 15 for 15th of each month"
                   required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Enter -1 for last day of month
@@ -311,19 +318,20 @@ export function RecurringJobForm({
             
             {/* Start Date */}
             <div>
-              <Label htmlFor="start_date">Start Date *</Label>
-              <Input
+              <label htmlFor="start_date" className="block text-sm font-medium text-gray-700 mb-1">Start Date *</label>
+              <input
                 id="start_date"
                 type="date"
                 value={formData.start_date}
-                onChange={(e) => updateField('start_date', e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField('start_date', e.target.value)}
                 required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
             
             {/* End Condition */}
             <div>
-              <Label>End Date</Label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
               <div className="space-y-2 mt-2">
                 <label className="flex items-center gap-2">
                   <input
@@ -343,12 +351,12 @@ export function RecurringJobForm({
                     className="text-orange-600 focus:ring-orange-500"
                   />
                   <span>After</span>
-                  <Input
+                  <input
                     type="number"
                     min="1"
-                    className="w-20"
+                    className="w-20 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                     value={formData.end_after_occurrences || ''}
-                    onChange={(e) => updateField('end_after_occurrences', parseInt(e.target.value))}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField('end_after_occurrences', parseInt(e.target.value))}
                     disabled={formData.end_type !== 'after_occurrences'}
                   />
                   <span>occurrences</span>
@@ -362,11 +370,11 @@ export function RecurringJobForm({
                     className="text-orange-600 focus:ring-orange-500"
                   />
                   <span>On</span>
-                  <Input
+                  <input
                     type="date"
-                    className="w-40"
+                    className="w-40 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                     value={formData.end_date || ''}
-                    onChange={(e) => updateField('end_date', e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField('end_date', e.target.value)}
                     disabled={formData.end_type !== 'on_date'}
                   />
                 </label>
@@ -375,16 +383,16 @@ export function RecurringJobForm({
             
             {/* Generate Ahead */}
             <div>
-              <Label htmlFor="generate_ahead_weeks">Auto-generate jobs</Label>
+              <label htmlFor="generate_ahead_weeks" className="block text-sm font-medium text-gray-700 mb-1">Auto-generate jobs</label>
               <div className="flex items-center gap-2 mt-2">
-                <Input
+                <input
                   id="generate_ahead_weeks"
                   type="number"
                   min="1"
                   max="52"
-                  className="w-20"
+                  className="w-20 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                   value={formData.generate_ahead_weeks}
-                  onChange={(e) => updateField('generate_ahead_weeks', parseInt(e.target.value))}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField('generate_ahead_weeks', parseInt(e.target.value))}
                 />
                 <span className="text-sm text-gray-600">weeks in advance</span>
               </div>
@@ -393,12 +401,12 @@ export function RecurringJobForm({
               </p>
             </div>
           </div>
-        </Card>
+        </div>
       )}
       
       {/* Auto-Invoicing - Only show if recurring */}
       {jobType === 'recurring' && (
-        <Card className="p-6">
+        <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center gap-2 mb-4">
             <DollarSign className="w-5 h-5 text-green-600" />
             <h3 className="text-lg font-semibold">Auto-Invoicing</h3>
@@ -407,7 +415,7 @@ export function RecurringJobForm({
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <Label>Enable Auto-Invoicing</Label>
+                <label className="block text-sm font-medium text-gray-700">Enable Auto-Invoicing</label>
                 <p className="text-sm text-gray-500">
                   Automatically create invoices for completed jobs
                 </p>
@@ -430,7 +438,7 @@ export function RecurringJobForm({
             {formData.auto_invoice && (
               <>
                 <div>
-                  <Label htmlFor="invoice_timing">Invoice Timing</Label>
+                  <label htmlFor="invoice_timing" className="block text-sm font-medium text-gray-700 mb-1">Invoice Timing</label>
                   <select
                     id="invoice_timing"
                     value={formData.invoice_timing}
@@ -455,14 +463,15 @@ export function RecurringJobForm({
                 {(formData.invoice_timing === 'batch_monthly' || 
                   formData.invoice_timing === 'batch_quarterly') && (
                   <div>
-                    <Label htmlFor="invoice_batch_day">Invoice on day of month</Label>
-                    <Input
+                    <label htmlFor="invoice_batch_day" className="block text-sm font-medium text-gray-700 mb-1">Invoice on day of month</label>
+                    <input
                       id="invoice_batch_day"
                       type="number"
                       min="1"
                       max="31"
                       value={formData.invoice_batch_day || 1}
-                      onChange={(e) => updateField('invoice_batch_day', parseInt(e.target.value))}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateField('invoice_batch_day', parseInt(e.target.value))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                     <p className="text-xs text-gray-500 mt-1">
                       Day of the month to generate batch invoice (1-31)
@@ -472,22 +481,22 @@ export function RecurringJobForm({
               </>
             )}
           </div>
-        </Card>
+        </div>
       )}
       
       {/* Submit Buttons */}
       <div className="flex gap-3">
-        <Button 
+        <button 
           type="submit" 
           disabled={isSubmitting}
-          className="flex-1 bg-orange-600 hover:bg-orange-700"
+          className="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSubmitting ? 'Saving...' : submitLabel}
-        </Button>
+        </button>
         {onCancel && (
-          <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
+          <button type="button" onClick={onCancel} className="flex-1 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold py-2 px-4 rounded-lg transition-colors">
             Cancel
-          </Button>
+          </button>
         )}
       </div>
     </form>

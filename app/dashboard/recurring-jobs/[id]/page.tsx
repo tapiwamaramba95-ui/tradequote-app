@@ -268,7 +268,7 @@ export default function RecurringJobDetailPage() {
       
       {/* Upcoming Instances */}
       {upcomingInstances.length > 0 && (
-        <Card className="p-6 mb-6">
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">Upcoming Instances</h2>
           
           <div className="space-y-3">
@@ -293,23 +293,22 @@ export default function RecurringJobDetailPage() {
                 </div>
                 
                 <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
+                  <button 
+                    className="border border-gray-300 hover:bg-gray-50 px-3 py-1 text-sm rounded"
                     onClick={() => router.push(`/dashboard/jobs/${instance.id}`)}
                   >
                     View
-                  </Button>
+                  </button>
                 </div>
               </div>
             ))}
           </div>
-        </Card>
+        </div>
       )}
       
       {/* Completed Instances */}
       {completedInstances.length > 0 && (
-        <Card className="p-6">
+        <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4">Completed Instances</h2>
           
           <div className="space-y-3">
@@ -342,23 +341,22 @@ export default function RecurringJobDetailPage() {
                       <div className="text-sm text-gray-500">Invoiced</div>
                     </div>
                   )}
-                  <Button 
-                    variant="outline" 
-                    size="sm"
+                  <button 
+                    className="border border-gray-300 hover:bg-gray-50 px-3 py-1 text-sm rounded"
                     onClick={() => router.push(`/dashboard/jobs/${instance.id}`)}
                   >
                     View
-                  </Button>
+                  </button>
                 </div>
               </div>
             ))}
           </div>
-        </Card>
+        </div>
       )}
       
       {/* Empty State */}
       {instances.length === 0 && (
-        <Card className="p-12 text-center">
+        <div className="bg-white rounded-lg shadow p-12 text-center">
           <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-900 mb-2">
             No instances generated yet
@@ -366,7 +364,7 @@ export default function RecurringJobDetailPage() {
           <p className="text-gray-600 mb-4">
             Job instances will be automatically generated based on your schedule.
           </p>
-        </Card>
+        </div>
       )}
     </div>
   )

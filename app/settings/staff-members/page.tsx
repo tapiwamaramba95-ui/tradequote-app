@@ -145,7 +145,7 @@ export default function StaffMembersPage() {
               staffId: newStaff.id,
               email: formData.email,
               name: formData.name,
-              businessName: profile?.company_name || 'your team'
+              businessName: 'your team'
             })
           });
 
@@ -203,7 +203,7 @@ export default function StaffMembersPage() {
           staffId,
           email,
           name,
-          businessName: profile?.company_name || 'your team'
+          businessName: 'your team'
         })
       });
 

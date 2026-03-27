@@ -104,13 +104,13 @@ export default function RecurringJobsPage() {
               Auto-generate job instances on flexible schedules
             </p>
           </div>
-          <Button 
+          <button 
             onClick={() => router.push('/dashboard/jobs/new?recurring=true')}
-            className="bg-orange-600 hover:bg-orange-700"
+            className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded flex items-center"
           >
             <Plus className="w-4 h-4 mr-2" />
             New Recurring Job
-          </Button>
+          </button>
         </div>
         
         {/* Filters */}
@@ -144,10 +144,10 @@ export default function RecurringJobsPage() {
       {loading && (
         <div className="space-y-4">
           {[1, 2, 3].map(i => (
-            <Card key={i} className="p-6 animate-pulse">
+            <div key={i} className="bg-white rounded-lg shadow p-6 animate-pulse">
               <div className="h-6 bg-gray-200 rounded w-1/3 mb-2"></div>
               <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-            </Card>
+            </div>
           ))}
         </div>
       )}
@@ -156,9 +156,9 @@ export default function RecurringJobsPage() {
       {!loading && filteredJobs.length > 0 && (
         <div className="space-y-4">
           {filteredJobs.map(job => (
-            <Card 
+            <div 
               key={job.id} 
-              className="p-6 hover:shadow-md transition-shadow cursor-pointer"
+              className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow cursor-pointer"
               onClick={() => router.push(`/dashboard/recurring-jobs/${job.id}`)}
             >
               <div className="flex items-start justify-between">
@@ -235,14 +235,14 @@ export default function RecurringJobsPage() {
                   View Details
                 </button>
               </div>
-            </Card>
+            </div>
           ))}
         </div>
       )}
       
       {/* Empty State */}
       {!loading && filteredJobs.length === 0 && (
-        <Card className="p-12 text-center">
+        <div className="bg-white rounded-lg shadow p-12 text-center">
           {search || statusFilter !== 'all' ? (
             <>
               <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -252,15 +252,15 @@ export default function RecurringJobsPage() {
               <p className="text-gray-600 mb-4">
                 Try adjusting your filters or search terms
               </p>
-              <Button
-                variant="outline"
+              <button
+                className="border border-gray-300 hover:bg-gray-50 px-4 py-2 rounded"
                 onClick={() => {
                   setSearch('')
                   setStatusFilter('all')
                 }}
               >
                 Clear Filters
-              </Button>
+              </button>
             </>
           ) : (
             <>
@@ -271,16 +271,16 @@ export default function RecurringJobsPage() {
               <p className="text-gray-600 mb-4">
                 Create your first recurring job to automatically generate job instances on a schedule
               </p>
-              <Button
+              <button
                 onClick={() => router.push('/dashboard/jobs/new?recurring=true')}
-                className="bg-orange-600 hover:bg-orange-700"
+                className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded flex items-center mx-auto"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Create Recurring Job
-              </Button>
+              </button>
             </>
           )}
-        </Card>
+        </div>
       )}
     </div>
   )

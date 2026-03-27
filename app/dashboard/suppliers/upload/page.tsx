@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { colors } from '@/lib/colors'
 import Papa from 'papaparse'
 import { getBusinessId } from '@/lib/business'
+import { formatAustralianPhone, isValidAustralianPhone, normalizeEmail, isValidEmail, suggestEmailCorrection } from '@/lib/utils/formatters'
 
 type CSVRow = {
   'Supplier Name': string
@@ -200,6 +201,8 @@ export default function UploadPriceListPage() {
   }
 
   const importProducts = async (supplierId: string) => {
+    if (!previewData) return
+    
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return

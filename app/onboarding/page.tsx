@@ -247,8 +247,14 @@ export default function OnboardingWizard() {
               setPhoneNumber={setPhoneNumber}
               abn={abn}
               setAbn={setAbn}
-              address={address}
-              setAddress={setAddress}
+              streetAddress={streetAddress}
+              setStreetAddress={setStreetAddress}
+              suburb={suburb}
+              setSuburb={setSuburb}
+              state={state}
+              setState={setState}
+              postcode={postcode}
+              setPostcode={setPostcode}
               onSubmit={handleProfileSubmit}
               onSkip={() => setCurrentStep('invoice')}
               saving={saving}
@@ -334,9 +340,16 @@ function ProfileStep({
   tradeType, setTradeType, 
   phoneNumber, setPhoneNumber,
   abn, setAbn, 
-  address, setAddress, 
+  streetAddress, setStreetAddress,
+  suburb, setSuburb,
+  state, setState,
+  postcode, setPostcode,
   onSubmit, onSkip, saving 
 }: any) {
+  // Compute complete address for validation
+  const address = streetAddress && suburb && state && postcode 
+    ? `${streetAddress}, ${suburb}, ${state} ${postcode}` 
+    : ''
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8">
       <div className="text-center mb-8">
