@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { colors } from '@/lib/colors'
 import { UserCheck, CheckCircle, XCircle, Loader2 } from 'lucide-react'
 import type { Connection } from '@/lib/connections/types'
 
-export default function AcceptConnectionPage() {
+function AcceptConnectionContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
@@ -274,5 +274,17 @@ export default function AcceptConnectionPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function AcceptConnectionPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="w-12 h-12 text-orange-600 animate-spin" />
+      </div>
+    }>
+      <AcceptConnectionContent />
+    </Suspense>
   )
 }

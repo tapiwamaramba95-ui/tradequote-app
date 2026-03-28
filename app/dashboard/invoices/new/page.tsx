@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { supabase } from '@/lib/supabase'
 import { colors } from '@/lib/colors'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -39,7 +39,7 @@ type Quote = {
   terms?: string
 }
 
-export default function NewInvoicePage() {
+function NewInvoicePageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const quoteId = searchParams.get('from_quote') || searchParams.get('quote')
@@ -612,5 +612,17 @@ export default function NewInvoicePage() {
         applyMarkup={true}
       />
     </div>
+  )
+}
+
+export default function NewInvoicePage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+      </div>
+    }>
+      <NewInvoicePageContent />
+    </Suspense>
   )
 }

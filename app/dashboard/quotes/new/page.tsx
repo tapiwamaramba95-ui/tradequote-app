@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { FileText, Plus, Trash2 } from 'lucide-react'
@@ -29,7 +29,7 @@ type Client = {
   email: string
 }
 
-export default function NewQuotePage() {
+function NewQuotePageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const jobId = searchParams.get('job_id')
@@ -510,5 +510,17 @@ export default function NewQuotePage() {
         applyMarkup={true}
       />
     </div>
+  )
+}
+
+export default function NewQuotePage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+      </div>
+    }>
+      <NewQuotePageContent />
+    </Suspense>
   )
 }

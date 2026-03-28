@@ -1,5 +1,6 @@
 'use client'
 
+import { Suspense } from 'react'
 import { colors } from '@/lib/colors'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
@@ -40,7 +41,7 @@ const SETTINGS_SECTIONS = [
   { id: 'billing', label: 'Billing & Plans', icon: CreditCard },
 ]
 
-export default function SettingsLayout({ children }: { children: React.ReactNode }) {
+function SettingsLayoutContent({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams()
   const activeTab = searchParams.get('tab') || 'company'
 
@@ -86,5 +87,17 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
         {children}
       </div>
     </div>
+  )
+}
+
+export default function SettingsLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+      </div>
+    }>
+      <SettingsLayoutContent>{children}</SettingsLayoutContent>
+    </Suspense>
   )
 }
