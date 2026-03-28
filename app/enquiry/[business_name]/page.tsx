@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { formatAustralianPhone, isValidAustralianPhone, normalizeEmail, isValidEmail, suggestEmailCorrection } from '@/lib/utils/formatters'
 import { AddressFields } from '@/components/AddressFields'
 import { colors } from '@/lib/colors'
+import { ChevronDown } from 'lucide-react'
 
 type EnquirySettings = {
   user_id: string
@@ -386,38 +387,44 @@ export default function PublicEnquiryFormPage({ params }: { params: Promise<{ bu
                     <label className="block text-sm font-medium mb-2 text-gray-900">
                       Frequency *
                     </label>
-                    <select
-                      required
-                      value={formData.frequency}
-                      onChange={(e) => setFormData({ ...formData, frequency: e.target.value })}
-                      className="w-full rounded-md border border-gray-300 px-4 py-2 text-gray-900 focus:border-orange-600 focus:ring-1 focus:ring-orange-600"
-                    >
-                      <option value="">Select frequency...</option>
-                      <option value="daily">Daily</option>
-                      <option value="weekly">Weekly</option>
-                      <option value="fortnightly">Fortnightly</option>
-                      <option value="monthly">Monthly</option>
-                      <option value="quarterly">Quarterly</option>
-                      <option value="yearly">Yearly</option>
-                    </select>
+                    <div className="relative">
+                      <select
+                        required
+                        value={formData.frequency}
+                        onChange={(e) => setFormData({ ...formData, frequency: e.target.value })}
+                        className="w-full rounded-md border border-gray-300 px-4 py-2 pr-10 text-gray-900 focus:border-orange-600 focus:ring-1 focus:ring-orange-600 appearance-none"
+                      >
+                        <option value="">Select frequency...</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="fortnightly">Fortnightly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="quarterly">Quarterly</option>
+                        <option value="yearly">Yearly</option>
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                    </div>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium mb-2 text-gray-900">
                       Duration *
                     </label>
-                    <select
-                      required
-                      value={formData.duration}
-                      onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                      className="w-full rounded-md border border-gray-300 px-4 py-2 text-gray-900 focus:border-orange-600 focus:ring-1 focus:ring-orange-600"
-                    >
-                      <option value="">Select duration...</option>
-                      <option value="3-months">3 Months</option>
-                      <option value="6-months">6 Months</option>
-                      <option value="12-months">12 Months</option>
-                      <option value="ongoing">Ongoing / Until Cancelled</option>
-                    </select>
+                    <div className="relative">
+                      <select
+                        required
+                        value={formData.duration}
+                        onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                        className="w-full rounded-md border border-gray-300 px-4 py-2 pr-10 text-gray-900 focus:border-orange-600 focus:ring-1 focus:ring-orange-600 appearance-none"
+                      >
+                        <option value="">Select duration...</option>
+                        <option value="3-months">3 Months</option>
+                        <option value="6-months">6 Months</option>
+                        <option value="12-months">12 Months</option>
+                        <option value="ongoing">Ongoing / Until Cancelled</option>
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                    </div>
                   </div>
                 </>
               )}

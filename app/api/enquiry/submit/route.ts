@@ -77,6 +77,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Get business_id for the user
+    const { data: userBusiness } = await supabaseAdmin
+      .from('user_businesses')
+      .select('business_id')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+
+    if (!userBusiness || !userBusiness.business_id) {
+      return NextResponse.json(
+        { error: 'No business found for user' },
+        { status: 400 }
+      )
+    }
+
+    const businessId = userBusiness.business_id
+
     // Step 1: Find or create client
     let clientId: string | null = null
 
@@ -84,7 +103,7 @@ export async function POST(request: NextRequest) {
       const { data: existingClient } = await supabaseAdmin
         .from('clients')
         .select('id')
-        .eq('user_id', userId)
+        .eq('business_id', businessId)
         .eq('email', customerEmail)
         .maybeSingle()
 
@@ -98,7 +117,7 @@ export async function POST(request: NextRequest) {
       const { data: newClient, error: clientError } = await supabaseAdmin
         .from('clients')
         .insert({
-          user_id: userId,
+          business_id: businessId,
           name: customerName,
           email: customerEmail || null,
           phone: customerPhone || null,
@@ -141,7 +160,7 @@ export async function POST(request: NextRequest) {
     const { data: lastJob } = await supabaseAdmin
       .from('jobs')
       .select('job_number')
-      .eq('user_id', userId)
+      .eq('business_id', businessId)
       .ilike('job_number', `${prefix}%`)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -161,7 +180,7 @@ export async function POST(request: NextRequest) {
     const { data: newJob, error: jobError } = await supabaseAdmin
       .from('jobs')
       .insert({
-        user_id: userId,
+        business_id: businessId,
         client_id: clientId,
         job_number: jobNumber,
         enquiry_number: jobNumber,
