@@ -1,0 +1,5 @@
+Supplier Name,Product Code,Product Name,Unit,Price,Category,Description
+ABC Plumbing Supplies,P001,Copper Pipe 15mm,meter,12.50,Plumbing,Standard copper pipe
+ABC Plumbing Supplies,P002,PVC Elbow 90deg,each,2.75,Plumbing,PVC connector 90 degree
+ABC Plumbing Supplies,E001,LED Downlight,each,18.00,Electrical,6W LED downlight warm white
+ABC Plumbing Supplies,G001,Gyprock Sheet 2400x1200,sheet,32.50,General,Standard plasterboard

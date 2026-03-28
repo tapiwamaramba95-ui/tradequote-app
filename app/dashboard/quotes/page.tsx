@@ -220,7 +220,7 @@ export default function QuotesPage() {
         </div>
 
         {/* Desktop Table */}
-        <div className="hidden xl:block bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="hidden lg:block bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full min-w-full">
               <colgroup>
@@ -324,90 +324,8 @@ export default function QuotesPage() {
           )}
         </div>
 
-        {/* Tablet Table - Simplified */}
-        <div className="hidden md:block xl:hidden bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Quote #</th>
-                  <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Customer</th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Status</th>
-                  <th className="px-2 py-2 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Amount</th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {quotes.map((quote) => {
-                  const statusConfig = getQuoteStatusConfig(quote.status as any)
-                  return (
-                    <tr key={quote.id} className="hover:bg-gray-50 transition-colors group">
-                      <td className="px-2 py-2 whitespace-nowrap">
-                        <Link href={`/dashboard/quotes/${quote.id}`} className="text-xs font-medium text-cyan-600 hover:text-cyan-700 font-sans">
-                          {quote.quote_number}
-                        </Link>
-                      </td>
-                      <td className="px-2 py-2">
-                        <div className="text-xs font-medium text-gray-900">{getClientName(quote)}</div>
-                        {quote.jobs?.id && quote.jobs?.job_number && (
-                          <Link
-                            href={`/dashboard/jobs/${quote.jobs.id}`}
-                            className="text-xs text-purple-600 hover:text-purple-700 font-medium"
-                          >
-                            {quote.jobs.job_number}
-                          </Link>
-                        )}
-                      </td>
-                      <td className="px-2 py-2 whitespace-nowrap text-center">
-                        <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium" style={{ backgroundColor: statusConfig.bg, color: statusConfig.text }}>
-                          {statusConfig.label}
-                        </span>
-                      </td>
-                      <td className="px-2 py-2 whitespace-nowrap text-right">
-                        <span className="text-xs font-medium text-gray-900">{formatCurrency(quote.total)}</span>
-                      </td>
-                      <td className="px-2 py-2 whitespace-nowrap">
-                        <div className="flex items-center justify-center gap-1">
-                          <Link href={`/dashboard/quotes/${quote.id}`} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors" title="View">
-                            <Eye className="w-3.5 h-3.5 text-gray-600" />
-                          </Link>
-                          <Link href={`/dashboard/quotes/edit/${quote.id}`} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors" title="Edit">
-                            <Edit className="w-3.5 h-3.5 text-gray-600" />
-                          </Link>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination for tablet */}
-          {totalCount > PAGE_SIZE && (
-            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-600">
-                  Showing {page * PAGE_SIZE + 1} to {Math.min((page + 1) * PAGE_SIZE, totalCount)} of {totalCount}
-                </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} className="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                    <ChevronLeft className="w-4 h-4" />
-                    Previous
-                  </button>
-                  <span className="text-sm text-gray-600 px-4">Page {page + 1} of {Math.ceil(totalCount / PAGE_SIZE)}</span>
-                  <button onClick={() => setPage(p => p + 1)} disabled={!hasMore} className="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                    Next
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
         {/* Mobile Cards */}
-        <div className="md:hidden space-y-3">
+        <div className="lg:hidden space-y-3">
           {quotes.map((quote) => {
             const statusConfig = getQuoteStatusConfig(quote.status as any)
             return (

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { formatAustralianPhone, isValidAustralianPhone, normalizeEmail, isValidEmail, suggestEmailCorrection } from '@/lib/utils/formatters'
 import { AddressFields } from '@/components/AddressFields'
+import { colors } from '@/lib/colors'
 
 type EnquirySettings = {
   user_id: string
@@ -31,6 +32,9 @@ export default function PublicEnquiryFormPage({ params }: { params: Promise<{ bu
     description: '',
     job_type: '',
     preferred_date: '',
+    is_recurring: 'once-off',
+    frequency: '',
+    duration: '',
   })
 
   // Unwrap async params
@@ -131,6 +135,9 @@ export default function PublicEnquiryFormPage({ params }: { params: Promise<{ bu
           postcode: formData.postcode,
           description: formData.description,
           jobType: formData.job_type,
+          isRecurring: formData.is_recurring,
+          frequency: formData.frequency,
+          duration: formData.duration,
         }),
       })
 
@@ -224,7 +231,7 @@ export default function PublicEnquiryFormPage({ params }: { params: Promise<{ bu
                     required
                     value={formData.customer_name}
                     onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
-                    className="w-full rounded-md border border-gray-300 px-4 py-2 text-gray-900 focus:border-cyan-600 focus:ring-1 focus:ring-cyan-600"
+                    className="w-full rounded-md border border-gray-300 px-4 py-2 text-gray-900 focus:border-orange-600 focus:ring-1 focus:ring-orange-600\"
                   />
                 </div>
               )}
@@ -252,7 +259,7 @@ export default function PublicEnquiryFormPage({ params }: { params: Promise<{ bu
                       }
                     }}
                     placeholder="example@email.com"
-                    className="w-full rounded-md border border-gray-300 px-4 py-2 text-gray-900 focus:border-cyan-600 focus:ring-1 focus:ring-cyan-600"
+                    className="w-full rounded-md border border-gray-300 px-4 py-2 text-gray-900 focus:border-orange-600 focus:ring-1 focus:ring-orange-600"
                   />
                 </div>
               )}
@@ -272,7 +279,7 @@ export default function PublicEnquiryFormPage({ params }: { params: Promise<{ bu
                       setFormData({ ...formData, customer_phone: formatted })
                     }}
                     placeholder="0412 345 678"
-                    className="w-full rounded-md border border-gray-300 px-4 py-2 text-gray-900 focus:border-cyan-600 focus:ring-1 focus:ring-cyan-600"
+                    className="w-full rounded-md border border-gray-300 px-4 py-2 text-gray-900 focus:border-orange-600 focus:ring-1 focus:ring-orange-600"
                   />
                 </div>
               )}
@@ -309,7 +316,7 @@ export default function PublicEnquiryFormPage({ params }: { params: Promise<{ bu
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     placeholder="Please describe what you need..."
-                    className="w-full rounded-md border border-gray-300 px-4 py-2 text-gray-900 focus:border-cyan-600 focus:ring-1 focus:ring-cyan-600"
+                    className="w-full rounded-md border border-gray-300 px-4 py-2 text-gray-900 focus:border-orange-600 focus:ring-1 focus:ring-orange-600"
                   />
                 </div>
               )}
@@ -324,8 +331,96 @@ export default function PublicEnquiryFormPage({ params }: { params: Promise<{ bu
                     type="date"
                     value={formData.preferred_date}
                     onChange={(e) => setFormData({ ...formData, preferred_date: e.target.value })}
-                    className="w-full rounded-md border border-gray-300 px-4 py-2 text-gray-900 focus:border-cyan-600 focus:ring-1 focus:ring-cyan-600"
+                    className="w-full rounded-md border border-gray-300 px-4 py-2 text-gray-900 focus:border-orange-600 focus:ring-1 focus:ring-orange-600"
                   />
+                  <p className="text-xs text-gray-500 mt-1">When would you like this work to be done?</p>
+                </div>
+              )}
+
+              {/* Job Type - Recurring or Once-off */}
+              <div>
+                <label className="block text-sm font-medium mb-2 text-gray-900">
+                  Job Type *
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="flex items-center justify-center px-4 py-3 border-2 rounded-md cursor-pointer transition-colors"
+                    style={{
+                      borderColor: formData.is_recurring === 'once-off' ? colors.accent.DEFAULT : colors.border.DEFAULT,
+                      backgroundColor: formData.is_recurring === 'once-off' ? `${colors.accent.DEFAULT}10` : 'white'
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="is_recurring"
+                      value="once-off"
+                      checked={formData.is_recurring === 'once-off'}
+                      onChange={(e) => setFormData({ ...formData, is_recurring: e.target.value })}
+                      className="sr-only"
+                    />
+                    <span className="text-sm font-medium">Once-off Job</span>
+                  </label>
+                  
+                  <label className="flex items-center justify-center px-4 py-3 border-2 rounded-md cursor-pointer transition-colors"
+                    style={{
+                      borderColor: formData.is_recurring === 'recurring' ? colors.accent.DEFAULT : colors.border.DEFAULT,
+                      backgroundColor: formData.is_recurring === 'recurring' ? `${colors.accent.DEFAULT}10` : 'white'
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="is_recurring"
+                      value="recurring"
+                      checked={formData.is_recurring === 'recurring'}
+                      onChange={(e) => setFormData({ ...formData, is_recurring: e.target.value })}
+                      className="sr-only"
+                    />
+                    <span className="text-sm font-medium">Recurring Job</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Recurring Job Details */}
+              {formData.is_recurring === 'recurring' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-900">
+                      Frequency *
+                    </label>
+                    <select
+                      required
+                      value={formData.frequency}
+                      onChange={(e) => setFormData({ ...formData, frequency: e.target.value })}
+                      className="w-full rounded-md border border-gray-300 px-4 py-2 text-gray-900 focus:border-orange-600 focus:ring-1 focus:ring-orange-600"
+                    >
+                      <option value="">Select frequency...</option>
+                      <option value="daily">Daily</option>
+                      <option value="weekly">Weekly</option>
+                      <option value="fortnightly">Fortnightly</option>
+                      <option value="monthly">Monthly</option>
+                      <option value="quarterly">Quarterly</option>
+                      <option value="yearly">Yearly</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-900">
+                      Duration *
+                    </label>
+                    <select
+                      required
+                      value={formData.duration}
+                      onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                      className="w-full rounded-md border border-gray-300 px-4 py-2 text-gray-900 focus:border-orange-600 focus:ring-1 focus:ring-orange-600"
+                    >
+                      <option value="">Select duration...</option>
+                      <option value="3-months">3 Months</option>
+                      <option value="6-months">6 Months</option>
+                      <option value="12-months">12 Months</option>
+                      <option value="ongoing">Ongoing / Until Cancelled</option>
+                    </select>
+                  </div>
+                </>
+              )}
                   <p className="text-xs text-gray-500 mt-1">When would you like this work to be done?</p>
                 </div>
               )}
@@ -334,7 +429,10 @@ export default function PublicEnquiryFormPage({ params }: { params: Promise<{ bu
             <button
               type="submit"
               disabled={submitting}
-              className="w-full mt-6 py-3 rounded-md font-medium text-white bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full mt-6 py-3 rounded-md font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              style={{ backgroundColor: colors.accent.DEFAULT }}
+              onMouseEnter={(e) => !submitting && (e.currentTarget.style.backgroundColor = colors.accent.hover)}
+              onMouseLeave={(e) => !submitting && (e.currentTarget.style.backgroundColor = colors.accent.DEFAULT)}
             >
               {submitting ? 'Submitting...' : 'Submit Enquiry'}
             </button>

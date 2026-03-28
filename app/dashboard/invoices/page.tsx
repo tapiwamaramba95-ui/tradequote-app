@@ -262,7 +262,7 @@ export default function InvoicesPage() {
           </div>
         </div>
 
-        <div className="hidden md:block bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
+        <div className="hidden lg:block bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
@@ -352,7 +352,7 @@ export default function InvoicesPage() {
           )}
         </div>
 
-        <div className="md:hidden space-y-3">
+        <div className="lg:hidden space-y-3">
           {invoices.map((invoice) => {
             const displayStatus = getInvoiceDisplayStatus(invoice)
             const statusConfig = getInvoiceStatusConfig(displayStatus)

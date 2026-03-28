@@ -1,5 +1,7 @@
 'use client'
 
+import { ChevronDown } from 'lucide-react'
+
 interface AddressFieldsProps {
   streetAddress: string
   suburb: string

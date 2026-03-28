@@ -9,7 +9,6 @@ import { Plus, Search, Eye, Edit, DollarSign, FileText, Calendar, ChevronLeft, C
 import { formatCurrency } from '@/lib/utils/format'
 import { formatDate } from '@/lib/utils/dates'
 import { getJobStatusConfig } from '@/lib/utils/status'
-import { useIsMobile } from '@/lib/utils/responsive'
 import { Skeleton, SkeletonTable } from '@/components/Skeleton'
 import { ActionButtons } from '@/components/ActionButtons'
 import Breadcrumb from '@/components/Breadcrumb'
@@ -36,7 +35,6 @@ const ITEMS_PER_PAGE = 50
 
 export default function JobsPageOptimized() {
   const router = useRouter()
-  const isMobile = useIsMobile()
 
   const [jobs, setJobs] = useState<JobWithClient[]>([])
   const [loading, setLoading] = useState(true)
@@ -267,9 +265,8 @@ export default function JobsPageOptimized() {
           ) : (
             <>
               {/* Desktop Table */}
-              {!isMobile && (
-                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                  <table className="w-full table-fixed">
+              <div className="hidden lg:block bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <table className="w-full table-fixed">
                     <colgroup>
                       <col style={{ width: '10%' }} />
                       <col style={{ width: '25%' }} />
@@ -379,12 +376,10 @@ export default function JobsPageOptimized() {
                     </tbody>
                   </table>
                 </div>
-              )}
 
               {/* Mobile Cards */}
-              {isMobile && (
-                <div className="mobile-cards p-4 space-y-4">
-                  {jobs.map((job) => {
+              <div className="lg:hidden space-y-4 p-4">
+                {jobs.map((job) => {
                     const statusConfig = getJobStatusConfig(job.status as any)
                     return (
                       <div
@@ -470,7 +465,6 @@ export default function JobsPageOptimized() {
                     )
                   })}
                 </div>
-              )}
             </>
           )}
         </div>
