@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { useRouter, usePathname } from 'next/navigation'
 import * as Sentry from '@sentry/nextjs'
 import { colors } from '@/lib/colors'
 
@@ -11,10 +12,18 @@ type ErrorBoundaryState = {
 }
 
 export class ErrorBoundary extends React.Component<
-  { children: React.ReactNode; fallback?: React.ReactElement },
+  { 
+    children: React.ReactNode
+    fallback?: React.ReactElement
+    onReset?: () => void
+  },
   ErrorBoundaryState
 > {
-  constructor(props: { children: React.ReactNode; fallback?: React.ReactElement }) {
+  constructor(props: { 
+    children: React.ReactNode
+    fallback?: React.ReactElement
+    onReset?: () => void
+  }) {
     super(props)
     this.state = { hasError: false, error: null, eventId: null }
   }
@@ -31,11 +40,16 @@ export class ErrorBoundary extends React.Component<
       contexts: {
         react: {
           componentStack: errorInfo.componentStack,
-        },
+          },
       },
     })
     
     this.setState({ eventId })
+  }
+  
+  resetErrorBoundary = () => {
+    this.setState({ hasError: false, error: null, eventId: null })
+    this.props.onReset?.()
   }
 
   render() {
@@ -60,24 +74,32 @@ export class ErrorBoundary extends React.Component<
             </h1>
             
             <p className="text-sm mb-6" style={{ color: colors.text.secondary }}>
-              We've been notified and are working on a fix.
+              We've been notified and are working on a fix. Try refreshing the page or navigating elsewhere.
             </p>
             
             <div className="flex flex-col gap-3">
               <button
                 onClick={() => window.location.reload()}
-                className="px-6 py-3 rounded-lg text-white font-semibold"
+                className="px-6 py-3 rounded-lg text-white font-semibold hover:opacity-90 transition-opacity"
                 style={{ backgroundColor: colors.primary.DEFAULT }}
               >
                 Reload Page
               </button>
               
               <button
-                onClick={() => this.setState({ hasError: false, error: null, eventId: null })}
-                className="px-6 py-3 rounded-lg border-2 font-semibold"
+                onClick={this.resetErrorBoundary}
+                className="px-6 py-3 rounded-lg border-2 font-semibold hover:bg-gray-50 transition-colors"
                 style={{ borderColor: colors.border.DEFAULT, color: colors.text.primary }}
               >
                 Try Again
+              </button>
+              
+              <button
+                onClick={() => window.history.back()}
+                className="px-6 py-3 text-sm font-medium hover:underline"
+                style={{ color: colors.text.secondary }}
+              >
+                Go Back
               </button>
             </div>
             
@@ -106,4 +128,28 @@ export class ErrorBoundary extends React.Component<
 
     return this.props.children
   }
+}
+
+// Hook component that auto-resets ErrorBoundary on route change
+export function ErrorBoundaryWithReset({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+  const router = useRouter()
+  const [key, setKey] = React.useState(0)
+  
+  React.useEffect(() => {
+    // Reset error boundary on route change
+    setKey(prev => prev + 1)
+  }, [pathname])
+  
+  return (
+    <ErrorBoundary 
+      key={key}
+      onReset={() => {
+        // Force re-render on reset
+        setKey(prev => prev + 1)
+      }}
+    >
+      {children}
+    </ErrorBoundary>
+  )
 }

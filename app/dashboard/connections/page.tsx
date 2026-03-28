@@ -22,13 +22,19 @@ export default function ConnectionsPage() {
   const loadConnections = async () => {
     try {
       const response = await fetch('/api/connections')
-      if (!response.ok) throw new Error('Failed to load connections')
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('API Error:', errorData)
+        throw new Error(errorData.error || 'Failed to load connections')
+      }
       
       const data = await response.json()
+      console.log('Connections loaded:', data)
       setConnections(data.connections || [])
     } catch (error) {
       console.error('Error loading connections:', error)
-      toast('error', 'Failed to load connections')
+      toast('error', error instanceof Error ? error.message : 'Failed to load connections')
     } finally {
       setLoading(false)
     }

@@ -9,6 +9,7 @@ import { getCurrentUserPermissions, isBusinessOwner, PermissionKey } from '@/lib
 import { StaffPermissions } from '@/lib/permissions/types'
 import { checkSubscriptionAccess, getSubscriptionMessage, SubscriptionState } from '@/lib/subscription'
 import { ReadOnlyProvider } from '@/lib/contexts/ReadOnlyContext'
+import { ErrorBoundaryWithReset } from '@/components/ErrorBoundary'
 
 export default function DashboardLayout({
   children,
@@ -430,7 +431,9 @@ export default function DashboardLayout({
           })()}
           
           <div className="p-6">
-            {children}
+            <ErrorBoundaryWithReset>
+              {children}
+            </ErrorBoundaryWithReset>
           </div>
         </main>
       </div>

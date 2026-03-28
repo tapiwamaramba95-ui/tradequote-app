@@ -292,6 +292,21 @@ export default function PriceListSettings() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
     if (selectedFile) {
+      // Validate file size (max 10MB)
+      const maxSizeBytes = 10 * 1024 * 1024 // 10MB
+      if (selectedFile.size > maxSizeBytes) {
+        alert('File is too large. Maximum file size is 10MB.')
+        e.target.value = '' // Reset file input
+        return
+      }
+      
+      // Validate file type
+      if (!selectedFile.name.endsWith('.csv')) {
+        alert('Please select a CSV file.')
+        e.target.value = '' // Reset file input
+        return
+      }
+      
       setFile(selectedFile)
       parseFile(selectedFile)
     }
@@ -299,11 +314,19 @@ export default function PriceListSettings() {
 
   const parseFile = (file: File) => {
     setUploadLoading(true)
+    
+    // Set a timeout to prevent indefinite loading
+    const timeoutId = setTimeout(() => {
+      setUploadLoading(false)
+      alert('CSV parsing timed out. The file may be too large or malformed.')
+    }, 30000) // 30 second timeout
 
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
+      preview: 10000, // Limit to first 10,000 rows
       complete: (results) => {
+        clearTimeout(timeoutId) // Clear the timeout on successful parse
         try {
           const rows = results.data as CSVRow[]
           
@@ -311,6 +334,11 @@ export default function PriceListSettings() {
             alert('CSV file is empty')
             setUploadLoading(false)
             return
+          }
+          
+          // Check if we hit the row limit
+          if (results.data.length >= 10000) {
+            alert('Note: Only the first 10,000 rows will be imported.')
           }
 
           const supplierName = rows[0]['Supplier Name']?.trim()
@@ -329,6 +357,12 @@ export default function PriceListSettings() {
             category: row['Category']?.trim(),
             description: row['Description']?.trim(),
           })).filter(p => p.name)
+          
+          if (products.length === 0) {
+            alert('No valid products found in CSV. Please check the format.')
+            setUploadLoading(false)
+            return
+          }
 
           setPreviewData({ supplierName, products })
           setUploadLoading(false)
@@ -339,8 +373,9 @@ export default function PriceListSettings() {
         }
       },
       error: (error) => {
+        clearTimeout(timeoutId) // Clear the timeout on error
         console.error('Parse error:', error)
-        alert('Failed to parse CSV file')
+        alert('Failed to parse CSV file. Please ensure it is properly formatted.')
         setUploadLoading(false)
       }
     })

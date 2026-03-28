@@ -421,11 +421,9 @@ export default function PublicEnquiryFormPage({ params }: { params: Promise<{ bu
                   </div>
                 </>
               )}
-                  <p className="text-xs text-gray-500 mt-1">When would you like this work to be done?</p>
-                </div>
-              )}
             </div>
 
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={submitting}

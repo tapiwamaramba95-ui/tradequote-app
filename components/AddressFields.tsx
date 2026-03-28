@@ -60,22 +60,25 @@ export function AddressFields({
           <label className="block text-base font-medium text-gray-700 mb-2">
             State {required && <span className="text-red-500">*</span>}
           </label>
-          <select
-            value={state}
-            onChange={(e) => onStateChange(e.target.value)}
-            className="w-full px-4 py-2.5 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 h-11"
-            required={required}
-          >
-            <option value="">Select...</option>
-            <option value="NSW">NSW</option>
-            <option value="VIC">VIC</option>
-            <option value="QLD">QLD</option>
-            <option value="SA">SA</option>
-            <option value="WA">WA</option>
-            <option value="TAS">TAS</option>
-            <option value="NT">NT</option>
-            <option value="ACT">ACT</option>
-          </select>
+          <div className="relative">
+            <select
+              value={state}
+              onChange={(e) => onStateChange(e.target.value)}
+              className="w-full px-4 py-2.5 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 h-11 appearance-none pr-10"
+              required={required}
+            >
+              <option value="">Select...</option>
+              <option value="NSW">NSW</option>
+              <option value="VIC">VIC</option>
+              <option value="QLD">QLD</option>
+              <option value="SA">SA</option>
+              <option value="WA">WA</option>
+              <option value="TAS">TAS</option>
+              <option value="NT">NT</option>
+              <option value="ACT">ACT</option>
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+          </div>
         </div>
       </div>
 
