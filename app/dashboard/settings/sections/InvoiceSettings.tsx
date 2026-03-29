@@ -17,6 +17,7 @@ export default function InvoiceSettings() {
   
   const [depositRequired, setDepositRequired] = useState(false)
   const [depositPercentage, setDepositPercentage] = useState('30')
+  const [stripeEnabled, setStripeEnabled] = useState(false)
   
   const [bankName, setBankName] = useState('')
   const [bsb, setBsb] = useState('')
@@ -44,6 +45,7 @@ export default function InvoiceSettings() {
         setInvoiceTerms(data.invoice_terms || 'Payment due within 30 days')
         setDepositRequired(data.deposit_required || false)
         setDepositPercentage(String(data.deposit_percentage || 30))
+        setStripeEnabled(data.stripe_enabled || false)
         setBankName(data.bank_name || '')
         setBsb(data.bsb || '')
         setAccountNumber(data.account_number || '')
@@ -71,6 +73,7 @@ export default function InvoiceSettings() {
           invoice_terms: invoiceTerms,
           deposit_required: depositRequired,
           deposit_percentage: parseFloat(depositPercentage) || 30,
+          stripe_enabled: stripeEnabled,
           bank_name: bankName,
           bsb: bsb,
           account_number: accountNumber,
@@ -153,11 +156,20 @@ export default function InvoiceSettings() {
 
       <SettingsCard title="Payment & Deposit Settings">
         <SettingsToggle
-          label="Require Deposit on Quotes"
-          description="When enabled, accepted quotes will prompt to create a deposit invoice"
-          checked={depositRequired}
-          onChange={setDepositRequired}
+          label="Accept Stripe Payments"
+          description="Allow customers to pay invoices online with credit card via Stripe"
+          checked={stripeEnabled}
+          onChange={setStripeEnabled}
         />
+        
+        <div className="mt-6 pt-6 border-t" style={{ borderColor: colors.border.DEFAULT }}>
+          <SettingsToggle
+            label="Require Deposit on Quotes"
+            description="When enabled, accepted quotes will prompt to create a deposit invoice"
+            checked={depositRequired}
+            onChange={setDepositRequired}
+          />
+        </div>
         
         {depositRequired && (
           <div className="mt-4 pl-4 border-l-2" style={{ borderColor: colors.border.DEFAULT }}>

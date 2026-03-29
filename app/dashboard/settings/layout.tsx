@@ -18,8 +18,7 @@ import {
   Users,
   Plug,
   Lock,
-  CreditCard,
-  Calendar
+  CreditCard
 } from 'lucide-react'
 
 const SETTINGS_SECTIONS = [
@@ -28,10 +27,8 @@ const SETTINGS_SECTIONS = [
   { id: 'invoice', label: 'Invoice Settings', icon: FileText },
   { id: 'jobs', label: 'Jobs Settings', icon: Briefcase },
   { id: 'purchase-orders', label: 'Purchase Orders', icon: Package },
-  { id: 'scheduler', label: 'Scheduler', icon: Calendar },
   { id: 'timesheets', label: 'Timesheets', icon: Clock },
   { id: 'labour-rates', label: 'Labour Rates', icon: DollarSign },
-  { id: 'payment-methods', label: 'Payment Methods', icon: CreditCard },
   { id: 'note-templates', label: 'Note Templates', icon: StickyNote },
   { id: 'price-list', label: 'Price List', icon: Clipboard },
   { id: 'pricing-levels', label: 'Pricing Levels', icon: BarChart3 },
