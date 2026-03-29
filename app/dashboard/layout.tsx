@@ -10,6 +10,7 @@ import { StaffPermissions } from '@/lib/permissions/types'
 import { checkSubscriptionAccess, getSubscriptionMessage, SubscriptionState } from '@/lib/subscription'
 import { ReadOnlyProvider } from '@/lib/contexts/ReadOnlyContext'
 import { ErrorBoundaryWithReset } from '@/components/ErrorBoundary'
+import { ToastProvider } from '@/components/Toast'
 
 export default function DashboardLayout({
   children,
@@ -279,7 +280,8 @@ export default function DashboardLayout({
 
   return (
     <ReadOnlyProvider>
-      <div className="min-h-screen flex" style={{ backgroundColor: colors.background.main }}>
+      <ToastProvider>
+        <div className="min-h-screen flex" style={{ backgroundColor: colors.background.main }}>
       {/* Sidebar */}
       <div 
         className={`${sidebarOpen ? 'w-64' : 'w-20'} transition-all duration-300 flex-shrink-0`}
@@ -438,6 +440,7 @@ export default function DashboardLayout({
         </main>
       </div>
     </div>
+      </ToastProvider>
     </ReadOnlyProvider>
   )
 }
