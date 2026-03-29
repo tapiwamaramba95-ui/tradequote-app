@@ -6,8 +6,10 @@ import { colors } from '@/lib/colors'
 import { SettingsCard } from '@/components/SettingsCard'
 import { SettingsInput } from '@/components/SettingsInput'
 import { SettingsToggle } from '@/components/SettingsToggle'
+import { useToast } from '@/components/Toast'
 
 export default function InvoiceSettings() {
+  const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   
@@ -83,6 +85,8 @@ export default function InvoiceSettings() {
           onConflict: 'user_id'
         })
 
+      console.log('Upsert result - error:', error)
+
       if (!error) {
         if (bsb && accountNumber && accountName) {
           await supabase
@@ -94,14 +98,16 @@ export default function InvoiceSettings() {
             .eq('user_id', user.id)
         }
         
-        alert('Invoice settings saved!')
+        toast('success', 'Invoice settings saved!')
       } else {
         console.error('Save error:', error)
-        alert('Failed to save')
+        const errorMsg = error?.message || error?.hint || error?.details || 'Failed to save settings'
+        toast('error', errorMsg)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving settings:', error)
-      alert('Error saving settings')
+      const errorMsg = error?.message || 'An unexpected error occurred'
+      toast('error', errorMsg)
     } finally {
       setSaving(false)
     }
