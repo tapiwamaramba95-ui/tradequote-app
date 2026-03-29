@@ -37,8 +37,6 @@ const StaffPermissionsSettings = lazy(() => import('./sections/StaffPermissionsS
 const IntegrationsSettings = lazy(() => import('./sections/IntegrationsSettings'))
 const SecuritySettings = lazy(() => import('./sections/SecuritySettings'))
 const BillingSettings = lazy(() => import('./sections/BillingSettings'))
-const PaymentMethodsSettings = lazy(() => import('./sections/PaymentMethodsSettings'))
-const SchedulerSettings = lazy(() => import('./sections/SchedulerSettings'))
 
 const SETTINGS_SECTIONS = [
   { id: 'company', label: 'Company Information', icon: Building2, component: CompanySettings },
@@ -46,10 +44,8 @@ const SETTINGS_SECTIONS = [
   { id: 'invoice', label: 'Invoice Settings', icon: FileText, component: InvoiceSettings },
   { id: 'jobs', label: 'Jobs Settings', icon: Briefcase, component: JobsSettings },
   { id: 'purchase-orders', label: 'Purchase Orders', icon: Package, component: PurchaseOrdersSettings },
-  { id: 'scheduler', label: 'Scheduler', icon: Calendar, component: SchedulerSettings },
   { id: 'timesheets', label: 'Timesheets', icon: Clock, component: TimesheetsSettings },
   { id: 'labour-rates', label: 'Labour Rates', icon: DollarSign, component: LabourRatesSettings },
-  { id: 'payment-methods', label: 'Payment Methods', icon: CreditCard, component: PaymentMethodsSettings },
   { id: 'note-templates', label: 'Note Templates', icon: StickyNote, component: NoteTemplatesSettings },
   { id: 'price-list', label: 'Price List', icon: Clipboard, component: PriceListSettings },
   { id: 'pricing-levels', label: 'Pricing Levels', icon: BarChart3, component: PricingLevelsSettings },

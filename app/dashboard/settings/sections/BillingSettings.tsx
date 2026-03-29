@@ -60,18 +60,82 @@ export default function BillingSettings() {
 
   const isOnTrial = profile?.subscription_status === 'trial'
   const isActive = profile?.subscription_status === 'active'
-  const isStarter = profile?.subscription_plan === 'starter'
-  const isProfessional = profile?.subscription_plan === 'professional'
-  const isBusiness = profile?.subscription_plan === 'business'
+  const currentPlan = profile?.subscription_plan || 'none'
+
+  const plans = [
+    {
+      id: 'starter',
+      name: 'Starter',
+      price: 39,
+      description: 'Perfect for solo tradies',
+      features: [
+        'Unlimited jobs & invoices',
+        '1 user',
+        'Mobile app',
+        'Email support',
+        'Quote & invoice templates',
+        'Basic reporting'
+      ],
+      isCurrent: currentPlan === 'starter'
+    },
+    {
+      id: 'professional',
+      name: 'Professional',
+      price: 49,
+      description: 'For small teams',
+      features: [
+        'Everything in Starter',
+        'Up to 5 staff members',
+        'Timesheets',
+        'Purchase orders',
+        'Priority support',
+        'Advanced reporting'
+      ],
+      isCurrent: currentPlan === 'professional',
+      isPopular: true
+    },
+    {
+      id: 'business',
+      name: 'Business',
+      price: 89,
+      description: 'For growing businesses',
+      features: [
+        'Everything in Professional',
+        'Unlimited staff',
+        'Custom branding',
+        'API access',
+        'Dedicated support',
+        'Custom integrations'
+      ],
+      isCurrent: currentPlan === 'business'
+    }
+  ]
+
+  const canUpgradeTo = (planId: string) => {
+    const planOrder = ['none', 'starter', 'professional', 'business']
+    const currentIndex = planOrder.indexOf(currentPlan)
+    const targetIndex = planOrder.indexOf(planId)
+    return targetIndex > currentIndex
+  }
+
+  const canDowngradeTo = (planId: string) => {
+    const planOrder = ['none', 'starter', 'professional', 'business']
+    const currentIndex = planOrder.indexOf(currentPlan)
+    const targetIndex = planOrder.indexOf(planId)
+    return isActive && targetIndex < currentIndex && targetIndex > 0
+  }
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-8" style={{ color: colors.text.primary }}>
+      <h1 className="text-2xl font-bold mb-2" style={{ color: colors.text.primary }}>
         Billing & Plans
       </h1>
+      <p className="text-sm mb-8" style={{ color: colors.text.secondary }}>
+        Choose the plan that works best for your business
+      </p>
 
       {isOnTrial && (
-        <div className="bg-orange-50 border-2 border-orange-200 rounded-2xl p-6 mb-8">
+        <div className="bg-orange-50 border-2 border-orange-200 rounded-xl p-6 mb-8">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-bold text-orange-900 mb-1">
@@ -81,198 +145,101 @@ export default function BillingSettings() {
                 Choose a plan to continue using TradeQuote after your trial ends
               </p>
             </div>
-            <button
-              onClick={() => router.push('/dashboard/settings/billing/upgrade')}
-              className="px-6 py-3 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors"
-            >
-              Choose Plan
-            </button>
           </div>
         </div>
       )}
 
-      <div className="bg-white rounded-2xl p-8 shadow-sm mb-8">
-        <h2 className="text-xl font-bold mb-6" style={{ color: colors.text.primary }}>
-          Current Plan
-        </h2>
-
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <h3 className="text-2xl font-bold" style={{ color: colors.text.primary }}>
-                {isOnTrial ? 'Free Trial' : isStarter ? 'Starter' : isProfessional ? 'Professional' : 'Business'}
-              </h3>
-              {isActive && (
-                <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
-                  Active
-                </span>
-              )}
-            </div>
-            {isActive && (
-              <p className="text-lg font-bold" style={{ color: colors.accent.DEFAULT }}>
-                {isStarter ? '$39' : isProfessional ? '$49' : '$89'}/month
-              </p>
-            )}
-            {isOnTrial && profile && (
-              <p style={{ color: colors.text.secondary }}>
-                Ends {new Date(profile.trial_ends_at).toLocaleDateString('en-AU')}
-              </p>
-            )}
+      {isActive && (
+        <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 mb-8">
+          <div className="flex items-center gap-2">
+            <span className="text-green-600 font-semibold">✓</span>
+            <p className="text-sm text-green-800">
+              You're currently on the <strong>{currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)}</strong> plan
+            </p>
           </div>
-
-          {isActive && (
-            <div className="flex gap-3">
-              {isStarter && (
-                <button
-                  onClick={() => router.push('/dashboard/settings/billing/upgrade?plan=professional')}
-                  className="px-4 py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600"
-                >
-                  Upgrade
-                </button>
-              )}
-              {isProfessional && (
-                <button
-                  onClick={() => router.push('/dashboard/settings/billing/upgrade?plan=business')}
-                  className="px-4 py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600"
-                >
-                  Upgrade
-                </button>
-              )}
-            </div>
-          )}
         </div>
+      )}
 
-        {isActive && (
-          <div className="border-t pt-6" style={{ borderColor: colors.border.DEFAULT }}>
-            <h4 className="font-semibold mb-3" style={{ color: colors.text.primary }}>
-              Your plan includes:
-            </h4>
-            <ul className="grid grid-cols-2 gap-3 text-sm" style={{ color: colors.text.secondary }}>
-              <li className="flex items-center gap-2">
-                <span className="text-green-500">✓</span>
-                Unlimited jobs & invoices
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="text-green-500">✓</span>
-                {isStarter ? '1 user' : isProfessional ? 'Up to 5 staff' : 'Unlimited staff'}
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="text-green-500">✓</span>
-                Mobile app
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="text-green-500">✓</span>
-                {isStarter ? 'Email support' : 'Priority support'}
-              </li>
-              {(isProfessional || isBusiness) && (
-                <>
-                  <li className="flex items-center gap-2">
-                    <span className="text-green-500">✓</span>
-                    Timesheets
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-green-500">✓</span>
-                    Purchase orders
-                  </li>
-                </>
-              )}
-              {isBusiness && (
-                <>
-                  <li className="flex items-center gap-2">
-                    <span className="text-green-500">✓</span>
-                    Custom branding
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-green-500">✓</span>
-                    API access
-                  </li>
-                </>
-              )}
-            </ul>
-          </div>
-        )}
-
-        {isActive && (
-          <div className="border-t mt-6 pt-6" style={{ borderColor: colors.border.DEFAULT }}>
-            <button
-              onClick={() => router.push('/dashboard/settings/billing/cancel')}
-              className="text-sm font-semibold text-red-600 hover:text-red-700"
-            >
-              Cancel subscription
-            </button>
-          </div>
-        )}
-      </div>
-
-      {!isActive && (
-        <div className="bg-white rounded-2xl p-8 shadow-sm">
-          <h2 className="text-xl font-bold mb-6" style={{ color: colors.text.primary }}>
-            Choose Your Plan
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="border-2 rounded-xl p-6" style={{ borderColor: colors.border.DEFAULT }}>
-              <h3 className="text-xl font-bold mb-2">Starter</h3>
-              <p className="text-sm mb-4" style={{ color: colors.text.secondary }}>
-                Perfect for solo tradies
-              </p>
-              <div className="mb-4">
-                <span className="text-3xl font-bold" style={{ color: colors.accent.DEFAULT }}>
-                  $39
-                </span>
-                <span className="text-sm">/month</span>
-              </div>
-              <button
-                onClick={() => router.push('/dashboard/settings/billing/upgrade?plan=starter')}
-                className="w-full py-3 border-2 rounded-lg font-semibold hover:bg-gray-50"
-                style={{ borderColor: colors.accent.DEFAULT, color: colors.accent.DEFAULT }}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {plans.map((plan) => (
+          <div
+            key={plan.id}
+            className={`border-2 rounded-xl p-6 relative ${
+              plan.isCurrent ? 'border-green-500 bg-green-50' : ''
+            }`}
+            style={!plan.isCurrent ? { borderColor: plan.isPopular ? colors.accent.DEFAULT : colors.border.DEFAULT } : {}}
+          >
+            {plan.isPopular && !plan.isCurrent && (
+              <div className="absolute -top-3 right-4 px-3 py-1 rounded-full text-xs font-bold text-white"
+                style={{ backgroundColor: colors.accent.DEFAULT }}
               >
-                Choose Starter
-              </button>
-            </div>
-
-            <div className="border-2 rounded-xl p-6 relative" style={{ borderColor: colors.accent.DEFAULT }}>
-              <div className="absolute -top-3 right-4 px-3 py-1 bg-blue-500 text-white rounded-full text-xs font-bold">
                 POPULAR
               </div>
-              <h3 className="text-xl font-bold mb-2">Professional</h3>
-              <p className="text-sm mb-4" style={{ color: colors.text.secondary }}>
-                For small teams
-              </p>
-              <div className="mb-4">
-                <span className="text-3xl font-bold" style={{ color: colors.accent.DEFAULT }}>
-                  $49
-                </span>
-                <span className="text-sm">/month</span>
+            )}
+            {plan.isCurrent && (
+              <div className="absolute -top-3 right-4 px-3 py-1 bg-green-500 text-white rounded-full text-xs font-bold">
+                CURRENT PLAN
               </div>
-              <button
-                onClick={() => router.push('/dashboard/settings/billing/upgrade?plan=professional')}
-                className="w-full py-3 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600"
-              >
-                Choose Professional
-              </button>
+            )}
+
+            <h3 className="text-xl font-bold mb-2" style={{ color: colors.text.primary }}>
+              {plan.name}
+            </h3>
+            <p className="text-sm mb-4" style={{ color: colors.text.secondary }}>
+              {plan.description}
+            </p>
+            <div className="mb-6">
+              <span className="text-3xl font-bold" style={{ color: colors.accent.DEFAULT }}>
+                ${plan.price}
+              </span>
+              <span className="text-sm" style={{ color: colors.text.secondary }}>/month</span>
             </div>
 
-            <div className="border-2 rounded-xl p-6" style={{ borderColor: colors.border.DEFAULT }}>
-              <h3 className="text-xl font-bold mb-2">Business</h3>
-              <p className="text-sm mb-4" style={{ color: colors.text.secondary }}>
-                For growing businesses
-              </p>
-              <div className="mb-4">
-                <span className="text-3xl font-bold" style={{ color: colors.accent.DEFAULT }}>
-                  $89
-                </span>
-                <span className="text-sm">/month</span>
-              </div>
+            <ul className="space-y-2 mb-6 text-sm">
+              {plan.features.map((feature, idx) => (
+                <li key={idx} className="flex items-start gap-2">
+                  <span className="text-green-500 mt-0.5">✓</span>
+                  <span style={{ color: colors.text.secondary }}>{feature}</span>
+                </li>
+              ))}
+            </ul>
+
+            {plan.isCurrent ? (
               <button
-                onClick={() => router.push('/dashboard/settings/billing/upgrade?plan=business')}
-                className="w-full py-3 border-2 rounded-lg font-semibold hover:bg-gray-50"
-                style={{ borderColor: colors.accent.DEFAULT, color: colors.accent.DEFAULT }}
+                disabled
+                className="w-full py-3 rounded-lg font-semibold bg-green-500 text-white opacity-60 cursor-not-allowed"
               >
-                Choose Business
+                Current Plan
               </button>
-            </div>
+            ) : canUpgradeTo(plan.id) ? (
+              <button
+                onClick={() => router.push(`/dashboard/settings/billing/upgrade?plan=${plan.id}`)}
+                className="w-full py-3 rounded-lg font-semibold text-white hover:opacity-90 transition-opacity"
+                style={{ backgroundColor: colors.accent.DEFAULT }}
+              >
+                Upgrade to {plan.name}
+              </button>
+            ) : canDowngradeTo(plan.id) ? (
+              <button
+                onClick={() => router.push(`/dashboard/settings/billing/downgrade?plan=${plan.id}`)}
+                className="w-full py-3 border-2 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+                style={{ borderColor: colors.border.DEFAULT, color: colors.text.primary }}
+              >
+                Downgrade to {plan.name}
+              </button>
+            ) : null}
           </div>
+        ))}
+      </div>
+
+      {isActive && (
+        <div className="mt-8 pt-6 border-t" style={{ borderColor: colors.border.DEFAULT }}>
+          <button
+            onClick={() => router.push('/dashboard/settings/billing/cancel')}
+            className="text-sm font-semibold text-red-600 hover:text-red-700"
+          >
+            Cancel subscription
+          </button>
         </div>
       )}
     </div>

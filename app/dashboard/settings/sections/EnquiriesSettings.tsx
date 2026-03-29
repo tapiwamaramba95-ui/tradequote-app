@@ -166,10 +166,10 @@ export default function EnquiriesSettings() {
             )}
             
             <div className="mt-6 pt-6 border-t border-gray-200">
-              <h4 className="font-medium mb-3" style={{ color: colors.text.primary }}>
+              <h4 className="font-medium mb-3 text-base" style={{ color: colors.text.primary }}>
                 Direct Link
               </h4>
-              <p className="text-sm mb-2" style={{ color: colors.text.secondary }}>
+              <p className="text-xs mb-2" style={{ color: colors.text.secondary }}>
                 Share this link on social media or in emails
               </p>
               <div className="flex gap-2">
@@ -177,7 +177,7 @@ export default function EnquiriesSettings() {
                   type="text"
                   value={formUrl}
                   readOnly
-                  className="flex-1 rounded-md border px-3 py-2 text-sm bg-gray-50"
+                  className="flex-1 rounded-md border px-2 py-2 text-xs bg-gray-50 break-all"
                   style={{ 
                     borderColor: colors.border.DEFAULT,
                     color: colors.text.primary 
@@ -186,7 +186,7 @@ export default function EnquiriesSettings() {
                 <button
                   onClick={() => navigator.clipboard.writeText(formUrl)}
                   disabled={!companyName}
-                  className="px-4 py-2 rounded-md text-sm font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-2 rounded-md text-xs font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                   style={{ backgroundColor: colors.accent.DEFAULT }}
                 >
                   Copy
@@ -195,17 +195,18 @@ export default function EnquiriesSettings() {
             </div>
 
             <div className="mt-6 pt-6 border-t border-gray-200">
-              <h4 className="font-medium mb-3" style={{ color: colors.text.primary }}>
+              <h4 className="font-medium mb-3 text-base" style={{ color: colors.text.primary }}>
                 Embed Code
               </h4>
-              <p className="text-sm mb-2" style={{ color: colors.text.secondary }}>
+              <p className="text-xs mb-2" style={{ color: colors.text.secondary }}>
                 Copy this code and paste it into your website
               </p>
               <div className="relative">
-                <pre className="p-4 rounded-md text-xs overflow-x-auto bg-gray-50 border"
+                <pre className="p-3 rounded-md text-[10px] leading-relaxed bg-gray-50 border break-all whitespace-pre-wrap"
                   style={{ 
                     color: colors.text.primary,
-                    borderColor: colors.border.DEFAULT 
+                    borderColor: colors.border.DEFAULT,
+                    wordBreak: 'break-all'
                   }}
                 >
                   {embedCode}
@@ -213,7 +214,7 @@ export default function EnquiriesSettings() {
                 <button
                   onClick={() => navigator.clipboard.writeText(embedCode)}
                   disabled={!companyName}
-                  className="absolute top-2 right-2 px-3 py-1 rounded text-xs font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="absolute top-2 right-2 px-2 py-1 rounded text-[10px] font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ backgroundColor: colors.accent.DEFAULT }}
                 >
                   Copy
