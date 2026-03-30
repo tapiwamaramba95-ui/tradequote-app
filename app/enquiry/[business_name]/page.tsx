@@ -44,7 +44,12 @@ export default function PublicEnquiryFormPage({ params }: { params: Promise<{ bu
   }, [params])
 
   const loadSettings = useCallback(async () => {
-    if (!businessName) return
+    if (!businessName) {
+      console.log('No business name provided yet')
+      return
+    }
+    
+    console.log('Loading settings for business:', businessName)
     
     try {
       // Helper function to generate slug from company name
@@ -58,37 +63,50 @@ export default function PublicEnquiryFormPage({ params }: { params: Promise<{ bu
       }
 
       // Fetch all business settings to find matching company
-      const { data: allBusinesses } = await supabase
+      const { data: allBusinesses, error: fetchError } = await supabase
         .from('business_settings')
         .select('user_id, company_name, company_logo_url')
 
+      console.log('Fetched businesses:', allBusinesses?.length || 0, 'Error:', fetchError)
+
       if (!allBusinesses || allBusinesses.length === 0) {
+        console.log('No businesses found in database')
         setSettings(null)
         setLoading(false)
         return
       }
 
       // Find the business whose company name slug matches the URL
+      console.log('Searching for business with slug:', businessName)
+      console.log('Available slugs:', allBusinesses.map(b => ({ name: b.company_name, slug: generateSlug(b.company_name || '') })))
+      
       const matchingBusiness = allBusinesses.find(business => 
         business.company_name && generateSlug(business.company_name) === businessName
       )
 
+      console.log('Matching business found:', matchingBusiness)
+
       if (!matchingBusiness) {
+        console.log('No matching business found for slug:', businessName)
         setSettings(null)
         setLoading(false)
         return
       }
 
       // Check if enquiry form is enabled for this user
-      const { data: enquiryData } = await supabase
+      const { data: enquiryData, error: enquiryError } = await supabase
         .from('enquiry_settings')
         .select('form_enabled, form_fields')
         .eq('user_id', matchingBusiness.user_id)
         .single()
 
+      console.log('Enquiry settings:', enquiryData, 'Error:', enquiryError)
+
       // Default to enabled with all fields if no settings exist
       const isEnabled = enquiryData ? (enquiryData.form_enabled ?? true) : true
       const fields = enquiryData?.form_fields || ['name', 'email', 'phone', 'address', 'description', 'job_type']
+
+      console.log('Form enabled:', isEnabled, 'Fields:', fields)
 
       if (isEnabled) {
         setSettings({
@@ -99,12 +117,15 @@ export default function PublicEnquiryFormPage({ params }: { params: Promise<{ bu
           form_fields: fields
         })
       } else {
+        console.log('Form is disabled for this business')
         setSettings(null)
       }
     } catch (error) {
       console.error('Error loading settings:', error)
+      console.error('Business name:', businessName)
       setSettings(null)
     } finally {
+      console.log('Loading complete, settings:', settings)
       setLoading(false)
     }
   }, [businessName])
@@ -161,7 +182,7 @@ export default function PublicEnquiryFormPage({ params }: { params: Promise<{ bu
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: colors.accent.DEFAULT }}></div>
       </div>
     )
   }
