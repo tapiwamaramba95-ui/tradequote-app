@@ -176,7 +176,44 @@ export async function POST(request: NextRequest) {
 
     const jobNumber = `${prefix}${String(nextNumber).padStart(5, '0')}`
 
-    // Step 3: Create job with status='enquiry'
+    // Step 3: Create enquiry record in enquiries table
+    const fullAddress = [streetAddress, suburb, state, postcode]
+      .filter(Boolean)
+      .join(', ') || null
+
+    const { data: newEnquiry, error: enquiryError } = await supabaseAdmin
+      .from('enquiries')
+      .insert({
+        user_id: userId,
+        client_id: clientId,
+        enquiry_number: jobNumber,
+        name: customerName,
+        email: customerEmail || null,
+        phone: customerPhone || null,
+        address: fullAddress,
+        description: description || null,
+        job_type: jobType || null,
+        status: 'new',
+      })
+      .select('id')
+      .single()
+
+    if (enquiryError) {
+      console.error('Error creating enquiry:', enquiryError)
+      return NextResponse.json(
+        { error: 'Failed to create enquiry', details: enquiryError.message },
+        { status: 500 }
+      )
+    }
+
+    if (!newEnquiry) {
+      return NextResponse.json(
+        { error: 'Failed to create enquiry' },
+        { status: 500 }
+      )
+    }
+
+    // Step 4: Create job with status='enquiry'
     const { data: newJob, error: jobError } = await supabaseAdmin
       .from('jobs')
       .insert({
@@ -213,8 +250,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Step 5: Update enquiry with the job ID it was converted to
+    await supabaseAdmin
+      .from('enquiries')
+      .update({
+        converted_to_job_id: newJob.id,
+      })
+      .eq('id', newEnquiry.id)
+
     return NextResponse.json({
       success: true,
+      enquiryId: newEnquiry.id,
       jobId: newJob.id,
       clientId: clientId,
     })
