@@ -196,7 +196,7 @@ export async function POST(request: NextRequest) {
         email: customerEmail || null,
         phone: customerPhone || null,
         address: fullAddress,
-        description: description || null,
+        message: description || null,
         job_type: jobType || null,
         status: 'new',
       })

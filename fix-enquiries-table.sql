@@ -32,7 +32,7 @@ COMMENT ON COLUMN enquiries.name IS 'Customer name from enquiry form';
 COMMENT ON COLUMN enquiries.email IS 'Customer email from enquiry form';
 COMMENT ON COLUMN enquiries.phone IS 'Customer phone from enquiry form';
 COMMENT ON COLUMN enquiries.address IS 'Full address from enquiry form';
-COMMENT ON COLUMN enquiries.message IS 'Additional message from customer';
+COMMENT ON COLUMN enquiries.message IS 'Job description or details from enquiry form';
 COMMENT ON COLUMN enquiries.job_type IS 'Type of job requested';
 COMMENT ON COLUMN enquiries.preferred_date IS 'Customer preferred date';
 COMMENT ON COLUMN enquiries.converted_to_job_id IS 'Link to job if converted';
