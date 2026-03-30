@@ -51,6 +51,9 @@ export default function PublicEnquiryFormPage({ params }: { params: Promise<{ bu
     
     console.log('Loading settings for business:', businessName)
     
+    // Create abort controller for this fetch
+    const abortController = new AbortController()
+    
     try {
       // Helper function to generate slug from company name
       const generateSlug = (name: string) => {
@@ -66,6 +69,7 @@ export default function PublicEnquiryFormPage({ params }: { params: Promise<{ bu
       const { data: allBusinesses, error: fetchError } = await supabase
         .from('business_settings')
         .select('user_id, company_name, company_logo_url')
+        .abortSignal(abortController.signal)
 
       console.log('Fetched businesses:', allBusinesses?.length || 0, 'Error:', fetchError)
 
@@ -98,6 +102,7 @@ export default function PublicEnquiryFormPage({ params }: { params: Promise<{ bu
         .from('enquiry_settings')
         .select('form_enabled, form_fields')
         .eq('user_id', matchingBusiness.user_id)
+        .abortSignal(abortController.signal)
         .single()
 
       console.log('Enquiry settings:', enquiryData, 'Error:', enquiryError)
@@ -109,29 +114,43 @@ export default function PublicEnquiryFormPage({ params }: { params: Promise<{ bu
       console.log('Form enabled:', isEnabled, 'Fields:', fields)
 
       if (isEnabled) {
-        setSettings({
+        const newSettings = {
           user_id: matchingBusiness.user_id,
           company_name: matchingBusiness.company_name,
           company_logo_url: matchingBusiness.company_logo_url,
           form_enabled: isEnabled,
           form_fields: fields
-        })
+        }
+        setSettings(newSettings)
+        console.log('Settings loaded successfully:', newSettings)
       } else {
         console.log('Form is disabled for this business')
         setSettings(null)
       }
-    } catch (error) {
+    } catch (error: any) {
+      // Ignore abort errors from cancelled requests
+      if (error?.name === 'AbortError' || error?.message?.includes('aborted')) {
+        console.log('Request was cancelled (component unmounted or re-rendered)')
+        return
+      }
       console.error('Error loading settings:', error)
       console.error('Business name:', businessName)
       setSettings(null)
     } finally {
-      console.log('Loading complete, settings:', settings)
       setLoading(false)
+    }
+    
+    // Return cleanup function
+    return () => {
+      abortController.abort()
     }
   }, [businessName])
 
   useEffect(() => {
-    loadSettings()
+    const cleanup = loadSettings()
+    return () => {
+      cleanup?.then(cleanupFn => cleanupFn?.())
+    }
   }, [loadSettings])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -182,7 +201,7 @@ export default function PublicEnquiryFormPage({ params }: { params: Promise<{ bu
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: colors.accent.DEFAULT }}></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
       </div>
     )
   }
@@ -190,9 +209,14 @@ export default function PublicEnquiryFormPage({ params }: { params: Promise<{ bu
   if (!settings) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <p className="text-lg text-gray-900">Form not found</p>
-          <p className="text-sm text-gray-500 mt-2">This enquiry form is not available.</p>
+        <div className="text-center max-w-md px-4">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Form not found</h1>
+          <p className="text-gray-600 mb-4">This enquiry form is not available or has been disabled.</p>
+          {businessName && (
+            <p className="text-sm text-gray-500">
+              Looking for: <span className="font-mono bg-gray-100 px-2 py-1 rounded">{businessName}</span>
+            </p>
+          )}
         </div>
       </div>
     )
