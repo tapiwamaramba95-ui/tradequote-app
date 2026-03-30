@@ -218,7 +218,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Step 4: Create job with status='enquiry'
+    // Step 4: Create job with status='enquiry' (automatically from enquiry)
     const { data: newJob, error: jobError } = await supabaseAdmin
       .from('jobs')
       .insert({
@@ -255,7 +255,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Step 5: Update enquiry with the job ID it was converted to
+    // Step 5: Link enquiry to job
     await supabaseAdmin
       .from('enquiries')
       .update({
