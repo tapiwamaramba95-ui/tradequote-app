@@ -64,30 +64,58 @@ export default function InvoiceSettings() {
     setSaving(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      if (!user) {
+        toast('error', 'User not authenticated')
+        return
+      }
 
-      const { error } = await supabase
+      console.log('Saving invoice settings for user:', user.id)
+      
+      const settingsData = {
+        user_id: user.id,
+        invoice_prefix: invoicePrefix,
+        invoice_start_number: parseInt(invoiceStartNumber) || 1,
+        invoice_terms: invoiceTerms,
+        deposit_required: depositRequired,
+        deposit_percentage: parseFloat(depositPercentage) || 30,
+        stripe_enabled: stripeEnabled,
+        bank_name: bankName,
+        bsb: bsb,
+        account_number: accountNumber,
+        account_name: accountName,
+        updated_at: new Date().toISOString(),
+      }
+
+      console.log('Settings data to save:', settingsData)
+
+      const { data, error, status, statusText } = await supabase
         .from('business_settings')
-        .upsert({
-          user_id: user.id,
-          invoice_prefix: invoicePrefix,
-          invoice_start_number: parseInt(invoiceStartNumber) || 1,
-          invoice_terms: invoiceTerms,
-          deposit_required: depositRequired,
-          deposit_percentage: parseFloat(depositPercentage) || 30,
-          stripe_enabled: stripeEnabled,
-          bank_name: bankName,
-          bsb: bsb,
-          account_number: accountNumber,
-          account_name: accountName,
-          updated_at: new Date().toISOString(),
-        }, {
+        .upsert(settingsData, {
           onConflict: 'user_id'
         })
+        .select()
 
-      console.log('Upsert result - error:', error)
+      console.log('Upsert response:', { data, error, status, statusText })
+      console.log('Error type:', typeof error, 'Error:', error)
+      console.log('Error stringified:', JSON.stringify(error))
+      console.log('Data received:', data)
+      console.log('Has data?', !!data, 'Data length:', data?.length)
 
-      if (!error) {
+      // Check for both error and successful data return
+      if (error) {
+        console.error('Save error:', error)
+        console.error('Error properties:', Object.keys(error || {}))
+        console.error('Error code:', error?.code)
+        console.error('Error message:', error?.message)
+        console.error('Error hint:', error?.hint)
+        console.error('Error details:', error?.details)
+        
+        const errorMsg = error?.message || error?.hint || error?.details || error?.code || 'Failed to save settings - unknown error'
+        toast('error', errorMsg)
+      } else if (!data || data.length === 0) {
+        console.error('No error but also no data returned - possible RLS policy issue')
+        toast('error', 'Settings may not have saved - please check permissions or contact support')
+      } else {
         if (bsb && accountNumber && accountName) {
           await supabase
             .from('onboarding_progress')
@@ -98,11 +126,8 @@ export default function InvoiceSettings() {
             .eq('user_id', user.id)
         }
         
+        console.log('Save successful!')
         toast('success', 'Invoice settings saved!')
-      } else {
-        console.error('Save error:', error)
-        const errorMsg = error?.message || error?.hint || error?.details || 'Failed to save settings'
-        toast('error', errorMsg)
       }
     } catch (error: any) {
       console.error('Error saving settings:', error)
