@@ -187,7 +187,7 @@ export default function SchedulePage() {
 
     const { data, error } = await supabase
       .from('jobs')
-      .select('*')
+      .select('*, client:clients(name)')
       .eq('business_id', businessId);
     if (!error && data) setJobList(data as Job[]);
   };
@@ -201,7 +201,7 @@ export default function SchedulePage() {
 
     const { data, error } = await supabase
       .from('jobs')
-      .select('*')
+      .select('*, client:clients(name)')
       .eq('business_id', businessId)
       .eq('status', 'enquiry') // Only enquiries
       .order('created_at', { ascending: false });
@@ -220,13 +220,15 @@ export default function SchedulePage() {
   const handleSelectJob = (job: Job) => {
     setSelectedJob(job);
     setSelectedEnquiry(null);
-    setJobSearch(job.job_name || '');
+    const displayText = `${job.job_number || 'No Number'} - ${job.client?.name || 'Unknown Client'}`;
+    setJobSearch(displayText);
   };
 
   const handleSelectEnquiry = (enquiry: Job) => {
     setSelectedEnquiry(enquiry);
     setSelectedJob(null);
-    setJobSearch(`${enquiry.job_name} - ${enquiry.description || 'M&Q'}`);
+    const displayText = `${enquiry.enquiry_number || 'No Number'} - ${enquiry.client?.name || 'Unknown Client'}`;
+    setJobSearch(displayText);
   };
 
   // Handler for JobCreationForm modal
@@ -248,7 +250,10 @@ export default function SchedulePage() {
   };
 
   const handleSaveAppointment = async () => {
-    if (!selectedDate) return;
+    if (!selectedDate || isNaN(selectedDate.getTime())) {
+      alert('Please select a valid date');
+      return;
+    }
     
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -440,8 +445,13 @@ export default function SchedulePage() {
                   </label>
                   <input 
                     type="date" 
-                    value={selectedDate ? selectedDate.toISOString().split('T')[0] : ''} 
-                    onChange={e => setSelectedDate(new Date(e.target.value))}
+                    value={selectedDate && !isNaN(selectedDate.getTime()) ? selectedDate.toISOString().split('T')[0] : ''} 
+                    onChange={e => {
+                      const newDate = new Date(e.target.value);
+                      if (!isNaN(newDate.getTime())) {
+                        setSelectedDate(newDate);
+                      }
+                    }}
                     className="w-full rounded-lg border-2 border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-500"
                   />
                 </div>
@@ -452,9 +462,9 @@ export default function SchedulePage() {
                   </label>
                   <input 
                     type="time" 
-                    value={selectedDate ? selectedDate.toTimeString().slice(0,5) : ''} 
+                    value={selectedDate && !isNaN(selectedDate.getTime()) ? selectedDate.toTimeString().slice(0,5) : ''} 
                     onChange={e => {
-                      if (selectedDate) {
+                      if (selectedDate && !isNaN(selectedDate.getTime())) {
                         const [h, m] = e.target.value.split(':');
                         const newDate = new Date(selectedDate);
                         newDate.setHours(Number(h));
@@ -497,9 +507,12 @@ export default function SchedulePage() {
                   {jobSearch && (
                     <div className="mt-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg">
                       {jobList
-                        .filter(job => 
-                          job.job_name?.toLowerCase().includes(jobSearch.toLowerCase())
-                        )
+                        .filter(job => {
+                          const searchLower = jobSearch.toLowerCase();
+                          const jobNumber = job.job_number?.toLowerCase() || '';
+                          const clientName = job.client?.name?.toLowerCase() || '';
+                          return jobNumber.includes(searchLower) || clientName.includes(searchLower);
+                        })
                         .map(job => (
                           <button
                             key={job.id}
@@ -507,7 +520,7 @@ export default function SchedulePage() {
                             onClick={() => handleSelectJob(job)}
                             className="w-full text-left px-4 py-2 hover:bg-gray-100"
                           >
-                            {job.job_name}
+                            {job.job_number || 'No Number'} - {job.client?.name || 'Unknown Client'}
                           </button>
                         ))
                       }
@@ -516,7 +529,7 @@ export default function SchedulePage() {
                   {selectedJob && (
                     <div className="mt-2 p-3 bg-blue-50 rounded-lg">
                       <p className="text-sm font-medium text-blue-900">
-                        Selected: {selectedJob.job_name}
+                        Selected: {selectedJob.job_number || 'No Number'} - {selectedJob.client?.name || 'Unknown Client'}
                       </p>
                     </div>
                   )}
@@ -538,10 +551,13 @@ export default function SchedulePage() {
                   {jobSearch && (
                     <div className="mt-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg">
                       {enquiriesList
-                        .filter(enquiry =>
-                          enquiry.job_name?.toLowerCase().includes(jobSearch.toLowerCase()) ||
-                          enquiry.description?.toLowerCase().includes(jobSearch.toLowerCase())
-                        )
+                        .filter(enquiry => {
+                          const searchLower = jobSearch.toLowerCase();
+                          const enquiryNumber = enquiry.enquiry_number?.toLowerCase() || '';
+                          const clientName = enquiry.client?.name?.toLowerCase() || '';
+                          const description = enquiry.description?.toLowerCase() || '';
+                          return enquiryNumber.includes(searchLower) || clientName.includes(searchLower) || description.includes(searchLower);
+                        })
                         .map(enquiry => (
                           <button
                             key={enquiry.id}
@@ -550,7 +566,7 @@ export default function SchedulePage() {
                             className="w-full text-left px-4 py-2 hover:bg-gray-100"
                           >
                             <div>
-                              <p className="font-medium">{enquiry.job_name}</p>
+                              <p className="font-medium">{enquiry.enquiry_number || 'No Number'} - {enquiry.client?.name || 'Unknown Client'}</p>
                               {enquiry.description && (
                                 <p className="text-sm text-gray-600">{enquiry.description}</p>
                               )}
@@ -563,7 +579,7 @@ export default function SchedulePage() {
                   {selectedEnquiry && (
                     <div className="mt-2 p-3 bg-amber-50 rounded-lg">
                       <p className="text-sm font-medium text-amber-900">
-                        Selected: {selectedEnquiry.job_name}
+                        Selected: {selectedEnquiry.enquiry_number || 'No Number'} - {selectedEnquiry.client?.name || 'Unknown Client'}
                         {selectedEnquiry.description && ` - ${selectedEnquiry.description}`}
                       </p>
                     </div>
