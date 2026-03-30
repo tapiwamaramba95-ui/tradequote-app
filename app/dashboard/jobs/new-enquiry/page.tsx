@@ -76,13 +76,82 @@ export default function NewEnquiryPage() {
         return
       }
 
-      // Create job with enquiry status
-      const { data: job, error } = await supabase
+      // Get business_id
+      const { data: userBusiness } = await supabase
+        .from('user_businesses')
+        .select('business_id')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+
+      if (!userBusiness?.business_id) {
+        alert('No business found')
+        return
+      }
+
+      const businessId = userBusiness.business_id
+
+      // Get client info for enquiry
+      const selectedClient = clients.find(c => c.id === clientId)
+      
+      // Generate enquiry number
+      const { data: allEnquiries } = await supabase
+        .from('enquiries')
+        .select('enquiry_number')
+        .eq('business_id', businessId)
+        .ilike('enquiry_number', 'ENQ%')
+
+      let nextEnquiryNum = 1
+      if (allEnquiries && allEnquiries.length > 0) {
+        const numbers = allEnquiries
+          .map(enq => {
+            const match = enq.enquiry_number?.match(/\d+$/)
+            return match ? parseInt(match[0], 10) : 0
+          })
+          .filter(num => !isNaN(num))
+        
+        if (numbers.length > 0) {
+          nextEnquiryNum = Math.max(...numbers) + 1
+        }
+      }
+
+      const enquiryNumber = `ENQ${String(nextEnquiryNum).padStart(5, '0')}`
+
+      // Step 1: Create enquiry record
+      const { data: enquiry, error: enquiryError } = await supabase
+        .from('enquiries')
+        .insert({
+          user_id: user.id,
+          business_id: businessId,
+          client_id: clientId,
+          enquiry_number: enquiryNumber,
+          name: selectedClient?.name || '',
+          email: selectedClient?.email || null,
+          phone: selectedClient?.phone || null,
+          street_address: streetAddress || null,
+          suburb: suburb || null,
+          state: state || null,
+          postcode: postcode || null,
+          address: [streetAddress, suburb, state, postcode].filter(Boolean).join(', ') || null,
+          message: description || null,
+          status: 'new',
+        })
+        .select()
+        .single()
+
+      if (enquiryError) throw enquiryError
+
+      // Step 2: Create job with enquiry status
+      const { data: job, error: jobError } = await supabase
         .from('jobs')
         .insert({
           user_id: user.id,
+          business_id: businessId,
           client_id: clientId,
           job_name: jobName,
+          enquiry_number: enquiryNumber,
           street_address: streetAddress,
           suburb: suburb,
           state: state,
@@ -95,14 +164,20 @@ export default function NewEnquiryPage() {
         .select()
         .single()
 
-      if (error) throw error
+      if (jobError) throw jobError
+
+      // Step 3: Link enquiry to job
+      await supabase
+        .from('enquiries')
+        .update({ converted_to_job_id: job.id })
+        .eq('id', enquiry.id)
 
       // Redirect to job detail
       router.push(`/dashboard/jobs/${job.id}`)
 
     } catch (error) {
-      console.error('Error creating job:', error)
-      alert('Failed to create job from enquiry')
+      console.error('Error creating enquiry:', error)
+      alert('Failed to create enquiry')
       setLoading(false)
     }
   }

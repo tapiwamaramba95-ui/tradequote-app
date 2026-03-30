@@ -37,7 +37,7 @@ type Enquiry = {
   } | null
   jobs: {
     enquiry_source: string | null
-  } | null
+  }[] | null
 }
 
 export default function EnquiriesPage() {
@@ -68,7 +68,7 @@ export default function EnquiriesPage() {
 				.from('enquiries')
 				.select(`
 					*,
-					jobs!converted_to_job_id(enquiry_source)
+					jobs(enquiry_source)
 				`)
 				.eq('user_id', user.id)
 				.order('created_at', { ascending: false })
@@ -207,22 +207,22 @@ export default function EnquiriesPage() {
 					<table className="w-full divide-y divide-gray-200">
 						<thead className="bg-gray-50">
 							<tr>
-								<th className="px-2 py-2 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider w-20">
+								<th className="px-2 py-2 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider w-28">
 									Enquiry #
 								</th>
-								<th className="px-2 py-2 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
+								<th className="px-2 py-2 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider w-44">
 									Customer
 								</th>
-								<th className="px-2 py-2 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
+								<th className="px-2 py-2 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider w-56">
 								Job
 							</th>
-							<th className="px-2 py-2 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider w-28">
+							<th className="px-2 py-2 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider w-36">
 								Contact
 							</th>
-							<th className="px-2 py-2 text-center text-xs font-semibold text-gray-900 uppercase tracking-wider w-16">
+							<th className="px-2 py-2 text-center text-xs font-semibold text-gray-900 uppercase tracking-wider w-24">
 								Source
 							</th>
-							<th className="px-2 py-2 text-center text-xs font-semibold text-gray-900 uppercase tracking-wider w-20">
+							<th className="px-2 py-2 text-center text-xs font-semibold text-gray-900 uppercase tracking-wider w-28">
 								Status
 							</th>
 							</tr>
@@ -271,37 +271,43 @@ export default function EnquiriesPage() {
 										</td>
 										
 										<td className="px-2 py-2 whitespace-nowrap text-center text-xs">
-											{enquiry.jobs?.enquiry_source === 'web_form' && (
-												<span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-medium">
-													<Globe size={12} />
-													Web
-												</span>
-											)}
-											{enquiry.jobs?.enquiry_source === 'email' && (
-												<span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-md text-xs font-medium">
-													<Mail size={12} />
-													Email
-												</span>
-											)}
-											{enquiry.jobs?.enquiry_source === 'phone' && (
-												<span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded-md text-xs font-medium">
-													<Phone size={12} />
-													Phone
-												</span>
-											)}
-											{enquiry.jobs?.enquiry_source === 'referral' && (
-												<span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-700 rounded-md text-xs font-medium">
-													<Users size={12} />
-													Referral
-												</span>
-											)}
-											{!enquiry.jobs?.enquiry_source && '-'}
-										</td>
+										{enquiry.jobs?.[0]?.enquiry_source === 'website_form' && (
+											<span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-medium">
+												<Globe size={12} />
+												Web
+											</span>
+										)}
+										{enquiry.jobs?.[0]?.enquiry_source === 'email' && (
+											<span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-md text-xs font-medium">
+												<Mail size={12} />
+												Email
+											</span>
+										)}
+										{enquiry.jobs?.[0]?.enquiry_source === 'phone' && (
+											<span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded-md text-xs font-medium">
+												<Phone size={12} />
+												Phone
+											</span>
+										)}
+										{enquiry.jobs?.[0]?.enquiry_source === 'phone_call' && (
+											<span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded-md text-xs font-medium">
+												<Phone size={12} />
+												Phone
+											</span>
+										)}
+										{enquiry.jobs?.[0]?.enquiry_source === 'referral' && (
+											<span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-700 rounded-md text-xs font-medium">
+												<Users size={12} />
+												Referral
+											</span>
+										)}
+										{!enquiry.jobs?.[0]?.enquiry_source && '-'}
+									</td>
 										
-										<td className="px-2 py-2 whitespace-nowrap text-center">
-											<StatusBadge status={enquiry.status} />
-										</td>
-									</tr>
+									<td className="px-2 py-2 whitespace-nowrap text-center">
+										<StatusBadge status={enquiry.status} />
+									</td>
+								</tr>
 							
 							{/* Expanded Row - Customer Request */}
 							{expandedRow === enquiry.id && (enquiry.description || enquiry.message) && (

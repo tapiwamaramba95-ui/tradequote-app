@@ -147,26 +147,50 @@ export async function POST(request: NextRequest) {
       clientId = newClient.id
     }
 
-    // Step 2: Get job settings to generate job number
+    // Step 2: Generate enquiry number (separate from job numbers)
+    const enquiryPrefix = 'ENQ'
+    
+    // Find the highest enquiry number
+    const { data: allEnquiries } = await supabaseAdmin
+      .from('enquiries')
+      .select('enquiry_number')
+      .eq('business_id', businessId)
+      .ilike('enquiry_number', `${enquiryPrefix}%`)
+
+    let nextEnquiryNumber = 1
+    if (allEnquiries && allEnquiries.length > 0) {
+      const numbers = allEnquiries
+        .map(enq => {
+          const match = enq.enquiry_number?.match(/\d+$/)
+          return match ? parseInt(match[0], 10) : 0
+        })
+        .filter(num => !isNaN(num))
+      
+      if (numbers.length > 0) {
+        nextEnquiryNumber = Math.max(...numbers) + 1
+      }
+    }
+
+    const enquiryNumber = `${enquiryPrefix}${String(nextEnquiryNumber).padStart(5, '0')}`
+
+    // Generate job number (uses job_prefix from settings)
     const { data: jobSettings } = await supabaseAdmin
       .from('business_settings')
       .select('job_prefix')
       .eq('user_id', userId)
       .maybeSingle()
 
-    const prefix = jobSettings?.job_prefix || 'ENQ'
+    const jobPrefix = jobSettings?.job_prefix || 'J'
 
-    // Find the highest job number for this user with this prefix
-    // Order by job_number DESC to get the actual highest number, not most recent by date
+    // Find the highest job number
     const { data: allJobs } = await supabaseAdmin
       .from('jobs')
       .select('job_number')
       .eq('business_id', businessId)
-      .ilike('job_number', `${prefix}%`)
+      .ilike('job_number', `${jobPrefix}%`)
 
-    let nextNumber = 1
+    let nextJobNumber = 1
     if (allJobs && allJobs.length > 0) {
-      // Extract all numbers and find the maximum
       const numbers = allJobs
         .map(job => {
           const match = job.job_number?.match(/\d+$/)
@@ -175,11 +199,11 @@ export async function POST(request: NextRequest) {
         .filter(num => !isNaN(num))
       
       if (numbers.length > 0) {
-        nextNumber = Math.max(...numbers) + 1
+        nextJobNumber = Math.max(...numbers) + 1
       }
     }
 
-    const jobNumber = `${prefix}${String(nextNumber).padStart(5, '0')}`
+    const jobNumber = `${jobPrefix}${String(nextJobNumber).padStart(5, '0')}`
 
     // Step 3: Create enquiry record in enquiries table
     const fullAddress = [streetAddress, suburb, state, postcode]
@@ -190,12 +214,17 @@ export async function POST(request: NextRequest) {
       .from('enquiries')
       .insert({
         user_id: userId,
+        business_id: businessId,
         client_id: clientId,
-        enquiry_number: jobNumber,
+        enquiry_number: enquiryNumber,
         name: customerName,
         email: customerEmail || null,
         phone: customerPhone || null,
         address: fullAddress,
+        street_address: streetAddress || null,
+        suburb: suburb || null,
+        state: state || null,
+        postcode: postcode || null,
         message: description || null,
         job_type: jobType || null,
         status: 'new',
@@ -225,7 +254,7 @@ export async function POST(request: NextRequest) {
         business_id: businessId,
         client_id: clientId,
         job_number: jobNumber,
-        enquiry_number: jobNumber,
+        enquiry_number: enquiryNumber,
         title: jobNumber,
         job_name: jobNumber,
         street_address: streetAddress || null,
