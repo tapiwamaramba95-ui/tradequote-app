@@ -156,21 +156,26 @@ export async function POST(request: NextRequest) {
 
     const prefix = jobSettings?.job_prefix || 'ENQ'
 
-    // Find the last job number for this user with this prefix
-    const { data: lastJob } = await supabaseAdmin
+    // Find the highest job number for this user with this prefix
+    // Order by job_number DESC to get the actual highest number, not most recent by date
+    const { data: allJobs } = await supabaseAdmin
       .from('jobs')
       .select('job_number')
       .eq('business_id', businessId)
       .ilike('job_number', `${prefix}%`)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
 
     let nextNumber = 1
-    if (lastJob?.job_number) {
-      const match = lastJob.job_number.match(/\d+$/)
-      if (match) {
-        nextNumber = parseInt(match[0], 10) + 1
+    if (allJobs && allJobs.length > 0) {
+      // Extract all numbers and find the maximum
+      const numbers = allJobs
+        .map(job => {
+          const match = job.job_number?.match(/\d+$/)
+          return match ? parseInt(match[0], 10) : 0
+        })
+        .filter(num => !isNaN(num))
+      
+      if (numbers.length > 0) {
+        nextNumber = Math.max(...numbers) + 1
       }
     }
 
