@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { getBusinessId } from '@/lib/business'
 
 interface PriceListItem {
   id: string
@@ -40,10 +41,13 @@ export default function PriceListBrowser({ show, onClose, onSelect, applyMarkup 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
+    const businessId = await getBusinessId()
+    if (!businessId) return
+
     const { data, error } = await supabase
       .from('price_list_items')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('business_id', businessId)
       .eq('is_active', true)
       .order('category', { ascending: true })
       .order('name', { ascending: true })
@@ -58,10 +62,13 @@ export default function PriceListBrowser({ show, onClose, onSelect, applyMarkup 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
+    const businessId = await getBusinessId()
+    if (!businessId) return
+
     const { data } = await supabase
       .from('business_settings')
       .select('default_markup_percentage')
-      .eq('user_id', user.id)
+      .eq('business_id', businessId)
       .single()
 
     if (data?.default_markup_percentage) {

@@ -1,10 +1,10 @@
 import Link from 'next/link'
 import POActions from '@/components/POActions'
 
-type Props = { params: { id: string } }
+type Props = { params: Promise<{ id: string }> }
 
 export default async function PurchaseOrderPage({ params }: Props) {
-  const id = params.id
+  const { id } = await params
   const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/purchase-orders/${id}`, { cache: 'no-store' })
   if (!res.ok) return <div className="text-red-600">Could not load purchase order</div>
   const po = await res.json()

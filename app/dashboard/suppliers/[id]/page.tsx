@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, use } from 'react'
 import { supabase } from '@/lib/supabase'
 import { colors } from '@/lib/colors'
 import { getBusinessId } from '@/lib/business'
 import Link from 'next/link'
+import { Edit2, X } from 'lucide-react'
 
 type Supplier = {
   id: string
@@ -12,8 +13,10 @@ type Supplier = {
   abn: string | null
   email: string | null
   phone: string | null
-  address: string | null
-  website: string | null
+  street_address: string | null
+  suburb: string | null
+  state: string | null
+  postcode: string | null
   details_completed: boolean
 }
 
@@ -27,15 +30,19 @@ type Product = {
   is_active: boolean
 }
 
-export default function SupplierDetailPage({ params }: { params: { id: string } }) {
+export default function SupplierDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
   const [supplier, setSupplier] = useState<Supplier | null>(null)
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     loadSupplierData()
-  }, [params.id])
+  }, [id])
 
   const loadSupplierData = async () => {
     try {
@@ -51,7 +58,7 @@ export default function SupplierDetailPage({ params }: { params: { id: string } 
       const { data: supplierData } = await supabase
         .from('suppliers')
         .select('*')
-        .eq('id', params.id)
+        .eq('id', id)
         .eq('business_id', businessId)
         .single()
 
@@ -61,7 +68,7 @@ export default function SupplierDetailPage({ params }: { params: { id: string } 
       const { data: productsData } = await supabase
         .from('supplier_products')
         .select('*')
-        .eq('supplier_id', params.id)
+        .eq('supplier_id', id)
         .eq('business_id', businessId)
         .eq('is_active', true)
         .order('product_name')
@@ -79,6 +86,45 @@ export default function SupplierDetailPage({ params }: { params: { id: string } 
     p.product_code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.category?.toLowerCase().includes(searchQuery.toLowerCase())
   )
+
+  const handleEditProduct = (product: Product) => {
+    setEditingProduct(product)
+    setShowEditModal(true)
+  }
+
+  const handleSaveProduct = async () => {
+    if (!editingProduct) return
+
+    setSaving(true)
+    try {
+      const { error } = await supabase
+        .from('supplier_products')
+        .update({
+          product_code: editingProduct.product_code || null,
+          product_name: editingProduct.product_name,
+          unit: editingProduct.unit,
+          price: editingProduct.price,
+          category: editingProduct.category || null,
+        })
+        .eq('id', editingProduct.id)
+
+      if (error) throw error
+
+      // Update local state
+      setProducts(products.map(p => 
+        p.id === editingProduct.id ? editingProduct : p
+      ))
+
+      setShowEditModal(false)
+      setEditingProduct(null)
+      alert('✅ Product updated successfully')
+    } catch (error) {
+      console.error('Error updating product:', error)
+      alert('Failed to update product')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -188,34 +234,20 @@ export default function SupplierDetailPage({ params }: { params: { id: string } 
                 <p style={{ color: colors.text.primary }}>{supplier.abn}</p>
               </div>
             )}
-            {supplier.address && (
-              <div>
+            {(supplier.street_address || supplier.suburb || supplier.state || supplier.postcode) && (
+              <div className="col-span-2 md:col-span-3">
                 <p 
                   className="text-xs font-semibold mb-1"
                   style={{ color: colors.text.secondary }}
                 >
                   Address
                 </p>
-                <p style={{ color: colors.text.primary }}>{supplier.address}</p>
-              </div>
-            )}
-            {supplier.website && (
-              <div>
-                <p 
-                  className="text-xs font-semibold mb-1"
-                  style={{ color: colors.text.secondary }}
-                >
-                  Website
+                <p style={{ color: colors.text.primary }}>
+                  {[
+                    supplier.street_address,
+                    [supplier.suburb, supplier.state, supplier.postcode].filter(Boolean).join(' ')
+                  ].filter(Boolean).join(', ')}
                 </p>
-                <a 
-                  href={supplier.website.startsWith('http') ? supplier.website : `https://${supplier.website}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:underline"
-                  style={{ color: colors.accent.DEFAULT }}
-                >
-                  {supplier.website}
-                </a>
               </div>
             )}
           </div>
@@ -263,6 +295,7 @@ export default function SupplierDetailPage({ params }: { params: { id: string } 
                   <th className="px-6 py-3 text-center text-xs font-semibold uppercase">Unit</th>
                   <th className="px-6 py-3 text-right text-xs font-semibold uppercase">Price</th>
                   <th className="px-6 py-3 text-center text-xs font-semibold uppercase">Category</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -287,6 +320,20 @@ export default function SupplierDetailPage({ params }: { params: { id: string } 
                     <td className="px-6 py-4 text-sm text-center">
                       {product.category || '-'}
                     </td>
+                    <td className="px-6 py-4 text-center">
+                      <button
+                        onClick={() => handleEditProduct(product)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+                        style={{ 
+                          color: colors.accent.DEFAULT,
+                          backgroundColor: colors.background.card
+                        }}
+                        title="Edit product"
+                      >
+                        <Edit2 size={14} />
+                        Edit
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -294,6 +341,140 @@ export default function SupplierDetailPage({ params }: { params: { id: string } 
           </div>
         )}
       </div>
+
+      {/* Edit Product Modal */}
+      {showEditModal && editingProduct && (
+        <div
+          className="fixed inset-0 bg-white/10 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => !saving && setShowEditModal(false)}
+        >
+          <div
+            className="bg-white rounded-lg w-full max-w-2xl p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 
+                className="text-xl font-bold"
+                style={{ color: colors.text.primary }}
+              >
+                Edit Product
+              </h2>
+              <button
+                onClick={() => !saving && setShowEditModal(false)}
+                className="p-1 rounded-lg hover:bg-gray-100"
+                disabled={saving}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Product Code */}
+              <div>
+                <label className="block text-sm font-semibold mb-2">
+                  Product Code <span style={{ color: colors.text.secondary }}>(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={editingProduct.product_code || ''}
+                  onChange={(e) => setEditingProduct({ ...editingProduct, product_code: e.target.value })}
+                  placeholder="e.g., SKU123"
+                  className="w-full px-3 py-2 border rounded-lg text-sm"
+                  style={{ borderColor: colors.border.DEFAULT }}
+                />
+              </div>
+
+              {/* Product Name */}
+              <div>
+                <label className="block text-sm font-semibold mb-2">
+                  Product Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editingProduct.product_name}
+                  onChange={(e) => setEditingProduct({ ...editingProduct, product_name: e.target.value })}
+                  placeholder="e.g., Base Cabinet 600mm"
+                  className="w-full px-3 py-2 border rounded-lg text-sm"
+                  style={{ borderColor: colors.border.DEFAULT }}
+                />
+              </div>
+
+              {/* Unit and Price */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold mb-2">
+                    Unit <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editingProduct.unit}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, unit: e.target.value })}
+                    placeholder="e.g., each, meter, kg"
+                    className="w-full px-3 py-2 border rounded-lg text-sm"
+                    style={{ borderColor: colors.border.DEFAULT }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-2">
+                    Price <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    step="0.01"
+                    min="0"
+                    value={editingProduct.price}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, price: parseFloat(e.target.value) || 0 })}
+                    placeholder="0.00"
+                    className="w-full px-3 py-2 border rounded-lg text-sm"
+                    style={{ borderColor: colors.border.DEFAULT }}
+                  />
+                </div>
+              </div>
+
+              {/* Category */}
+              <div>
+                <label className="block text-sm font-semibold mb-2">
+                  Category <span style={{ color: colors.text.secondary }}>(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={editingProduct.category || ''}
+                  onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
+                  placeholder="e.g., Plumbing, Electrical"
+                  className="w-full px-3 py-2 border rounded-lg text-sm"
+                  style={{ borderColor: colors.border.DEFAULT }}
+                />
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => !saving && setShowEditModal(false)}
+                disabled={saving}
+                className="flex-1 px-4 py-2 rounded-lg font-medium border disabled:opacity-50"
+                style={{ 
+                  borderColor: colors.border.DEFAULT,
+                  color: colors.text.primary 
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveProduct}
+                disabled={saving || !editingProduct.product_name || !editingProduct.unit}
+                className="flex-1 px-4 py-2 rounded-lg font-medium text-white disabled:opacity-50"
+                style={{ backgroundColor: colors.accent.DEFAULT }}
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

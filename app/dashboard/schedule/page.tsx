@@ -26,11 +26,36 @@ export default function SchedulePage() {
   const [showJobModal, setShowJobModal] = useState(false);
   const [scheduleFilter, setScheduleFilter] = useState<string>('all'); // 'all', 'measure_quote', 'work'
   const [eventType, setEventType] = useState<ScheduleEventType>('scheduled_work');
+  const [timeHour, setTimeHour] = useState<string>('09');
+  const [timeMinute, setTimeMinute] = useState<string>('00');
+  const [timePeriod, setTimePeriod] = useState<'AM' | 'PM'>('AM');
 
   // Fetch scheduled jobs on mount
   useEffect(() => {
     fetchScheduledJobs();
   }, []);
+
+  // Sync time picker with selectedDate
+  useEffect(() => {
+    if (selectedDate && !isNaN(selectedDate.getTime())) {
+      const hours = selectedDate.getHours();
+      const minutes = selectedDate.getMinutes();
+      
+      // Convert to 12-hour format
+      const period = hours >= 12 ? 'PM' : 'AM';
+      let displayHour = hours % 12;
+      if (displayHour === 0) displayHour = 12;
+      
+      setTimeHour(String(displayHour).padStart(2, '0'));
+      setTimeMinute(String(minutes).padStart(2, '0'));
+      setTimePeriod(period);
+    } else {
+      // Set default time
+      setTimeHour('09');
+      setTimeMinute('00');
+      setTimePeriod('AM');
+    }
+  }, [selectedDate]);
 
   // Refresh jobs when filter changes
   useEffect(() => {
@@ -258,6 +283,12 @@ export default function SchedulePage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    const businessId = await getBusinessId();
+    if (!businessId) {
+      alert('No business found');
+      return;
+    }
+
     // Validate based on event type
     if (eventType === 'scheduled_work' && !selectedJob) {
       alert('Please select a job for scheduled work');
@@ -272,20 +303,60 @@ export default function SchedulePage() {
       return;
     }
 
-    const scheduleData = {
+    // Determine title based on event type
+    let title = '';
+    let streetAddress = null;
+    let suburb = null;
+    let state = null;
+    let postcode = null;
+    let clientId = null;
+    
+    if (eventType === 'admin') {
+      title = newTitle;
+    } else if (eventType === 'measure_quote' && selectedEnquiry) {
+      title = `M&Q - ${selectedEnquiry.client?.name || 'Unknown Client'}`;
+      streetAddress = selectedEnquiry.street_address;
+      suburb = selectedEnquiry.suburb;
+      state = selectedEnquiry.state;
+      postcode = selectedEnquiry.postcode;
+      clientId = selectedEnquiry.client_id;
+    } else if (eventType === 'scheduled_work' && selectedJob) {
+      title = selectedJob.job_name || selectedJob.job_number || 'Scheduled Work';
+      streetAddress = selectedJob.street_address;
+      suburb = selectedJob.suburb;
+      state = selectedJob.state;
+      postcode = selectedJob.postcode;
+      clientId = selectedJob.client_id;
+    }
+
+    // Set end time (add 1 hour to start time)
+    const endDate = new Date(selectedDate);
+    endDate.setHours(endDate.getHours() + 1);
+
+    const appointmentData = {
       user_id: user.id,
-      event_type: eventType,
-      scheduled_date: selectedDate.toISOString().split('T')[0],
-      scheduled_time: selectedDate.toTimeString().slice(0, 8),
-      job_id: eventType === 'scheduled_work' ? selectedJob?.id : null,
-      enquiry_id: eventType === 'measure_quote' ? selectedEnquiry?.id : null,
-      title: eventType === 'admin' ? newTitle : null,
-      staff_id: selectedStaff.length > 0 ? selectedStaff[0].id : null,
+      business_id: businessId,
+      created_by_user_id: user.id,
+      job_id: eventType === 'scheduled_work' ? selectedJob?.id : (eventType === 'measure_quote' ? selectedEnquiry?.id : null),
+      client_id: clientId,
+      assigned_staff_id: selectedStaff.length > 0 ? selectedStaff[0].id : null,
+      title: title,
+      description: eventType === 'measure_quote' ? 'Measure & Quote appointment' : (eventType === 'admin' ? 'Admin task' : 'Scheduled work'),
+      start_time: selectedDate.toISOString(),
+      end_time: endDate.toISOString(),
+      start_date: selectedDate.toISOString(),
+      end_date: endDate.toISOString(),
+      street_address: streetAddress,
+      suburb: suburb,
+      state: state,
+      postcode: postcode,
+      all_day: false,
+      status: 'scheduled',
     };
 
     const { error } = await supabase
-      .from('schedule_events')
-      .insert(scheduleData);
+      .from('appointments')
+      .insert(appointmentData);
 
     if (error) {
       alert('Error creating appointment: ' + error.message);
@@ -460,20 +531,187 @@ export default function SchedulePage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Time
                   </label>
-                  <input 
-                    type="time" 
-                    value={selectedDate && !isNaN(selectedDate.getTime()) ? selectedDate.toTimeString().slice(0,5) : ''} 
-                    onChange={e => {
-                      if (selectedDate && !isNaN(selectedDate.getTime())) {
-                        const [h, m] = e.target.value.split(':');
-                        const newDate = new Date(selectedDate);
-                        newDate.setHours(Number(h));
-                        newDate.setMinutes(Number(m));
-                        setSelectedDate(newDate);
-                      }
-                    }}
-                    className="w-full rounded-lg border-2 border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-500"
-                  />
+                  <div className="flex items-center gap-2 mb-3">
+                    {/* Hour Input */}
+                    <input
+                      type="text"
+                      value={timeHour}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '').slice(0, 2);
+                        if (val === '' || (Number(val) >= 1 && Number(val) <= 12)) {
+                          setTimeHour(val);
+                          if (val.length === 2) {
+                            // Auto-advance to minute field
+                            const minuteInput = document.getElementById('minute-input');
+                            if (minuteInput) (minuteInput as HTMLInputElement).focus();
+                          }
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const val = e.target.value;
+                        if (val && val.length === 1) {
+                          setTimeHour('0' + val);
+                        } else if (!val || Number(val) < 1 || Number(val) > 12) {
+                          setTimeHour('09');
+                        }
+                        // Update selectedDate
+                        if (selectedDate && !isNaN(selectedDate.getTime())) {
+                          const newDate = new Date(selectedDate);
+                          let hour = Number(timeHour);
+                          if (timePeriod === 'PM' && hour !== 12) hour += 12;
+                          if (timePeriod === 'AM' && hour === 12) hour = 0;
+                          newDate.setHours(hour);
+                          newDate.setMinutes(Number(timeMinute));
+                          setSelectedDate(newDate);
+                        }
+                      }}
+                      onFocus={(e) => e.target.select()}
+                      maxLength={2}
+                      placeholder="09"
+                      className="w-[60px] px-3 py-3 border-2 border-gray-200 rounded-lg text-center text-sm focus:outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-500"
+                    />
+                    
+                    {/* Colon Separator */}
+                    <span className="text-sm font-medium text-gray-600">:</span>
+                    
+                    {/* Minute Input */}
+                    <input
+                      id="minute-input"
+                      type="text"
+                      value={timeMinute}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '').slice(0, 2);
+                        if (val === '' || Number(val) <= 59) {
+                          setTimeMinute(val);
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const val = e.target.value;
+                        if (val && val.length === 1) {
+                          setTimeMinute('0' + val);
+                        } else if (!val || Number(val) > 59) {
+                          setTimeMinute('00');
+                        }
+                        // Update selectedDate
+                        if (selectedDate && !isNaN(selectedDate.getTime())) {
+                          const newDate = new Date(selectedDate);
+                          let hour = Number(timeHour);
+                          if (timePeriod === 'PM' && hour !== 12) hour += 12;
+                          if (timePeriod === 'AM' && hour === 12) hour = 0;
+                          newDate.setHours(hour);
+                          newDate.setMinutes(Number(timeMinute));
+                          setSelectedDate(newDate);
+                        }
+                      }}
+                      onFocus={(e) => e.target.select()}
+                      maxLength={2}
+                      placeholder="00"
+                      className="w-[60px] px-3 py-3 border-2 border-gray-200 rounded-lg text-center text-sm focus:outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-500"
+                    />
+                    
+                    {/* AM/PM Toggle */}
+                    <div className="flex">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTimePeriod('AM');
+                          // Update selectedDate
+                          if (selectedDate && !isNaN(selectedDate.getTime())) {
+                            const newDate = new Date(selectedDate);
+                            let hour = Number(timeHour);
+                            if (hour === 12) hour = 0;
+                            newDate.setHours(hour);
+                            newDate.setMinutes(Number(timeMinute));
+                            setSelectedDate(newDate);
+                          }
+                        }}
+                        className={`px-5 py-3.5 border-2 rounded-l-lg text-sm font-medium transition-all ${
+                          timePeriod === 'AM'
+                            ? 'bg-orange-500 text-white border-orange-500'
+                            : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                        }`}
+                      >
+                        AM
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTimePeriod('PM');
+                          // Update selectedDate
+                          if (selectedDate && !isNaN(selectedDate.getTime())) {
+                            const newDate = new Date(selectedDate);
+                            let hour = Number(timeHour);
+                            if (hour !== 12) hour += 12;
+                            newDate.setHours(hour);
+                            newDate.setMinutes(Number(timeMinute));
+                            setSelectedDate(newDate);
+                          }
+                        }}
+                        className={`px-5 py-3.5 border-2 rounded-r-lg text-sm font-medium transition-all ${
+                          timePeriod === 'PM'
+                            ? 'bg-orange-500 text-white border-orange-500'
+                            : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                        }`}
+                      >
+                        PM
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Quick Select Buttons */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTimeHour('09');
+                        setTimeMinute('00');
+                        setTimePeriod('AM');
+                        if (selectedDate && !isNaN(selectedDate.getTime())) {
+                          const newDate = new Date(selectedDate);
+                          newDate.setHours(9);
+                          newDate.setMinutes(0);
+                          setSelectedDate(newDate);
+                        }
+                      }}
+                      className="px-2 py-2 border-2 border-gray-200 rounded-lg bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-orange-300 transition-all"
+                    >
+                      9:00 AM
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTimeHour('12');
+                        setTimeMinute('00');
+                        setTimePeriod('PM');
+                        if (selectedDate && !isNaN(selectedDate.getTime())) {
+                          const newDate = new Date(selectedDate);
+                          newDate.setHours(12);
+                          newDate.setMinutes(0);
+                          setSelectedDate(newDate);
+                        }
+                      }}
+                      className="px-2 py-2 border-2 border-gray-200 rounded-lg bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-orange-300 transition-all"
+                    >
+                      12:00 PM
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTimeHour('05');
+                        setTimeMinute('00');
+                        setTimePeriod('PM');
+                        if (selectedDate && !isNaN(selectedDate.getTime())) {
+                          const newDate = new Date(selectedDate);
+                          newDate.setHours(17);
+                          newDate.setMinutes(0);
+                          setSelectedDate(newDate);
+                        }
+                      }}
+                      className="px-2 py-2 border-2 border-gray-200 rounded-lg bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-orange-300 transition-all"
+                    >
+                      5:00 PM
+                    </button>
+                  </div>
                 </div>
               </div>
 

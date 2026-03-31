@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, ReactNode } from 'react'
+import React, { createContext, useContext, useState, ReactNode } from 'react'
 import { colors } from '@/lib/colors'
 
 type ToastType = 'success' | 'error' | 'warning' | 'info'
@@ -28,6 +28,19 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       setToasts(prev => prev.filter(t => t.id !== id))
     }, 5000)
   }
+
+  // Listen for global error toast events
+  React.useEffect(() => {
+    const handleErrorToast = (event: CustomEvent) => {
+      toast('error', event.detail.message)
+    }
+    
+    window.addEventListener('show-error-toast', handleErrorToast as EventListener)
+    
+    return () => {
+      window.removeEventListener('show-error-toast', handleErrorToast as EventListener)
+    }
+  }, [])
 
   return (
     <ToastContext.Provider value={{ toast }}>

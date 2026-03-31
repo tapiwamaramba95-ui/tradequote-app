@@ -3,9 +3,10 @@
 import { useState, useEffect, useCallback, Suspense } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { FileText, Plus, Trash2 } from 'lucide-react'
+import { FileText, Plus, Trash2, Package } from 'lucide-react'
 import NoteTemplateSelector from '@/components/NoteTemplateSelector'
 import PriceListBrowser from '@/components/PriceListBrowser'
+import PackageBrowser from '@/components/PackageBrowser'
 import Breadcrumb from '@/components/Breadcrumb'
 import { getBusinessId } from '@/lib/business'
 
@@ -15,6 +16,24 @@ type LineItem = {
   quantity: number
   rate: number
   amount: number
+  // Package data (optional)
+  is_from_package?: boolean
+  package_snapshot?: {
+    package_id: string
+    package_name: string
+    items: Array<{
+      item_id: string
+      item_name: string
+      supplier: string | null
+      unit_cost: number
+      quantity: number
+      line_total: number
+    }>
+    total_cost: number
+  }
+  cost?: number
+  profit?: number
+  margin?: number
 }
 
 type Job = {
@@ -38,6 +57,7 @@ function NewQuotePageContent() {
   const [jobs, setJobs] = useState<Job[]>([])
   const [clients, setClients] = useState<Client[]>([])
   const [showPriceList, setShowPriceList] = useState(false)
+  const [showPackageBrowser, setShowPackageBrowser] = useState(false)
   const [taxRate, setTaxRate] = useState(10) // Default tax rate
   const [lineItems, setLineItems] = useState<LineItem[]>([
     { id: '1', description: '', quantity: 1, rate: 0, amount: 0 }
@@ -104,6 +124,44 @@ function NewQuotePageContent() {
       amount: calculatedPrice
     }
     setLineItems([...lineItems, newItem])
+  }
+
+  const handlePackageSelect = (pkg: any, customerDescription: string, customerPrice: number) => {
+    const newId = String(lineItems.length + 1)
+    
+    // Create snapshot of package items
+    const packageSnapshot = {
+      package_id: pkg.id,
+      package_name: pkg.name,
+      items: pkg.items.map((item: any) => ({
+        item_id: item.id,
+        item_name: item.item_name,
+        supplier: item.supplier,
+        unit_cost: item.unit_cost,
+        quantity: item.quantity,
+        line_total: item.line_total
+      })),
+      total_cost: pkg.total_cost
+    }
+
+    const profit = customerPrice - pkg.total_cost
+    const margin = (profit / customerPrice) * 100
+
+    const newItem: LineItem = {
+      id: newId,
+      description: customerDescription,
+      quantity: 1,
+      rate: customerPrice,
+      amount: customerPrice,
+      is_from_package: true,
+      package_snapshot: packageSnapshot,
+      cost: pkg.total_cost,
+      profit: profit,
+      margin: margin
+    }
+    
+    setLineItems([...lineItems, newItem])
+    setShowPackageBrowser(false)
   }
 
   const removeLineItem = (id: string) => {
@@ -336,6 +394,14 @@ function NewQuotePageContent() {
               </button>
               <button
                 type="button"
+                onClick={() => setShowPackageBrowser(true)}
+                className="inline-flex items-center gap-2 px-3 py-2 border border-orange-600 text-sm font-medium rounded-md text-orange-700 bg-white hover:bg-orange-50"
+              >
+                <Package className="w-4 h-4" />
+                Add from Package
+              </button>
+              <button
+                type="button"
                 onClick={addLineItem}
                 className="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-cyan-700 bg-cyan-100 hover:bg-cyan-200 transition-colors"
               >
@@ -508,6 +574,12 @@ function NewQuotePageContent() {
         onClose={() => setShowPriceList(false)}
         onSelect={handlePriceListSelect}
         applyMarkup={true}
+      />
+
+      <PackageBrowser
+        show={showPackageBrowser}
+        onClose={() => setShowPackageBrowser(false)}
+        onSelect={handlePackageSelect}
       />
     </div>
   )

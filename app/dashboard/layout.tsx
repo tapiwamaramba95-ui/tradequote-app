@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
@@ -11,6 +11,9 @@ import { checkSubscriptionAccess, getSubscriptionMessage, SubscriptionState } fr
 import { ReadOnlyProvider } from '@/lib/contexts/ReadOnlyContext'
 import { ErrorBoundaryWithReset } from '@/components/ErrorBoundary'
 import { ToastProvider } from '@/components/Toast'
+import { safeAsync } from '@/lib/error-handler'
+import { useFreezeRecovery } from '@/lib/hooks/useSafeQuery'
+import { FeedbackWidget } from '@/components/feedback/FeedbackWidget'
 
 export default function DashboardLayout({
   children,
@@ -26,78 +29,131 @@ export default function DashboardLayout({
   const [permissions, setPermissions] = useState<StaffPermissions | null>(null)
   const [isOwner, setIsOwner] = useState(false)
   const [subscriptionState, setSubscriptionState] = useState<SubscriptionState | null>(null)
+  
+  // Ref to prevent duplicate auth listener setup
+  const authListenerRef = useRef<any>(null)
+  const isCheckingUser = useRef(false)
+  
+  // Add freeze recovery shortcut (Ctrl/Cmd + Shift + R)
+  useFreezeRecovery()
+
+  // Memoized function to load user data
+  const loadUserData = useCallback(async (userId: string) => {
+    try {
+      // Load user profile information with subscription fields
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('full_name, company_name, email, subscription_status, trial_ends_at, access_until, cancelled_at')
+        .eq('id', userId)
+        .single()
+
+      if (profileError) {
+        console.error('Error loading profile:', profileError)
+        return null
+      }
+      
+      setProfile(profileData)
+      
+      // Check subscription access
+      const subState = checkSubscriptionAccess(profileData)
+      setSubscriptionState(subState)
+      
+      // Redirect if expired and not on billing pages
+      if (subState.isExpired && !pathname.includes('/billing')) {
+        router.push('/dashboard/settings/billing/expired')
+        return null
+      }
+      
+      // Load permissions
+      const userPermissions = await getCurrentUserPermissions()
+      setPermissions(userPermissions)
+      
+      const ownerStatus = await isBusinessOwner()
+      setIsOwner(ownerStatus)
+      
+      return profileData
+    } catch (error) {
+      console.error('Error loading user data:', error)
+      return null
+    }
+  }, [pathname, router])
 
   useEffect(() => {
+    // Prevent duplicate execution
+    if (isCheckingUser.current) return
+    isCheckingUser.current = true
+
     const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (!session) {
-        router.push('/login')
-      } else {
-        setUser(session.user)
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
         
-        // Load user profile information with subscription fields
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('full_name, company_name, email, subscription_status, trial_ends_at, access_until, cancelled_at')
-          .eq('id', session.user.id)
-          .single()
-        
-        setProfile(profileData)
-        
-        // Check subscription access
-        const subState = checkSubscriptionAccess(profileData)
-        setSubscriptionState(subState)
-        
-        // Redirect if expired and not on billing pages
-        if (subState.isExpired && !pathname.includes('/billing')) {
-          router.push('/dashboard/settings/billing/expired')
+        if (sessionError) {
+          console.error('Session error:', sessionError)
+          router.push('/login')
           return
         }
         
-        // Load permissions
-        const userPermissions = await getCurrentUserPermissions()
-        setPermissions(userPermissions)
+        if (!session) {
+          router.push('/login')
+          return
+        }
         
-        const ownerStatus = await isBusinessOwner()
-        setIsOwner(ownerStatus)
-        
+        setUser(session.user)
+        await loadUserData(session.user.id)
         setLoading(false)
+      } catch (error) {
+        console.error('Error checking user:', error)
+        router.push('/login')
+      } finally {
+        isCheckingUser.current = false
       }
     }
 
     checkUser()
     
-    // Listen for auth state changes to update profile
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user && event === 'SIGNED_IN') {
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('full_name, company_name, email, subscription_status, trial_ends_at, access_until, cancelled_at')
-          .eq('id', session.user.id)
-          .single()
+    // Setup auth state listener only once
+    if (!authListenerRef.current) {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        console.log('Auth state changed:', event)
         
-        setProfile(profileData)
-        
-        // Check subscription access
-        const subState = checkSubscriptionAccess(profileData)
-        setSubscriptionState(subState)
-        
-        // Reload permissions
-        const userPermissions = await getCurrentUserPermissions()
-        setPermissions(userPermissions)
-        
-        const ownerStatus = await isBusinessOwner()
-        setIsOwner(ownerStatus)
-      }
-    })
+        // Only handle specific events
+        if (event === 'SIGNED_IN' && session?.user) {
+          setUser(session.user)
+          await safeAsync(
+            () => loadUserData(session.user.id),
+            undefined,
+            'Failed to reload user data'
+          )
+        } else if (event === 'SIGNED_OUT') {
+          router.push('/login')
+        } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+          // Token refresh is normal, don't reload everything
+          setUser(session.user)
+        }
+      })
+      
+      authListenerRef.current = subscription
+    }
 
-    return () => subscription.unsubscribe()
-  }, [router])
+    return () => {
+      if (authListenerRef.current) {
+        authListenerRef.current.unsubscribe()
+        authListenerRef.current = null
+      }
+    }
+  }, [router, loadUserData])
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push('/login')
+    try {
+      // Clear any stale state before logout
+      sessionStorage.clear()
+      await supabase.auth.signOut()
+      router.push('/login')
+    } catch (error) {
+      console.error('Logout error:', error)
+      // Force logout even if API call fails
+      router.push('/login')
+    }
   }
 
   if (loading) {
@@ -440,6 +496,8 @@ export default function DashboardLayout({
         </main>
       </div>
     </div>
+      {/* Feedback Widget */}
+      <FeedbackWidget />
       </ToastProvider>
     </ReadOnlyProvider>
   )

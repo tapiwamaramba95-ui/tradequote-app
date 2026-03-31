@@ -4,6 +4,7 @@ import React from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import * as Sentry from '@sentry/nextjs'
 import { colors } from '@/lib/colors'
+import { clearStaleState, isRecoverableError } from '@/lib/error-handler'
 
 type ErrorBoundaryState = {
   hasError: boolean
@@ -48,15 +49,43 @@ export class ErrorBoundary extends React.Component<
   }
   
   resetErrorBoundary = () => {
+    // Clear any stale state that might be causing the error
+    clearStaleState()
+    
     this.setState({ hasError: false, error: null, eventId: null })
     this.props.onReset?.()
   }
 
+  handleReload = () => {
+    clearStaleState()
+    window.location.reload()
+  }
+
   render() {
     if (this.state.hasError) {
+      const recoverable = isRecoverableError(this.state.error)
+      const errorMessage = this.state.error?.message?.toLowerCase() || ''
+      
       // Use custom fallback if provided
       if (this.props.fallback) {
         return this.props.fallback
+      }
+      
+      // Determine user-friendly message
+      let userMessage = "An unexpected error occurred."
+      if (recoverable) {
+        if (errorMessage.includes('database') || errorMessage.includes('insert') || 
+            errorMessage.includes('update') || errorMessage.includes('delete')) {
+          userMessage = "There was an issue saving your data. This is usually temporary. Please try again."
+        } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+          userMessage = "Connection issue detected. Please check your internet and try again."
+        } else if (errorMessage.includes('permission') || errorMessage.includes('policy')) {
+          userMessage = "You don't have permission for this action. Try refreshing the page."
+        } else {
+          userMessage = "Something went wrong, but don't worry - you can try again without losing your work."
+        }
+      } else {
+        userMessage = "Your session may have expired. Please log in again to continue."
       }
       
       // Default fallback UI
@@ -70,37 +99,62 @@ export class ErrorBoundary extends React.Component<
             </div>
             
             <h1 className="text-2xl font-bold mb-2" style={{ color: colors.text.primary }}>
-              Something went wrong
+              {recoverable ? 'Temporary Issue' : 'Session Expired'}
             </h1>
             
             <p className="text-sm mb-6" style={{ color: colors.text.secondary }}>
-              We've been notified and are working on a fix. Try refreshing the page or navigating elsewhere.
+              {userMessage}
             </p>
             
             <div className="flex flex-col gap-3">
-              <button
-                onClick={() => window.location.reload()}
-                className="px-6 py-3 rounded-lg text-white font-semibold hover:opacity-90 transition-opacity"
-                style={{ backgroundColor: colors.primary.DEFAULT }}
-              >
-                Reload Page
-              </button>
-              
-              <button
-                onClick={this.resetErrorBoundary}
-                className="px-6 py-3 rounded-lg border-2 font-semibold hover:bg-gray-50 transition-colors"
-                style={{ borderColor: colors.border.DEFAULT, color: colors.text.primary }}
-              >
-                Try Again
-              </button>
-              
-              <button
-                onClick={() => window.history.back()}
-                className="px-6 py-3 text-sm font-medium hover:underline"
-                style={{ color: colors.text.secondary }}
-              >
-                Go Back
-              </button>
+              {recoverable ? (
+                <>
+                  <button
+                    onClick={this.handleReload}
+                    className="px-6 py-3 rounded-lg text-white font-semibold hover:opacity-90 transition-opacity"
+                    style={{ backgroundColor: colors.primary.DEFAULT }}
+                  >
+                    Reload Page
+                  </button>
+                  
+                  <button
+                    onClick={this.resetErrorBoundary}
+                    className="px-6 py-3 rounded-lg border-2 font-semibold hover:bg-gray-50 transition-colors"
+                    style={{ borderColor: colors.border.DEFAULT, color: colors.text.primary }}
+                  >
+                    Try Again
+                  </button>
+                  
+                  <button
+                    onClick={() => window.history.back()}
+                    className="px-6 py-3 text-sm font-medium hover:underline"
+                    style={{ color: colors.text.secondary }}
+                  >
+                    Go Back
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => {
+                      clearStaleState()
+                      window.location.href = '/login'
+                    }}
+                    className="px-6 py-3 rounded-lg text-white font-semibold hover:opacity-90 transition-opacity"
+                    style={{ backgroundColor: colors.primary.DEFAULT }}
+                  >
+                    Go to Login
+                  </button>
+                  
+                  <button
+                    onClick={this.handleReload}
+                    className="px-6 py-3 rounded-lg border-2 font-semibold hover:bg-gray-50 transition-colors"
+                    style={{ borderColor: colors.border.DEFAULT, color: colors.text.primary }}
+                  >
+                    Reload Page
+                  </button>
+                </>
+              )}
             </div>
             
             {this.state.eventId && (

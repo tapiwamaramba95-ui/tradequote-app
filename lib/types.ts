@@ -58,8 +58,9 @@ export interface TimesheetEntry {
   created_at: string
   updated_at: string
   
-  // Foreign key reference - ONLY job_id (everything goes through jobs)
-  job_id?: string // Required for 'work' and 'measure_quote' types, optional for 'general_admin'
+  // Foreign key references
+  job_id?: string // For 'work' type
+  enquiry_id?: string // For 'measure_quote' type
   event_type: 'work' | 'measure_quote' | 'general_admin' // Database column name
   
   // Costing fields (auto-calculated by triggers from staff member's hourly rate)
@@ -71,6 +72,10 @@ export interface TimesheetEntry {
     job_name: string
     status: string
   }
+  enquiries?: {
+    enquiry_number: string
+    name: string
+  }
 }
 
 export interface ActiveShift {
@@ -78,7 +83,8 @@ export interface ActiveShift {
   user_id: string
   staff_member_id: string
   clock_in_time: string
-  job_id?: string // Only job link
+  job_id?: string // For 'work' type
+  enquiry_id?: string // For 'measure_quote' type
   event_type: 'work' | 'measure_quote' | 'general_admin' // Database column name
   created_at: string
   
@@ -86,6 +92,10 @@ export interface ActiveShift {
   jobs?: { 
     job_name: string
     status: string
+  }
+  enquiries?: {
+    enquiry_number: string
+    name: string
   }
 }
 

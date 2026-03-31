@@ -8,6 +8,7 @@ import { getBusinessId } from '@/lib/business'
 import Papa from 'papaparse'
 import Link from 'next/link'
 import { Clipboard } from 'lucide-react'
+import MaterialPackagesTab from './MaterialPackagesTab'
 
 interface PriceListItem {
   id: string
@@ -56,13 +57,15 @@ export default function PriceListSettings() {
   const searchParams = useSearchParams()
   
   // Tab state - check for ?section= query param
-  const [activeTab, setActiveTab] = useState<'your-price-list' | 'supplier-price-lists'>('your-price-list')
+  const [activeTab, setActiveTab] = useState<'your-price-list' | 'supplier-price-lists' | 'material-packages'>('your-price-list')
   
   // Initialize tab from URL on mount
   useEffect(() => {
     const sectionParam = searchParams.get('section')
     if (sectionParam === 'supplier-price-lists') {
       setActiveTab('supplier-price-lists')
+    } else if (sectionParam === 'material-packages') {
+      setActiveTab('material-packages')
     }
   }, [searchParams])
   
@@ -85,8 +88,10 @@ export default function PriceListSettings() {
   const [supplierABN, setSupplierABN] = useState('')
   const [supplierEmail, setSupplierEmail] = useState('')
   const [supplierPhone, setSupplierPhone] = useState('')
-  const [supplierAddress, setSupplierAddress] = useState('')
-  const [supplierWebsite, setSupplierWebsite] = useState('')
+  const [supplierStreetAddress, setSupplierStreetAddress] = useState('')
+  const [supplierSuburb, setSupplierSuburb] = useState('')
+  const [supplierState, setSupplierState] = useState('')
+  const [supplierPostcode, setSupplierPostcode] = useState('')
   
   const [formData, setFormData] = useState({
     name: '',
@@ -112,10 +117,13 @@ export default function PriceListSettings() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
+    const businessId = await getBusinessId()
+    if (!businessId) return
+
     const { data, error } = await supabase
       .from('price_list_items')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('business_id', businessId)
       .order('category', { ascending: true })
       .order('name', { ascending: true })
 
@@ -159,6 +167,9 @@ export default function PriceListSettings() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
+    const businessId = await getBusinessId()
+    if (!businessId) return
+
     const itemData = {
       name: formData.name,
       description: formData.description,
@@ -175,7 +186,7 @@ export default function PriceListSettings() {
         .from('price_list_items')
         .update(itemData)
         .eq('id', editingItem.id)
-        .eq('user_id', user.id)
+        .eq('business_id', businessId)
 
       if (!error) {
         fetchItems()
@@ -187,7 +198,8 @@ export default function PriceListSettings() {
         .from('price_list_items')
         .insert({
           ...itemData,
-          user_id: user.id
+          user_id: user.id,
+          business_id: businessId
         })
 
       if (!error) {
@@ -203,11 +215,14 @@ export default function PriceListSettings() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
+    const businessId = await getBusinessId()
+    if (!businessId) return
+
     const { error } = await supabase
       .from('price_list_items')
       .delete()
       .eq('id', id)
-      .eq('user_id', user.id)
+      .eq('business_id', businessId)
 
     if (!error) {
       fetchItems()
@@ -409,7 +424,7 @@ export default function PriceListSettings() {
       if (existingSupplier) {
         supplierId = existingSupplier.id
         
-        if (!confirm(`Supplier "${previewData.supplierName}" already exists. Do you want to update their products?`)) {
+        if (!confirm(`Supplier "${previewData.supplierName}" already exists. New products will be added and existing products will be updated. Continue?`)) {
           setUploadLoading(false)
           return
         }
@@ -445,30 +460,61 @@ export default function PriceListSettings() {
         return
       }
 
-      const { data: supplier, error: supplierError } = await supabase
+      // Check if supplier already exists first
+      const { data: existingSupplier } = await supabase
         .from('suppliers')
-        .insert({
-          user_id: user.id,
-          business_id: businessId,
-          name: previewData.supplierName,
-          abn: skipDetails ? null : supplierABN || null,
-          email: skipDetails ? null : supplierEmail || null,
-          phone: skipDetails ? null : supplierPhone || null,
-          address: skipDetails ? null : supplierAddress || null,
-          website: skipDetails ? null : supplierWebsite || null,
-          auto_created: true,
-          details_completed: !skipDetails && (supplierEmail || supplierPhone) ? true : false,
-        })
-        .select()
+        .select('id')
+        .eq('business_id', businessId)
+        .eq('name', previewData.supplierName)
         .single()
 
-      if (supplierError) throw supplierError
+      let supplierId: string
 
-      await importProducts(supplier.id, businessId)
+      if (existingSupplier) {
+        // Supplier exists, use existing one
+        supplierId = existingSupplier.id
+        console.log('Using existing supplier:', previewData.supplierName)
+      } else {
+        // Create new supplier
+        const { data: supplier, error: supplierError } = await supabase
+          .from('suppliers')
+          .insert({
+            user_id: user.id,
+            business_id: businessId,
+            name: previewData.supplierName,
+            abn: skipDetails ? null : supplierABN || null,
+            email: skipDetails ? null : supplierEmail || null,
+            phone: skipDetails ? null : supplierPhone || null,
+            street_address: skipDetails ? null : supplierStreetAddress || null,
+            suburb: skipDetails ? null : supplierSuburb || null,
+            state: skipDetails ? null : supplierState || null,
+            postcode: skipDetails ? null : supplierPostcode || null,
+          })
+          .select()
+          .single()
+
+        if (supplierError) {
+          console.error('Supplier creation error:', supplierError)
+          alert(`Failed to create supplier: ${supplierError.message || 'Unknown error'}`)
+          setUploadLoading(false)
+          return
+        }
+
+        if (!supplier) {
+          alert('Failed to create supplier: No data returned')
+          setUploadLoading(false)
+          return
+        }
+
+        supplierId = supplier.id
+      }
+
+      await importProducts(supplierId, businessId)
 
     } catch (error) {
       console.error('Error creating supplier:', error)
-      alert('Failed to create supplier')
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      alert(`Failed to create supplier: ${errorMessage}`)
       setUploadLoading(false)
     }
   }
@@ -480,32 +526,79 @@ export default function PriceListSettings() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      const productsToInsert = previewData.products.map(p => ({
-        supplier_id: supplierId,
-        user_id: user.id,
-        business_id: businessId,
-        product_code: p.code || null,
-        product_name: p.name,
-        description: p.description || null,
-        unit: p.unit,
-        price: p.price,
-        category: p.category || null,
-        is_active: true,
-        last_updated: new Date().toISOString(),
-      }))
-
-      await supabase
+      // Get existing products for this supplier
+      const { data: existingProducts } = await supabase
         .from('supplier_products')
-        .delete()
+        .select('id, product_code, product_name')
         .eq('supplier_id', supplierId)
 
-      const { error: productsError } = await supabase
-        .from('supplier_products')
-        .insert(productsToInsert)
+      const existingProductsMap = new Map(
+        existingProducts?.map(p => [p.product_code || p.product_name.toLowerCase(), p.id]) || []
+      )
 
-      if (productsError) throw productsError
+      const productsToInsert: any[] = []
+      const productsToUpdate: any[] = []
 
-      alert(`✅ Successfully imported ${previewData.products.length} products for ${previewData.supplierName}`)
+      // Categorize products for insert vs update
+      previewData.products.forEach(p => {
+        const key = p.code || p.name.toLowerCase()
+        const existingId = existingProductsMap.get(key)
+
+        const productData = {
+          supplier_id: supplierId,
+          user_id: user.id,
+          business_id: businessId,
+          product_code: p.code || null,
+          product_name: p.name,
+          description: p.description || null,
+          unit: p.unit,
+          price: p.price,
+          category: p.category || null,
+          is_active: true,
+          last_updated: new Date().toISOString(),
+        }
+
+        if (existingId) {
+          // Update existing product
+          productsToUpdate.push({ id: existingId, ...productData })
+        } else {
+          // Insert new product
+          productsToInsert.push(productData)
+        }
+      })
+
+      // Perform updates
+      if (productsToUpdate.length > 0) {
+        for (const product of productsToUpdate) {
+          const { id, ...updateData } = product
+          const { error } = await supabase
+            .from('supplier_products')
+            .update(updateData)
+            .eq('id', id)
+
+          if (error) {
+            console.error('Error updating product:', error)
+            throw new Error(`Failed to update product: ${error.message}`)
+          }
+        }
+      }
+
+      // Perform inserts
+      if (productsToInsert.length > 0) {
+        const { error: insertError } = await supabase
+          .from('supplier_products')
+          .insert(productsToInsert)
+
+        if (insertError) {
+          console.error('Products insertion error:', insertError)
+          throw new Error(`Failed to insert products: ${insertError.message}`)
+        }
+      }
+
+      const addedCount = productsToInsert.length
+      const updatedCount = productsToUpdate.length
+
+      alert(`✅ Successfully imported ${previewData.products.length} products for ${previewData.supplierName}\n${addedCount} added, ${updatedCount} updated`)
       
       // Reset upload state
       setFile(null)
@@ -513,15 +606,19 @@ export default function PriceListSettings() {
       setSupplierABN('')
       setSupplierEmail('')
       setSupplierPhone('')
-      setSupplierAddress('')
-      setSupplierWebsite('')
+      setSupplierStreetAddress('')
+      setSupplierSuburb('')
+      setSupplierState('')
+      setSupplierPostcode('')
+      setUploadLoading(false)
       
       // Reload suppliers list
       loadSuppliers()
 
     } catch (error) {
       console.error('Error importing products:', error)
-      alert('Failed to import products')
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      alert(`Failed to import products: ${errorMessage}`)
       setUploadLoading(false)
     }
   }
@@ -576,6 +673,18 @@ export default function PriceListSettings() {
             }}
           >
             📦 Supplier Price Lists
+          </button>
+          <button
+            onClick={() => setActiveTab('material-packages')}
+            className={`px-4 py-2 font-medium text-sm transition-colors ${
+              activeTab === 'material-packages' ? 'border-b-2' : ''
+            }`}
+            style={{
+              borderColor: activeTab === 'material-packages' ? colors.accent.DEFAULT : 'transparent',
+              color: activeTab === 'material-packages' ? colors.accent.DEFAULT : colors.text.secondary
+            }}
+          >
+            📦 Material Packages
           </button>
         </div>
       </div>
@@ -1017,14 +1126,19 @@ export default function PriceListSettings() {
         </div>
       )}
 
+      {/* Material Packages Tab */}
+      {activeTab === 'material-packages' && (
+        <MaterialPackagesTab />
+      )}
+
       {/* Supplier Details Modal */}
       {showSupplierModal && previewData && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-white/10 backdrop-blur-sm flex items-center justify-center z-50 p-4"
           onClick={() => setShowSupplierModal(false)}
         >
           <div
-            className="bg-white rounded-lg w-full max-w-lg p-6"
+            className="bg-white rounded-lg w-full max-w-lg p-6 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <h2 
@@ -1086,27 +1200,56 @@ export default function PriceListSettings() {
 
               <div>
                 <label className="block text-sm font-semibold mb-2">
-                  Address <span style={{ color: colors.text.secondary }}>(optional)</span>
+                  Street Address <span style={{ color: colors.text.secondary }}>(optional)</span>
                 </label>
                 <input
                   type="text"
-                  value={supplierAddress}
-                  onChange={(e) => setSupplierAddress(e.target.value)}
-                  placeholder="123 Trade St, Melbourne VIC 3000"
+                  value={supplierStreetAddress}
+                  onChange={(e) => setSupplierStreetAddress(e.target.value)}
+                  placeholder="123 Trade St"
                   className="w-full px-3 py-2 border rounded-lg text-sm"
                   style={{ borderColor: colors.border.DEFAULT }}
                 />
               </div>
 
+              <div className="grid grid-cols-3 gap-3">
+                <div className="col-span-2">
+                  <label className="block text-sm font-semibold mb-2">
+                    Suburb <span style={{ color: colors.text.secondary }}>(optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={supplierSuburb}
+                    onChange={(e) => setSupplierSuburb(e.target.value)}
+                    placeholder="Melbourne"
+                    className="w-full px-3 py-2 border rounded-lg text-sm"
+                    style={{ borderColor: colors.border.DEFAULT }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-2">
+                    State <span style={{ color: colors.text.secondary }}>(optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={supplierState}
+                    onChange={(e) => setSupplierState(e.target.value)}
+                    placeholder="VIC"
+                    className="w-full px-3 py-2 border rounded-lg text-sm"
+                    style={{ borderColor: colors.border.DEFAULT }}
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-semibold mb-2">
-                  Website <span style={{ color: colors.text.secondary }}>(optional)</span>
+                  Postcode <span style={{ color: colors.text.secondary }}>(optional)</span>
                 </label>
                 <input
-                  type="url"
-                  value={supplierWebsite}
-                  onChange={(e) => setSupplierWebsite(e.target.value)}
-                  placeholder="www.supplier.com.au"
+                  type="text"
+                  value={supplierPostcode}
+                  onChange={(e) => setSupplierPostcode(e.target.value)}
+                  placeholder="3000"
                   className="w-full px-3 py-2 border rounded-lg text-sm"
                   style={{ borderColor: colors.border.DEFAULT }}
                 />

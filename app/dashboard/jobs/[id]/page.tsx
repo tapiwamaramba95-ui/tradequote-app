@@ -50,6 +50,58 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
   const [photoCount, setPhotoCount] = useState(0)
   const [showCompleteModal, setShowCompleteModal] = useState(false)
 
+  // Helper functions for timesheet display
+  const getInitials = (userName: string, userId?: string) => {
+    if (!userName || userName === 'Unknown User') {
+      return 'U'
+    }
+    const names = userName.trim().split(' ')
+    if (names.length >= 2) {
+      return (names[0][0] + names[names.length - 1][0]).toUpperCase()
+    }
+    return userName.substring(0, 2).toUpperCase()
+  }
+
+  const avatarColors = [
+    '#EA580C', // orange
+    '#0EA5E9', // blue
+    '#8B5CF6', // purple
+    '#10B981', // green
+    '#F59E0B', // amber
+  ]
+
+  const getAvatarColor = (userId: string) => {
+    const hash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+    return avatarColors[hash % avatarColors.length]
+  }
+
+  const formatTime12Hour = (time: string) => {
+    if (!time) return ''
+    const [hours, minutes] = time.split(':')
+    const hour = parseInt(hours)
+    const ampm = hour >= 12 ? 'PM' : 'AM'
+    const hour12 = hour % 12 || 12
+    return `${hour12}:${minutes} ${ampm}`
+  }
+
+  const formatDateLong = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-AU', { 
+      weekday: 'short', 
+      day: 'numeric', 
+      month: 'short', 
+      year: 'numeric' 
+    })
+  }
+
+  const getUserName = (entry: any) => {
+    // Get name from joined staff table
+    if (entry.staff?.name) {
+      return entry.staff.name
+    }
+    return 'Unknown User'
+  }
+
   useEffect(() => {
     loadJobData()
   }, [id])
@@ -63,8 +115,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
         jobResult,
         quotesResult,
         invoicesResult,
-        appointmentsResult,
-        timesheetsResult,
+        appointmentsResult,        generalAppointmentsResult,        timesheetsResult,
         staffResult,
         photoResult
       ] = await Promise.all([
@@ -92,21 +143,26 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
           .eq('job_id', id)
           .order('created_at', { ascending: false }),
         
-        // Load appointments
+        // Load appointments (from both job_appointments and appointments tables)
         supabase
           .from('job_appointments')
           .select('*')
           .eq('job_id', id)
           .order('scheduled_date'),
         
-        // Load timesheets
+        // Load general appointments for this job
         supabase
-          .from('timesheet_entries')
-          .select(`
-            *,
-            staff:profiles!timesheet_entries_staff_member_id_fkey(first_name, last_name)
-          `)
+          .from('appointments')
+          .select('*')
           .eq('job_id', id)
+          .order('start_time', { ascending: true }),
+        
+        // Load timesheets with staff information
+        supabase
+          .from('timesheets')
+          .select('*, staff:staff_id(name)')
+          .eq('job_id', id)
+          .not('end_time', 'is', null)
           .order('date', { ascending: false }),
         
         // Load staff members
@@ -127,10 +183,37 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
           .eq('job_id', id)
       ])
 
+      console.log('All query results:', { 
+        job: !!jobResult.data, 
+        quotes: quotesResult.data?.length,
+        invoices: invoicesResult.data?.length,
+        timesheets: timesheetsResult.data?.length,
+        timesheetsError: timesheetsResult.error 
+      })
+
       if (jobResult.data) setJob(jobResult.data as JobWithClient)
       if (quotesResult.data) setQuotes(quotesResult.data)
       if (invoicesResult.data) setInvoices(invoicesResult.data)
-      if (appointmentsResult.data) setAppointments(appointmentsResult.data)
+      
+      // Combine appointments from both tables
+      const allAppointments = [
+        ...(appointmentsResult.data || []),
+        ...(generalAppointmentsResult.data || []).map((apt: any) => ({
+          id: apt.id,
+          job_id: apt.job_id,
+          appointment_type: apt.description?.includes('Measure') ? 'measure_quote' : 'work',
+          scheduled_date: apt.start_time,
+          duration_minutes: Math.round((new Date(apt.end_time).getTime() - new Date(apt.start_time).getTime()) / 60000),
+          notes: apt.description,
+          status: apt.status,
+          created_at: apt.created_at,
+        }))
+      ];
+      setAppointments(allAppointments)
+      
+      console.log('Timesheets query result:', timesheetsResult)
+      console.log('Timesheets data:', timesheetsResult.data)
+      console.log('Timesheets count:', timesheetsResult.data?.length)
       if (timesheetsResult.data) setTimesheets(timesheetsResult.data)
       if (staffResult.data) setStaffMembers(staffResult.data)
       setPhotoCount(photoResult.count || 0)
@@ -497,7 +580,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
                 className="px-4 py-2 text-white rounded-lg font-semibold"
                 style={{ backgroundColor: colors.accent.DEFAULT }}
               >
-                📅 Schedule M&Q
+                📅 Schedule
               </Link>
               <Link
                 href={`/dashboard/quotes/new?job_id=${job.id}`}
@@ -761,36 +844,103 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
         )}
       </div>
 
-      {/* Timesheets */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm">
-        <h2 className="text-xl font-bold mb-4" style={{ color: colors.text.primary }}>
-          Time Logged ({timesheets.length} entries)
-        </h2>
+      {/* Timesheets - Modern Card Layout */}
+      <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
         {timesheets.length === 0 ? (
-          <p style={{ color: colors.text.secondary }}>No time logged yet</p>
-        ) : (
-          <div className="space-y-3">
-            {timesheets.slice(0, 5).map((entry: any) => (
-              <div
-                key={entry.id}
-                className="flex items-center justify-between p-3 border-2 rounded-lg"
-                style={{ borderColor: colors.border.DEFAULT }}
+          <>
+            <h2 className="text-lg font-semibold text-gray-900 mb-6">
+              Time logged
+            </h2>
+            <div className="text-center py-8">
+              <p className="text-sm text-gray-500 mb-4">No time logged yet</p>
+              <Link
+                href={`/dashboard/timesheets?job_id=${job.id}`}
+                className="w-full inline-block py-2.5 border border-gray-300 rounded-lg bg-white text-sm font-medium text-orange-600 hover:bg-gray-50 transition-colors"
               >
-                <div>
-                  <div className="font-semibold" style={{ color: colors.text.primary }}>
-                    {entry.staff?.first_name} {entry.staff?.last_name}
-                  </div>
-                  <div className="text-sm" style={{ color: colors.text.secondary }}>
-                    {new Date(entry.date).toLocaleDateString('en-AU')} • {entry.total_hours}h • {entry.event_type?.replace('_', ' ')}
+                + Add time entry
+              </Link>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Header with totals */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Time logged
+              </h2>
+              <div className="flex gap-8">
+                <div className="text-right">
+                  <div className="text-xs font-medium text-gray-600 mb-1">Total hours</div>
+                  <div className="text-xl font-semibold text-gray-900">
+                    {timesheets.reduce((sum, entry) => sum + (entry.hours || 0), 0).toFixed(1)}h
                   </div>
                 </div>
-                <div className="text-sm font-semibold" style={{ color: colors.text.primary }}>
-                  ${entry.total_cost?.toFixed(2) || '0.00'}
+                <div className="text-right">
+                  <div className="text-xs font-medium text-gray-600 mb-1">Total value</div>
+                  <div className="text-xl font-semibold text-green-600">
+                    ${timesheets.reduce((sum, entry) => 
+                      sum + ((entry.hours || 0) * (entry.hourly_rate || 0)), 0
+                    ).toFixed(2)}
+                  </div>
                 </div>
               </div>
-            ))}
-            {timesheets.length > 5 && (
-              <div className="text-center pt-2">
+            </div>
+
+            {/* Time entries */}
+            <div className="space-y-0">
+              {timesheets.slice(0, 5).map((entry: any, index: number) => {
+                const userName = getUserName(entry)
+                const initials = getInitials(userName, entry.user_id)
+                const avatarColor = getAvatarColor(entry.user_id || entry.id)
+                
+                return (
+                  <div
+                    key={entry.id}
+                    className={`py-3 flex justify-between gap-3 ${
+                      index > 0 ? 'border-t border-gray-200' : ''
+                    }`}
+                  >
+                    {/* Left: Avatar + Details */}
+                    <div className="flex gap-3 flex-1 min-w-0">
+                      {/* Avatar */}
+                      <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0"
+                        style={{ backgroundColor: avatarColor }}
+                      >
+                        {initials}
+                      </div>
+                      
+                      {/* Details */}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium mb-1 text-gray-900">
+                          {userName}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {formatDateLong(entry.date)}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {formatTime12Hour(entry.start_time)} - {formatTime12Hour(entry.end_time)}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right: Hours + Value */}
+                    <div className="flex items-center gap-4 flex-shrink-0">
+                      <div className="font-medium text-gray-900">
+                        {(entry.hours || 0).toFixed(2)}h
+                      </div>
+                      <div className="font-medium text-gray-900 min-w-[70px] text-right">
+                        ${((entry.hours || 0) * (entry.hourly_rate || 0)).toFixed(2)}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* View all link or Add button */}
+            {timesheets.length > 5 ? (
+              <div className="text-center pt-4 border-t border-gray-200 mt-3">
                 <Link
                   href={`/dashboard/timesheets?job_id=${job.id}`}
                   className="text-sm font-semibold"
@@ -799,8 +949,17 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
                   View all {timesheets.length} entries →
                 </Link>
               </div>
+            ) : (
+              <div className="mt-3">
+                <Link
+                  href={`/dashboard/timesheets?job_id=${job.id}`}
+                  className="w-full block py-2.5 border border-gray-300 rounded-lg bg-white text-sm font-medium text-orange-600 hover:bg-gray-50 transition-colors text-center"
+                >
+                  + Add time entry
+                </Link>
+              </div>
             )}
-          </div>
+          </>
         )}
       </div>
 

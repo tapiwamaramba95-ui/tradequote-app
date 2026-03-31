@@ -11,13 +11,9 @@ export type Staff = {
   name: string
   email: string
   phone?: string
-  mobile?: string
-  username?: string
   role?: string
-  status?: string
-  hourly_cost?: number
-  billing_rate?: string
-  licence_number?: string
+  is_active?: boolean
+  hourly_rate?: number
   permissions?: {
     timesheets?: boolean
     jobs?: boolean
@@ -46,19 +42,15 @@ export default function StaffPermissionsSettings() {
   const [staff, setStaff] = useState<Staff[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
-  const [activeTab, setActiveTab] = useState<'active' | 'inactive'>('active')
+  const [activeTab, setActiveTab] = useState<boolean>(true)
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null)
   const [formData, setFormData] = useState<Partial<Staff>>({
     name: '',
     email: '',
-    username: '',
-    mobile: '',
     phone: '',
     role: 'Account Owner',
-    billing_rate: 'Standard Labour Rate',
-    hourly_cost: 0,
-    licence_number: '',
-    status: 'active',
+    hourly_rate: 0,
+    is_active: true,
     permissions: {
       timesheets: true,
       jobs: true,
@@ -115,15 +107,25 @@ export default function StaffPermissionsSettings() {
       const accountOwnerName = profile?.full_name || user.email?.split('@')[0] || 'Account Owner'
       const accountOwnerEmail = profile?.email || user.email || ''
 
+      console.log('Creating Account Owner with data:', {
+        business_id: businessId,
+        owner_id: user.id,
+        user_id: user.id,
+        name: accountOwnerName,
+        email: accountOwnerEmail,
+        role: 'Account Owner'
+      })
+
       const { error: insertError } = await supabase
         .from('staff')
         .insert([{
           business_id: businessId,
+          owner_id: user.id, // REQUIRED: The business owner
+          user_id: user.id, // Link to current user's profile
           name: accountOwnerName,
           email: accountOwnerEmail,
           role: 'Account Owner',
-          status: 'active',
-          billing_rate: 'Standard Labour Rate',
+          is_active: true,
           permissions: {
             timesheets: true,
             jobs: true,
@@ -140,6 +142,13 @@ export default function StaffPermissionsSettings() {
           }
         }])
 
+      if (insertError) {
+        console.error('Error creating Account Owner:', insertError)
+        console.error('Full error details:', JSON.stringify(insertError, null, 2))
+      } else {
+        console.log('Account Owner created successfully')
+      }
+
       if (!insertError) {
         // Fetch again after creating
         fetchStaff()
@@ -154,7 +163,11 @@ export default function StaffPermissionsSettings() {
         if (a.role !== 'Account Owner' && b.role === 'Account Owner') return 1
         return 0
       })
+      console.log('Fetched staff from staff table:', sortedData)
+      console.log('Filtered by business_id:', businessId)
       setStaff(sortedData)
+    } else if (error) {
+      console.error('Error fetching staff:', error)
     }
     setLoading(false)
   }
@@ -170,6 +183,10 @@ export default function StaffPermissionsSettings() {
     if (editingStaff) {
       // Update existing staff - exclude id from update
       const { id, ...updateData } = formData as Staff
+      
+      console.log('Updating staff:', editingStaff.id)
+      console.log('Update data:', updateData)
+      
       const { error } = await supabase
         .from('staff')
         .update(updateData)
@@ -180,16 +197,39 @@ export default function StaffPermissionsSettings() {
         alert(`Failed to update staff: ${error.message || JSON.stringify(error)}`)
         return
       }
+      
+      console.log('Staff updated successfully')
+      alert('Staff member updated successfully!')
     } else {
       // Create new staff
-      const { error } = await supabase
+      const newStaffData = {
+        ...formData,
+        business_id: businessId,
+        owner_id: user.id // REQUIRED: The business owner
+        // user_id is null until staff member signs up
+      }
+
+      console.log('Creating new staff with data:', newStaffData)
+      console.log('Current user ID:', user.id)
+      console.log('Business ID:', businessId)
+
+      const { error, data: insertedData } = await supabase
         .from('staff')
-        .insert([{ ...formData, business_id: businessId }])
+        .insert([newStaffData])
+        .select()
       
       if (error) {
         console.error('Error creating staff:', error)
+        console.error('Full error details:', JSON.stringify(error, null, 2))
+        console.error('Error code:', error.code)
+        console.error('Error message:', error.message)
+        console.error('Error details:', error.details)
+        console.error('Error hint:', error.hint)
         alert(`Failed to create staff: ${error.message || JSON.stringify(error)}`)
         return
+      } else {
+        console.log('Staff created successfully:', insertedData)
+        alert('Staff member created successfully!')
       }
     }
 
@@ -198,16 +238,32 @@ export default function StaffPermissionsSettings() {
     setFormData({
       name: '',
       email: '',
-      username: '',
-      mobile: '',
       phone: '',
       role: 'Account Owner',
-      billing_rate: 'Standard Labour Rate',
-      hourly_cost: 0,
-      licence_number: '',
-      status: 'active',
-      permissions: {},
-      notifications: {}
+      hourly_rate: 0,
+      is_active: true,
+      permissions: {
+        timesheets: true,
+        jobs: true,
+        invoicing: true,
+        quoting: true,
+        purchases: true,
+        reports_financials: true,
+        scheduling_dispatch: true,
+        enquiries: true,
+        staff_tracking: true,
+        settings: true,
+        staff_members: true,
+        plan_billing: true,
+      },
+      notifications: {
+        job_alerts_email: true,
+        job_alerts_mobile: true,
+        enquiries_email: true,
+        enquiries_mobile: true,
+        approval_confirmation_popup: true,
+        copy_bills_to_costs_popup: true,
+      }
     })
     fetchStaff()
   }
@@ -219,10 +275,11 @@ export default function StaffPermissionsSettings() {
   }
 
   const handleToggleStatus = async (member: Staff) => {
-    const newStatus = member.status === 'active' ? 'inactive' : 'active'
+    const newIsActive = !member.is_active
+    
     const { error } = await supabase
       .from('staff')
-      .update({ status: newStatus })
+      .update({ is_active: newIsActive })
       .eq('id', member.id)
     
     if (!error) fetchStaff()
@@ -237,7 +294,11 @@ export default function StaffPermissionsSettings() {
       .slice(0, 2)
   }
 
-  const filteredStaff = staff.filter(s => s.status === activeTab)
+  const filteredStaff = staff.filter(s => s.is_active === activeTab)
+  
+  console.log('Total staff:', staff.length)
+  console.log('Active tab (is_active):', activeTab)
+  console.log('Filtered staff:', filteredStaff.length, filteredStaff)
 
   if (loading) {
     return (
@@ -279,14 +340,10 @@ export default function StaffPermissionsSettings() {
           setFormData({
             name: '',
             email: '',
-            username: '',
-            mobile: '',
             phone: '',
             role: 'Account Owner',
-            billing_rate: 'Standard Labour Rate',
-            hourly_cost: 0,
-            licence_number: '',
-            status: 'active',
+            hourly_rate: 0,
+            is_active: true,
             permissions: {
               timesheets: true,
               jobs: true,
@@ -321,44 +378,44 @@ export default function StaffPermissionsSettings() {
       <div className="bg-white border-b mb-6">
         <div className="flex gap-0">
           <button
-            onClick={() => setActiveTab('active')}
+            onClick={() => setActiveTab(true)}
             className="px-4 py-3 text-sm font-medium border-b-2 border-transparent"
             style={{
-              borderBottomColor: activeTab === 'active' ? colors.accent.DEFAULT : 'transparent',
-              color: activeTab === 'active' ? colors.accent.DEFAULT : '#6b7280'
+              borderBottomColor: activeTab === true ? colors.accent.DEFAULT : 'transparent',
+              color: activeTab === true ? colors.accent.DEFAULT : '#6b7280'
             }}
             onMouseEnter={(e) => {
-              if (activeTab !== 'active') {
+              if (activeTab !== true) {
                 (e.target as HTMLElement).style.color = '#374151'
               }
             }}
             onMouseLeave={(e) => {
-              if (activeTab !== 'active') {
+              if (activeTab !== true) {
                 (e.target as HTMLElement).style.color = '#6b7280'
               }
             }}
           >
-            Active ({staff.filter(s => s.status === 'active').length})
+            Active ({staff.filter(s => s.is_active === true).length})
           </button>
           <button
-            onClick={() => setActiveTab('inactive')}
+            onClick={() => setActiveTab(false)}
             className="px-4 py-3 text-sm font-medium border-b-2 border-transparent"
             style={{
-              borderBottomColor: activeTab === 'inactive' ? colors.accent.DEFAULT : 'transparent',
-              color: activeTab === 'inactive' ? colors.accent.DEFAULT : '#6b7280'
+              borderBottomColor: activeTab === false ? colors.accent.DEFAULT : 'transparent',
+              color: activeTab === false ? colors.accent.DEFAULT : '#6b7280'
             }}
             onMouseEnter={(e) => {
-              if (activeTab !== 'inactive') {
+              if (activeTab !== false) {
                 (e.target as HTMLElement).style.color = '#374151'
               }
             }}
             onMouseLeave={(e) => {
-              if (activeTab !== 'inactive') {
+              if (activeTab !== false) {
                 (e.target as HTMLElement).style.color = '#6b7280'
               }
             }}
           >
-            Inactive ({staff.filter(s => s.status === 'inactive').length})
+            Inactive ({staff.filter(s => s.is_active === false).length})
           </button>
         </div>
       </div>
@@ -371,14 +428,15 @@ export default function StaffPermissionsSettings() {
               <tr className="bg-gray-50">
                 <th className="px-4 py-5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-b">Name</th>
                 <th className="px-4 py-5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-b">Role</th>
+                <th className="px-4 py-5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-b">Features</th>
                 <th className="px-4 py-5 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-b">Status</th>
               </tr>
             </thead>
             <tbody>
               {filteredStaff.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="py-8 text-center text-gray-400 border-b">
-                    No {activeTab} staff members yet.
+                  <td colSpan={4} className="py-8 text-center text-gray-400 border-b">
+                    No {activeTab ? 'active' : 'inactive'} staff members yet.
                   </td>
                 </tr>
               ) : (
@@ -406,6 +464,30 @@ export default function StaffPermissionsSettings() {
                         )}
                       </div>
                     </td>
+                    <td className="px-4 py-5">
+                      <div className="flex flex-wrap gap-1.5">
+                        {member.permissions && Object.entries(member.permissions).filter(([_, enabled]) => enabled).length > 0 ? (
+                          Object.entries(member.permissions)
+                            .filter(([_, enabled]) => enabled)
+                            .slice(0, 3)
+                            .map(([key]) => (
+                              <span
+                                key={key}
+                                className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800"
+                              >
+                                {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                              </span>
+                            ))
+                        ) : (
+                          <span className="text-sm text-gray-400">No access</span>
+                        )}
+                        {member.permissions && Object.entries(member.permissions).filter(([_, enabled]) => enabled).length > 3 && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                            +{Object.entries(member.permissions).filter(([_, enabled]) => enabled).length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-4 py-5 whitespace-nowrap">
                       <button
                         onClick={(e) => {
@@ -413,12 +495,12 @@ export default function StaffPermissionsSettings() {
                           handleToggleStatus(member)
                         }}
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                          member.status === 'active' ? 'bg-orange-500' : 'bg-gray-200'
+                          member.is_active ? 'bg-orange-500' : 'bg-gray-200'
                         }`}
                       >
                         <span
                           className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                            member.status === 'active' ? 'translate-x-6' : 'translate-x-1'
+                            member.is_active ? 'translate-x-6' : 'translate-x-1'
                           }`}
                         />
                       </button>
@@ -501,32 +583,7 @@ export default function StaffPermissionsSettings() {
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Username <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.username || formData.email || ''}
-                        onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                        className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        <button type="button" className="hover:underline" style={{ color: colors.accent.DEFAULT }}>
-                          Learn about changing usernames.
-                        </button>
-                      </p>
-                    </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Mobile</label>
-                      <input
-                        type="text"
-                        value={formData.mobile || ''}
-                        onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
-                        className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                      />
-                    </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
@@ -538,51 +595,23 @@ export default function StaffPermissionsSettings() {
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Default Billing Rate <span className="text-red-500">*</span>
-                      </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={formData.billing_rate || 'Standard Labour Rate'}
-                          onChange={(e) => setFormData({ ...formData, billing_rate: e.target.value })}
-                          className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                        />
-                        <button
-                          type="button"
-                          className="px-3 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
+
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Hourly Cost <span className="text-gray-400 text-xs">(optional)</span>
+                        Hourly Rate <span className="text-gray-400 text-xs">(optional)</span>
                       </label>
                       <input
                         type="number"
                         step="0.01"
-                        value={formData.hourly_cost || ''}
-                        onChange={(e) => setFormData({ ...formData, hourly_cost: parseFloat(e.target.value) })}
+                        value={formData.hourly_rate || ''}
+                        onChange={(e) => setFormData({ ...formData, hourly_rate: parseFloat(e.target.value) })}
                         className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                         placeholder="0.00"
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Licence Number <span className="text-gray-400 text-xs">(optional)</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.licence_number || ''}
-                        onChange={(e) => setFormData({ ...formData, licence_number: e.target.value })}
-                        className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                      />
-                    </div>
+
 
                     {/* External Calendars */}
                     <div className="pt-6 border-t">
@@ -790,20 +819,27 @@ export default function StaffPermissionsSettings() {
                           key={permission.key}
                           className="flex items-center gap-3 p-3 rounded hover:bg-gray-50 cursor-pointer"
                         >
-                          <input
-                            type="checkbox"
-                            checked={formData.permissions?.[permission.key as keyof typeof formData.permissions] || false}
-                            onChange={(e) =>
+                          <button
+                            type="button"
+                            onClick={() =>
                               setFormData({
                                 ...formData,
                                 permissions: {
                                   ...formData.permissions,
-                                  [permission.key]: e.target.checked,
+                                  [permission.key]: !formData.permissions?.[permission.key as keyof typeof formData.permissions],
                                 },
                               })
                             }
-                            className="h-4 w-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500"
-                          />
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                              formData.permissions?.[permission.key as keyof typeof formData.permissions] ? 'bg-orange-500' : 'bg-gray-200'
+                            }`}
+                          >
+                            <span
+                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                formData.permissions?.[permission.key as keyof typeof formData.permissions] ? 'translate-x-6' : 'translate-x-1'
+                              }`}
+                            />
+                          </button>
                           <span className="flex-1 text-sm text-gray-700">
                             {permission.label}
                           </span>
