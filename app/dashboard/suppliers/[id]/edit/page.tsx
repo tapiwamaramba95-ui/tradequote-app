@@ -86,7 +86,22 @@ export default function EditSupplierPage({ params }: { params: Promise<{ id: str
     setSaving(true)
 
     try {
-      const { error } = await supabase
+      // Get business_id for RLS
+      const businessId = await getBusinessId()
+      if (!businessId) {
+        alert('Failed to get business context')
+        setSaving(false)
+        return
+      }
+
+      // Check if required fields are filled to mark as complete
+      const hasRequiredFields = !!(
+        formData.name &&
+        formData.email &&
+        formData.phone
+      )
+
+      const { data, error } = await supabase
         .from('suppliers')
         .update({
           name: formData.name,
@@ -97,17 +112,24 @@ export default function EditSupplierPage({ params }: { params: Promise<{ id: str
           suburb: formData.suburb || null,
           state: formData.state || null,
           postcode: formData.postcode || null,
+          details_completed: hasRequiredFields,
           updated_at: new Date().toISOString()
         })
         .eq('id', id)
+        .eq('business_id', businessId)
 
-      if (error) throw error
+      if (error) {
+        console.error('Supabase error:', error)
+        throw error
+      }
 
+      console.log('Update successful, data:', data)
       alert('✅ Supplier updated successfully')
       router.push(`/dashboard/suppliers/${id}`)
     } catch (error) {
       console.error('Error updating supplier:', error)
-      alert('Failed to update supplier')
+      console.error('Error details:', JSON.stringify(error, null, 2))
+      alert(`Failed to update supplier: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setSaving(false)
     }

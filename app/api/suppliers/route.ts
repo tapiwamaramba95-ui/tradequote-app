@@ -81,9 +81,22 @@ export async function POST(request: NextRequest) {
     }
     
     const body = await request.json()
+    
+    // Check if required fields are filled to mark as complete
+    const hasRequiredFields = !!(
+      body.name &&
+      body.email &&
+      body.phone
+    )
+    
     const { data, error } = await supabase
       .from('suppliers')
-      .insert([{ ...body, user_id: user.id, business_id: userBusiness.business_id }])
+      .insert([{ 
+        ...body, 
+        user_id: user.id, 
+        business_id: userBusiness.business_id,
+        details_completed: hasRequiredFields
+      }])
       .select()
       .single()
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })

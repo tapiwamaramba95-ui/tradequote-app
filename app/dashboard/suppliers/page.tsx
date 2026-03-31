@@ -6,7 +6,8 @@ import { supabase } from '@/lib/supabase'
 import { colors } from '@/lib/colors'
 import { getBusinessId } from '@/lib/business'
 import Link from 'next/link'
-import { Package, Upload, Plus, CheckCircle, AlertTriangle, Mail, Phone } from 'lucide-react'
+import { Package, Upload, Plus, CheckCircle, AlertTriangle, Mail, Phone, Eye, Edit } from 'lucide-react'
+import Breadcrumb from '@/components/Breadcrumb'
 
 type Supplier = {
   id: string
@@ -72,6 +73,9 @@ export default function SuppliersPage() {
 
   return (
     <div className="px-4 sm:px-6 lg:px-8">
+      {/* Breadcrumb */}
+      <Breadcrumb items={[{ label: 'Suppliers', href: '/dashboard/suppliers' }]} />
+      
       {/* Page Header */}
       <div className="flex items-center justify-between mb-8">
         {/* Left: Icon + Title */}
@@ -148,94 +152,128 @@ export default function SuppliersPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {suppliers.map((supplier) => (
-            <div
-              key={supplier.id}
-              className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow"
-            >
-              {/* Status indicator */}
-              <div className="flex items-center gap-2 mb-4">
-                {supplier.details_completed ? (
-                  <CheckCircle size={20} className="text-green-500" />
-                ) : (
-                  <AlertTriangle size={20} className="text-yellow-500" />
-                )}
-                <h3 
-                  className="text-lg font-bold flex-1"
-                  style={{ color: colors.text.primary }}
-                >
-                  {supplier.name}
-                </h3>
-              </div>
-
-              {/* Contact info or warning */}
-              {supplier.details_completed ? (
-                <div 
-                  className="space-y-2 text-sm mb-4"
-                  style={{ color: colors.text.secondary }}
-                >
-                  {supplier.email && (
-                    <div className="flex items-center gap-2">
-                      <Mail size={16} className="text-gray-400" />
-                      <span className="truncate">{supplier.email}</span>
-                    </div>
-                  )}
-                  {supplier.phone && (
-                    <div className="flex items-center gap-2">
-                      <Phone size={16} className="text-gray-400" />
-                      <span>{supplier.phone}</span>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div 
-                  className="text-sm mb-4 px-3 py-2 rounded-lg"
-                  style={{ 
-                    backgroundColor: '#fef3c7',
-                    color: '#92400e'
-                  }}
-                >
-                  Contact details incomplete
-                </div>
-              )}
-
-              {/* Product count */}
-              <div 
-                className="text-sm font-semibold mb-4"
-                style={{ color: colors.text.secondary }}
+        <>
+          {/* Mobile Card View */}
+          <div className="md:hidden grid grid-cols-1 gap-4">
+            {suppliers.map((supplier) => (
+              <div
+                key={supplier.id}
+                className="bg-white rounded-lg p-4 shadow-sm border border-gray-200"
               >
-                {supplier.product_count} products
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-2">
-                <Link
-                  href={`/dashboard/suppliers/${supplier.id}`}
-                  className="flex-1 text-center px-4 py-2 rounded-lg font-semibold text-sm transition-colors"
-                  style={{ 
-                    backgroundColor: colors.accent.DEFAULT,
-                    color: 'white'
-                  }}
-                >
-                  View Products
-                </Link>
-                {!supplier.details_completed && (
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    {supplier.details_completed ? (
+                      <CheckCircle size={18} className="text-green-500" />
+                    ) : (
+                      <AlertTriangle size={18} className="text-yellow-500" />
+                    )}
+                    <h3 className="font-semibold text-gray-900">{supplier.name}</h3>
+                  </div>
+                </div>
+                <div className="text-sm text-gray-600 mb-3">
+                  {supplier.email && <div className="truncate">{supplier.email}</div>}
+                  {supplier.phone && <div>{supplier.phone}</div>}
+                  <div className="font-medium mt-1">{supplier.product_count} products</div>
+                </div>
+                <div className="flex gap-2">
+                  <Link
+                    href={`/dashboard/suppliers/${supplier.id}`}
+                    className="flex-1 py-2 text-sm font-semibold border rounded-lg hover:bg-gray-50 transition-colors inline-flex items-center justify-center gap-1.5"
+                    style={{ borderColor: colors.border.DEFAULT, color: colors.text.primary }}
+                  >
+                    <Eye className="w-4 h-4" />
+                    View
+                  </Link>
                   <Link
                     href={`/dashboard/suppliers/${supplier.id}/edit`}
-                    className="px-4 py-2 rounded-lg font-semibold text-sm border-2 transition-colors"
-                    style={{ 
-                      borderColor: colors.accent.DEFAULT,
-                      color: colors.accent.DEFAULT
-                    }}
+                    className="flex-1 py-2 text-sm font-semibold border rounded-lg hover:bg-gray-50 transition-colors inline-flex items-center justify-center gap-1.5"
+                    style={{ borderColor: colors.border.DEFAULT, color: colors.text.primary }}
                   >
-                    Add Details
+                    <Edit className="w-4 h-4" />
+                    Edit
                   </Link>
-                )}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Supplier Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Email
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Phone
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Products
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {suppliers.map((supplier) => (
+                  <tr key={supplier.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {supplier.details_completed ? (
+                        <div className="flex items-center gap-2 text-green-600">
+                          <CheckCircle size={18} />
+                          <span className="text-xs font-medium">Complete</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 text-yellow-600">
+                          <AlertTriangle size={18} />
+                          <span className="text-xs font-medium">Incomplete</span>
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{supplier.name}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-600">{supplier.email || '-'}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-600">{supplier.phone || '-'}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{supplier.product_count}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex items-center justify-end gap-1">
+                        <Link
+                          href={`/dashboard/suppliers/${supplier.id}`}
+                          className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+                          title="View"
+                        >
+                          <Eye className="w-3.5 h-3.5 text-gray-600" />
+                        </Link>
+                        <Link
+                          href={`/dashboard/suppliers/${supplier.id}/edit`}
+                          className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+                          title="Edit"
+                        >
+                          <Edit className="w-3.5 h-3.5 text-gray-600" />
+                        </Link>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   )

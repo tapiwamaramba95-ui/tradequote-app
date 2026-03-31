@@ -49,8 +49,21 @@ export function useSafeQuery<T>(
   }, [queryFn, errorMessage])
 
   useEffect(() => {
-    fetchData()
-  }, [...dependencies, fetchData])
+    let mounted = true
+    
+    const runQuery = async () => {
+      if (mounted) {
+        await fetchData()
+      }
+    }
+    
+    runQuery()
+    
+    return () => {
+      mounted = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, dependencies)
 
   return {
     data,

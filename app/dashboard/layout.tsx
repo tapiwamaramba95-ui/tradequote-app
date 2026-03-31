@@ -58,8 +58,8 @@ export default function DashboardLayout({
       const subState = checkSubscriptionAccess(profileData)
       setSubscriptionState(subState)
       
-      // Redirect if expired and not on billing pages
-      if (subState.isExpired && !pathname.includes('/billing')) {
+      // Redirect if expired and not on billing pages (check pathname directly, don't add to deps)
+      if (subState.isExpired && !window.location.pathname.includes('/billing')) {
         router.push('/dashboard/settings/billing/expired')
         return null
       }
@@ -76,7 +76,7 @@ export default function DashboardLayout({
       console.error('Error loading user data:', error)
       return null
     }
-  }, [pathname, router])
+  }, [router]) // Only router as dependency, not pathname
 
   useEffect(() => {
     // Prevent duplicate execution
@@ -85,7 +85,13 @@ export default function DashboardLayout({
 
     const checkUser = async () => {
       try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        // Add timeout protection (15 seconds)
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error('Auth check timeout')), 15000)
+        })
+
+        const authPromise = supabase.auth.getSession()
+        const { data: { session }, error: sessionError } = await Promise.race([authPromise, timeoutPromise])
         
         if (sessionError) {
           console.error('Session error:', sessionError)
@@ -99,11 +105,23 @@ export default function DashboardLayout({
         }
         
         setUser(session.user)
-        await loadUserData(session.user.id)
+        
+        // Load user data with timeout protection
+        const loadDataPromise = loadUserData(session.user.id)
+        await Promise.race([loadDataPromise, timeoutPromise])
+        
         setLoading(false)
       } catch (error) {
         console.error('Error checking user:', error)
-        router.push('/login')
+        // On timeout or error, try to recover instead of forcing logout
+        if (error instanceof Error && error.message === 'Auth check timeout') {
+          console.warn('Auth check timed out, attempting recovery...')
+          setLoading(false)
+          // Show error message but don't force logout
+          alert('Loading timed out. Please refresh the page if you experience issues.')
+        } else {
+          router.push('/login')
+        }
       } finally {
         isCheckingUser.current = false
       }

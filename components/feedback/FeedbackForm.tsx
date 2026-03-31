@@ -18,11 +18,31 @@ export function FeedbackForm({ isOpen, onClose }: FeedbackFormProps) {
 
   // Get current user on mount
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
-      setLoading(false);
-    });
-  }, []);
+    let mounted = true;
+    
+    const loadUser = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (mounted) {
+          setUser(user);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error loading user:', error);
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+    
+    if (isOpen) {
+      loadUser();
+    }
+    
+    return () => {
+      mounted = false;
+    };
+  }, [isOpen]);
   const [sentiment, setSentiment] = useState<Sentiment | null>(null);
   const [type, setType] = useState<FeedbackType>('general');
   const [title, setTitle] = useState('');

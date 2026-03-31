@@ -6,6 +6,7 @@ import { colors } from '@/lib/colors'
 import { getBusinessId } from '@/lib/business'
 import Link from 'next/link'
 import { Edit2, X } from 'lucide-react'
+import Breadcrumb from '@/components/Breadcrumb'
 
 type Supplier = {
   id: string
@@ -30,6 +31,16 @@ type Product = {
   is_active: boolean
 }
 
+// Helper function to get supplier initials
+function getSupplierInitials(name: string): string {
+  return name
+    .split(' ')
+    .map(word => word[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+}
+
 export default function SupplierDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const [supplier, setSupplier] = useState<Supplier | null>(null)
@@ -39,6 +50,11 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  // Calculate category count
+  const categoryCount = new Set(
+    products.map(p => p.category).filter(Boolean)
+  ).size
 
   useEffect(() => {
     loadSupplierData()
@@ -147,126 +163,169 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="px-4 sm:px-6 lg:px-8">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <h1 
-              className="text-3xl font-bold"
-              style={{ color: colors.text.primary }}
-            >
+      {/* Breadcrumb */}
+      <Breadcrumb items={[
+        { label: 'Suppliers', href: '/dashboard/suppliers' },
+        { label: supplier.name }
+      ]} />
+      
+      {/* Header with Avatar */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          {/* Supplier Avatar/Initials */}
+          <div 
+            className="w-14 h-14 rounded-full flex items-center justify-center text-white font-semibold text-xl"
+            style={{ backgroundColor: colors.accent.DEFAULT }}
+          >
+            {getSupplierInitials(supplier.name)}
+          </div>
+          
+          <div>
+            <h1 className="text-3xl font-bold" style={{ color: colors.text.primary }}>
               {supplier.name}
             </h1>
-            {!supplier.details_completed && (
-              <span 
-                className="px-3 py-1 rounded-full text-xs font-semibold"
-                style={{ backgroundColor: '#fef3c7', color: '#92400e' }}
-              >
-                ⚠️ Incomplete
-              </span>
-            )}
+            <p style={{ color: colors.text.secondary }}>
+              {products.length} products • {categoryCount} categories
+            </p>
           </div>
-          <p style={{ color: colors.text.secondary }}>
-            {products.length} products
-          </p>
         </div>
+        
         <div className="flex gap-3">
           <Link
             href={`/dashboard/suppliers/${supplier.id}/edit`}
-            className="px-6 py-3 rounded-lg font-semibold border-2 transition-colors"
-            style={{ 
-              borderColor: colors.border.DEFAULT,
-              color: colors.text.primary 
-            }}
+            className="px-5 py-2.5 rounded-lg font-semibold border transition-colors"
+            style={{ borderColor: colors.border.DEFAULT, color: colors.text.primary }}
           >
             Edit Supplier
           </Link>
           <Link
             href="/dashboard/purchase-orders/new"
-            className="px-6 py-3 rounded-lg font-semibold text-white"
+            className="px-5 py-2.5 rounded-lg font-semibold text-white"
             style={{ backgroundColor: colors.accent.DEFAULT }}
           >
-            Create Purchase Order
+            New Purchase Order
           </Link>
         </div>
       </div>
 
-      {/* Supplier Info Card */}
-      {supplier.details_completed && (
-        <div className="bg-white rounded-2xl p-8 shadow-sm mb-6">
-          <h2 
-            className="text-lg font-bold mb-4"
-            style={{ color: colors.text.primary }}
+      {/* Supplier Info Cards - Always Show */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        
+        {/* Contact Card */}
+        <div 
+          className="bg-white rounded-xl p-5 border"
+          style={{ borderColor: colors.border.DEFAULT }}
+        >
+          <div 
+            className="text-xs font-semibold uppercase tracking-wide mb-3"
+            style={{ color: colors.text.secondary }}
           >
-            Contact Details
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-            {supplier.email && (
-              <div>
-                <p 
-                  className="text-xs font-semibold mb-1"
-                  style={{ color: colors.text.secondary }}
-                >
-                  Email
-                </p>
-                <p style={{ color: colors.text.primary }}>{supplier.email}</p>
+            📧 Contact
+          </div>
+          <div className="space-y-2">
+            {supplier.email ? (
+              <div className="text-xs font-medium break-all">
+                {supplier.email}
+              </div>
+            ) : (
+              <div className="text-xs" style={{ color: colors.text.secondary }}>
+                No email on file
               </div>
             )}
-            {supplier.phone && (
-              <div>
-                <p 
-                  className="text-xs font-semibold mb-1"
-                  style={{ color: colors.text.secondary }}
-                >
-                  Phone
-                </p>
-                <p style={{ color: colors.text.primary }}>{supplier.phone}</p>
+            
+            {supplier.phone ? (
+              <div className="text-xs font-medium">
+                {supplier.phone}
               </div>
-            )}
-            {supplier.abn && (
-              <div>
-                <p 
-                  className="text-xs font-semibold mb-1"
-                  style={{ color: colors.text.secondary }}
-                >
-                  ABN
-                </p>
-                <p style={{ color: colors.text.primary }}>{supplier.abn}</p>
-              </div>
-            )}
-            {(supplier.street_address || supplier.suburb || supplier.state || supplier.postcode) && (
-              <div className="col-span-2 md:col-span-3">
-                <p 
-                  className="text-xs font-semibold mb-1"
-                  style={{ color: colors.text.secondary }}
-                >
-                  Address
-                </p>
-                <p style={{ color: colors.text.primary }}>
-                  {[
-                    supplier.street_address,
-                    [supplier.suburb, supplier.state, supplier.postcode].filter(Boolean).join(' ')
-                  ].filter(Boolean).join(', ')}
-                </p>
+            ) : (
+              <div className="text-xs" style={{ color: colors.text.secondary }}>
+                No phone on file
               </div>
             )}
           </div>
         </div>
-      )}
+        
+        {/* Address Card */}
+        <div 
+          className="bg-white rounded-xl p-5 border"
+          style={{ borderColor: colors.border.DEFAULT }}
+        >
+          <div 
+            className="text-xs font-semibold uppercase tracking-wide mb-3"
+            style={{ color: colors.text.secondary }}
+          >
+            📍 Address
+          </div>
+          {(supplier.street_address || supplier.suburb || supplier.state || supplier.postcode) ? (
+            <div className="text-xs leading-relaxed">
+              {supplier.street_address && <div>{supplier.street_address}</div>}
+              {(supplier.suburb || supplier.state || supplier.postcode) && (
+                <div>
+                  {[supplier.suburb, supplier.state, supplier.postcode]
+                    .filter(Boolean)
+                    .join(' ')}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-xs" style={{ color: colors.text.secondary }}>
+              No address on file
+            </div>
+          )}
+        </div>
+        
+        {/* Business Details Card */}
+        <div 
+          className="bg-white rounded-xl p-5 border"
+          style={{ borderColor: colors.border.DEFAULT }}
+        >
+          <div 
+            className="text-xs font-semibold uppercase tracking-wide mb-3"
+            style={{ color: colors.text.secondary }}
+          >
+            🏢 Business Details
+          </div>
+          <div className="space-y-2">
+            {supplier.abn ? (
+              <div className="text-xs">
+                <span style={{ color: colors.text.secondary }}>ABN: </span>
+                <span className="font-medium">{supplier.abn}</span>
+              </div>
+            ) : (
+              <div className="text-xs" style={{ color: colors.text.secondary }}>
+                No ABN on file
+              </div>
+            )}
+            
+            <div className="text-xs">
+              <span style={{ color: colors.text.secondary }}>Categories: </span>
+              <span className="font-medium">{categoryCount || 0}</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Products Section */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-        {/* Search Bar */}
+        
+        {/* Section Header with Search */}
         <div 
-          className="p-6 border-b"
+          className="p-6 border-b flex items-center justify-between"
           style={{ borderColor: colors.border.DEFAULT }}
         >
+          <h2 
+            className="text-lg font-bold"
+            style={{ color: colors.text.primary }}
+          >
+            Products
+          </h2>
+          
           <input
             type="text"
             placeholder="Search products..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-3 border-2 rounded-lg text-sm"
+            className="w-64 px-4 py-2 border rounded-lg text-sm"
             style={{ borderColor: colors.border.DEFAULT }}
           />
         </div>
@@ -282,56 +341,47 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead>
+              <thead className="bg-gray-50">
                 <tr 
                   className="border-b"
-                  style={{ 
-                    backgroundColor: colors.background.card,
-                    borderColor: colors.border.DEFAULT 
-                  }}
+                  style={{ borderColor: colors.border.DEFAULT }}
                 >
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase">Code</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase">Product</th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold uppercase">Unit</th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold uppercase">Price</th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold uppercase">Category</th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold uppercase">Actions</th>
+                  <th className="px-2 py-2 text-left text-xs font-medium uppercase text-gray-500">Code</th>
+                  <th className="px-2 py-2 text-left text-xs font-medium uppercase text-gray-500">Product</th>
+                  <th className="px-2 py-2 text-center text-xs font-medium uppercase text-gray-500">Unit</th>
+                  <th className="px-2 py-2 text-right text-xs font-medium uppercase text-gray-500">Price</th>
+                  <th className="px-2 py-2 text-center text-xs font-medium uppercase text-gray-500">Category</th>
+                  <th className="px-2 py-2 text-center text-xs font-medium uppercase text-gray-500">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-gray-200">
                 {filteredProducts.map((product) => (
                   <tr
                     key={product.id}
-                    className="border-b hover:bg-gray-50"
-                    style={{ borderColor: colors.border.DEFAULT }}
+                    className="hover:bg-gray-50 transition-colors"
                   >
-                    <td className="px-6 py-4 text-sm font-mono">
+                    <td className="px-2 py-2 text-xs text-gray-600">
                       {product.product_code || '-'}
                     </td>
-                    <td className="px-6 py-4 text-sm font-semibold">
+                    <td className="px-2 py-2 text-xs font-medium text-gray-900">
                       {product.product_name}
                     </td>
-                    <td className="px-6 py-4 text-sm text-center">
+                    <td className="px-2 py-2 text-xs text-center text-gray-600">
                       {product.unit}
                     </td>
-                    <td className="px-6 py-4 text-sm text-right font-semibold">
+                    <td className="px-2 py-2 text-xs text-right font-medium text-gray-900">
                       ${product.price.toFixed(2)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-center">
+                    <td className="px-2 py-2 text-xs text-center text-gray-600">
                       {product.category || '-'}
                     </td>
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-2 py-2 text-center">
                       <button
                         onClick={() => handleEditProduct(product)}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
-                        style={{ 
-                          color: colors.accent.DEFAULT,
-                          backgroundColor: colors.background.card
-                        }}
+                        className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
                         title="Edit product"
                       >
-                        <Edit2 size={14} />
-                        Edit
+                        <Edit2 className="w-3.5 h-3.5 text-gray-600" />
                       </button>
                     </td>
                   </tr>

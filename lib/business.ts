@@ -97,13 +97,21 @@ export async function getUserBusiness(): Promise<UserBusiness | null> {
 
 /**
  * Get just the business_id for the current user
+ * Includes timeout protection to prevent hanging
  */
 export async function getBusinessId(): Promise<string | null> {
   try {
-    const { data: { user } } = await supabase.auth.getUser()
+    // Add timeout to prevent hanging
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('getBusinessId timeout')), 10000)
+    })
+
+    const userPromise = supabase.auth.getUser()
+    const { data: { user } } = await Promise.race([userPromise, timeoutPromise])
+    
     if (!user) return null
 
-    const { data, error } = await supabase
+    const queryPromise = supabase
       .from('user_businesses')
       .select('business_id')
       .eq('user_id', user.id)
@@ -111,10 +119,13 @@ export async function getBusinessId(): Promise<string | null> {
       .order('created_at', { ascending: true })
       .limit(1)
       .maybeSingle()
+    
+    const { data, error } = await Promise.race([queryPromise, timeoutPromise])
 
     if (error || !data) return null
     return data.business_id
-  } catch {
+  } catch (err) {
+    console.error('getBusinessId error:', err)
     return null
   }
 }

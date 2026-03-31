@@ -188,17 +188,28 @@ export default function UploadPriceListPage() {
         console.log('Using existing supplier:', previewData.supplierName)
       } else {
         // Create supplier
+        const supplierData = {
+          user_id: user.id,
+          business_id: businessId,
+          name: previewData.supplierName,
+          abn: skipDetails ? null : supplierABN || null,
+          email: skipDetails ? null : supplierEmail || null,
+          phone: skipDetails ? null : supplierPhone || null,
+          street_address: skipDetails ? null : supplierAddress || null,
+          website: skipDetails ? null : supplierWebsite || null,
+        }
+
+        // Check if required fields are filled to mark as complete
+        const hasRequiredFields = !skipDetails && !!(
+          supplierData.email &&
+          supplierData.phone
+        )
+
         const { data: supplier, error: supplierError } = await supabase
           .from('suppliers')
           .insert({
-            user_id: user.id,
-            business_id: businessId,
-            name: previewData.supplierName,
-            abn: skipDetails ? null : supplierABN || null,
-            email: skipDetails ? null : supplierEmail || null,
-            phone: skipDetails ? null : supplierPhone || null,
-            street_address: skipDetails ? null : supplierAddress || null,
-            website: skipDetails ? null : supplierWebsite || null,
+            ...supplierData,
+            details_completed: hasRequiredFields
           })
           .select()
           .single()
