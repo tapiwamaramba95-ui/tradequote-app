@@ -31,19 +31,21 @@ export function ArticleFeedbackButtons({ articleId }: ArticleFeedbackButtonsProp
 
       if (feedbackError) throw feedbackError;
 
-      // Update article counts
+      // Update article counts - increment the appropriate counter
       const columnToIncrement = wasHelpful ? 'helpful_count' : 'not_helpful_count';
       
+      // Fetch current article to increment count
       const { data: article } = await supabase
         .from('help_articles')
-        .select(columnToIncrement)
+        .select('helpful_count, not_helpful_count')
         .eq('id', articleId)
         .single();
 
       if (article) {
+        const currentCount = wasHelpful ? article.helpful_count : article.not_helpful_count;
         await supabase
           .from('help_articles')
-          .update({ [columnToIncrement]: (article[columnToIncrement] || 0) + 1 })
+          .update({ [columnToIncrement]: (currentCount || 0) + 1 })
           .eq('id', articleId);
       }
 

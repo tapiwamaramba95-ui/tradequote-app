@@ -14,7 +14,7 @@ interface ArticlePageProps {
 
 export async function generateMetadata({ params }: ArticlePageProps) {
   const { category, slug } = await params;
-  const supabase = await createClient();
+  const supabase = await createSupabaseServer();
 
   const { data: article } = await supabase
     .from('help_articles')
